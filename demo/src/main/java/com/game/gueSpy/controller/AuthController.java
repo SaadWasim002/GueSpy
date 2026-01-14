@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.game.gueSpy.dto.AuthRequest;
 import com.game.gueSpy.dto.AuthResponse;
+import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.entity.User;
+import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.repository.UserRepository;
 import com.game.gueSpy.security.JwtUtil;
+import com.game.gueSpy.service.AuthService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,27 +25,25 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
     
     @Autowired
-    private JwtUtil jwtUtil;
+    private AuthService authService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @PostMapping("/register")
+    @PostMapping(
+        path = "/register",
+        name = "Register",
+        consumes = "application/json",
+        produces = "application/json"
+    )
     public ResponseEntity<?> register(@RequestBody AuthRequest request){
-        log.info("User has started register flow with this request body : {}", request);
-        if(request.getUsername() != null && request.getEmail() != null && request.getPassword() != null){
-            User user = User.builder()
-                    .username(request.getUsername())
-                    .email(request.getEmail())
-                    .password(request.getPassword())
-                    .build();
-            
-            String token = jwtUtil.generateToken(request.getUsername());
-
-            userRepository.save(user);
-            return ResponseEntity.ok(new AuthResponse(token, "User registered Successfully"));
+        try {
+            return authService.userRegister(request);
+        } catch (Exception e) {
+            log.error("Registration failed", e);
+            return ResponseEntity.status(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus())
+                .body(GenericResponse.builder()
+                    .status(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus())
+                    .message(ResponseEnum.INTERNAL_SERVER_ERROR.getMessage())
+                    .build()
+                );
         }
-        log.info("request body : {}", request);
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
