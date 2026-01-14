@@ -6,9 +6,16 @@ import com.game.gueSpy.constant.MessageConstants;
 
 public enum ResponseEnum {
     
+    //registration
     USER_REGISTRATION_SUCCESS(MessageConstants.userRegistrationSuccess, HttpStatus.CREATED),
     USER_REGISTRATION_FAILURE(MessageConstants.userRegistrationFailure, HttpStatus.BAD_REQUEST),
     USER_ALREADY_EXIST(MessageConstants.userAlreadyExist, HttpStatus.CONFLICT),
+
+    //login
+    LOGIN_SUCCESS(MessageConstants.loginSuccess, HttpStatus.OK),
+    LOGIN_FAILURE(MessageConstants.loginFailure, HttpStatus.UNAUTHORIZED),
+    USER_NOT_EXISTS(MessageConstants.userNotExists, HttpStatus.NOT_FOUND),
+
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED);

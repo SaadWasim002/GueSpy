@@ -1,8 +1,8 @@
 package com.game.gueSpy.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.game.gueSpy.dto.AuthRequest;
@@ -25,14 +25,23 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+    
     public ResponseEntity<?> userRegister(AuthRequest request){
         log.info("User has started register flow with this request body : {}", request);
         if(request.getUsername() != null && request.getEmail() != null && request.getPassword() != null && 
         !request.getUsername().isEmpty() && !request.getEmail().isEmpty() && !request.getPassword().isEmpty()){
+
+            if(userRepository.findByEmail(request.getEmail()).isPresent()){
+                GenericResponse response = buildGenericResponse(ResponseEnum.USER_ALREADY_EXIST);
+                return GenericUtility.buildResponse(ResponseEnum.USER_ALREADY_EXIST.getStatus(), response);
+            }
+
             User user = User.builder()
                     .username(request.getUsername())
                     .email(request.getEmail())
-                    .password(request.getPassword())
+                    .password(passwordEncoder.encode(request.getPassword()))
                     .build();
             
             String token = jwtUtil.generateToken(request.getUsername());
@@ -44,7 +53,37 @@ public class AuthService {
         log.info("request body : {}", request);
         GenericResponse response = buildGenericResponse(ResponseEnum.VALUES_MISSING);
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
+    }
 
+    public ResponseEntity<?> userLogin(AuthRequest request){
+        log.info("User has started login flow with this request body : {}", request);
+        if(request.getEmail() != null && request.getPassword() != null && 
+        !request.getEmail().isEmpty() && !request.getPassword().isEmpty()){
+
+            var user = userRepository.findByEmail(request.getEmail());
+
+            if(user.isPresent()){
+                User foundUser = user.get();
+                String password = foundUser.getPassword();
+
+                if(passwordEncoder.matches(request.getPassword(), password)){
+                    String token = jwtUtil.generateToken(foundUser.getUsername());
+                    AuthResponse response = buildAuthResponse(ResponseEnum.LOGIN_SUCCESS, token);
+                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_SUCCESS.getStatus(), response);
+                }
+                else{
+                    GenericResponse response = buildGenericResponse(ResponseEnum.LOGIN_FAILURE);
+                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_FAILURE.getStatus(), response);
+                }
+            }
+            else{
+                GenericResponse response = buildGenericResponse(ResponseEnum.USER_NOT_EXISTS);
+                    return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS.getStatus(), response);
+            }
+        }
+        log.info("request body : {}", request);
+        GenericResponse response = buildGenericResponse(ResponseEnum.VALUES_MISSING);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
 
     private AuthResponse buildAuthResponse(ResponseEnum responseEnum, String token) {
