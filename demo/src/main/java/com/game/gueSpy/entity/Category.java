@@ -35,7 +35,8 @@ public class Category {
     @Column(columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean isEnabled;
 
-    private int totalWords;
+    @Builder.Default
+    private Integer totalWords = 0; 
     private String createdBy;
 
     @CreatedDate

@@ -25,6 +25,9 @@ public enum ResponseEnum {
     CATEGORY_RETRIEVED(MessageConstants.categoriesRetrieved, HttpStatus.OK),
     NO_CATEGORY_FOUND(MessageConstants.noCategoryFound, HttpStatus.NOT_FOUND),
 
+    //Word
+    WORD_ADDED(MessageConstants.wordAdded, HttpStatus.CREATED),
+
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED),
