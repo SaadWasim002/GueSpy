@@ -1,13 +1,17 @@
 package com.game.gueSpy.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import com.game.gueSpy.dto.AuthResponse;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
+import com.game.gueSpy.dto.response.CategoryResponse;
 import com.game.gueSpy.entity.Category;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.repository.CategoryRepository;
@@ -47,11 +51,11 @@ public class CategoryService {
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
 
-    public ResponseEntity<?> deleteCategory(CategoryRequest request){
-        log.info("User has started delete category flow with this request body : {}", request);
+    public ResponseEntity<?> deleteCategory(String categoryName){
+        log.info("User has started delete category flow with this category name : {}", categoryName);
 
-        if(request.getCategoryName() != null && !request.getCategoryName().isEmpty()){
-            var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName());
+        if(categoryName != null && !categoryName.isEmpty()){
+            var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(categoryName);
 
             if(categoryOptional.isEmpty()){
                 GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
@@ -65,7 +69,6 @@ public class CategoryService {
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_DELETED);
             return GenericUtility.buildResponse(ResponseEnum.CATEGORY_DELETED.getStatus(), response);
         }
-        log.info("request body : {}", request);
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
@@ -95,7 +98,6 @@ public class CategoryService {
             }
 
             if(request.getIsEnabled() != null){
-                log.info("{} - {}", request.getIsEnabled(), request);
                 category.setIsEnabled(request.getIsEnabled());
             }
 
@@ -108,5 +110,27 @@ public class CategoryService {
         log.info("request body : {}", request);
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
+    }
+
+    public ResponseEntity<?> getAllCategory(){
+        log.info("User has started get all category flow");
+        List<Category> categories = categoryRepository.findAll();
+        
+        if(categories.isEmpty()){
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_CATEGORY_FOUND);
+            return GenericUtility.buildResponse(ResponseEnum.NO_CATEGORY_FOUND.getStatus(), response);
+        }
+        log.info("Categories retrieved successfully");
+        
+        CategoryResponse response = buildCategoryResponse(ResponseEnum.CATEGORY_RETRIEVED, categories);
+        return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED.getStatus(), response);
+    }
+    
+     private CategoryResponse buildCategoryResponse(ResponseEnum responseEnum, List<Category> categories) {
+        return CategoryResponse.builder()
+                .status(responseEnum.getStatus())
+                .message(responseEnum.getMessage())
+                .categories(categories)
+                .build();
     }
 }   
