@@ -8,7 +8,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.game.gueSpy.dto.AuthResponse;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
 import com.game.gueSpy.dto.response.CategoryResponse;
