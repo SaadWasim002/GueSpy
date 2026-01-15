@@ -11,6 +11,7 @@ import com.game.gueSpy.dto.AuthRequest;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.AuthService;
+import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,12 +34,8 @@ public class AuthController {
             return authService.userRegister(request);
         } catch (Exception e) {
             log.error("Registration failed", e);
-            return ResponseEntity.status(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus())
-                .body(GenericResponse.builder()
-                    .status(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus())
-                    .message(ResponseEnum.INTERNAL_SERVER_ERROR.getMessage())
-                    .build()
-                );
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
         }
     }
 
@@ -53,12 +50,8 @@ public class AuthController {
             return authService.userLogin(request);
         } catch (Exception e) {
             log.error("Login failed", e);
-            return ResponseEntity.status(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus())
-                .body(GenericResponse.builder()
-                    .status(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus())
-                    .message(ResponseEnum.INTERNAL_SERVER_ERROR.getMessage())
-                    .build()
-                );
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
         }
     }
 }

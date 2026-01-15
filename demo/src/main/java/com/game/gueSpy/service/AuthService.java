@@ -10,6 +10,7 @@ import com.game.gueSpy.dto.AuthResponse;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.entity.User;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.enums.Role;
 import com.game.gueSpy.repository.UserRepository;
 import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
@@ -34,7 +35,7 @@ public class AuthService {
         !request.getUsername().isEmpty() && !request.getEmail().isEmpty() && !request.getPassword().isEmpty()){
 
             if(userRepository.findByEmail(request.getEmail()).isPresent()){
-                GenericResponse response = buildGenericResponse(ResponseEnum.USER_ALREADY_EXIST);
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_ALREADY_EXIST);
                 return GenericUtility.buildResponse(ResponseEnum.USER_ALREADY_EXIST.getStatus(), response);
             }
 
@@ -42,16 +43,17 @@ public class AuthService {
                     .username(request.getUsername())
                     .email(request.getEmail())
                     .password(passwordEncoder.encode(request.getPassword()))
+                    .role(Role.USER)
                     .build();
             
-            String token = jwtUtil.generateToken(request.getUsername());
+            String token = jwtUtil.generateToken(user);
 
             userRepository.save(user);
             AuthResponse response = buildAuthResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, token);
             return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS.getStatus(), response);
         }
         log.info("request body : {}", request);
-        GenericResponse response = buildGenericResponse(ResponseEnum.VALUES_MISSING);
+        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
 
@@ -67,22 +69,22 @@ public class AuthService {
                 String password = foundUser.getPassword();
 
                 if(passwordEncoder.matches(request.getPassword(), password)){
-                    String token = jwtUtil.generateToken(foundUser.getUsername());
+                    String token = jwtUtil.generateToken(foundUser);
                     AuthResponse response = buildAuthResponse(ResponseEnum.LOGIN_SUCCESS, token);
                     return GenericUtility.buildResponse(ResponseEnum.LOGIN_SUCCESS.getStatus(), response);
                 }
                 else{
-                    GenericResponse response = buildGenericResponse(ResponseEnum.LOGIN_FAILURE);
+                    GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.LOGIN_FAILURE);
                     return GenericUtility.buildResponse(ResponseEnum.LOGIN_FAILURE.getStatus(), response);
                 }
             }
             else{
-                GenericResponse response = buildGenericResponse(ResponseEnum.USER_NOT_EXISTS);
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS);
                     return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS.getStatus(), response);
             }
         }
         log.info("request body : {}", request);
-        GenericResponse response = buildGenericResponse(ResponseEnum.VALUES_MISSING);
+        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
 
@@ -91,13 +93,6 @@ public class AuthService {
                 .status(responseEnum.getStatus())
                 .message(responseEnum.getMessage())
                 .token(token)
-                .build();
-    }
-
-    private GenericResponse buildGenericResponse(ResponseEnum responseEnum) {
-        return GenericResponse.builder()
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
                 .build();
     }
 }

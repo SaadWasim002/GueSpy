@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import com.game.gueSpy.constant.MessageConstants;
 
 public enum ResponseEnum {
-    
+
     //registration
     USER_REGISTRATION_SUCCESS(MessageConstants.userRegistrationSuccess, HttpStatus.CREATED),
     USER_REGISTRATION_FAILURE(MessageConstants.userRegistrationFailure, HttpStatus.BAD_REQUEST),
@@ -18,8 +18,9 @@ public enum ResponseEnum {
 
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),
-    UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED);
-
+    UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED),
+    TESTING(MessageConstants.testing, HttpStatus.OK);
+        
     private String message;
     private HttpStatus status;
 
