@@ -11,6 +11,13 @@ public class MessageConstants {
     public static final String loginFailure = "Incorrect Password";
     public static final String userNotExists = "No user exists with this email";
 
+    //CATEGORY
+    public static final String categoryCreationSuccess = "Category created successfully";
+    public static final String categoryAlreadyExist = "Category already exist with this name";
+    public static final String categoryDeleted = "Category deleted successfully";
+    public static final String categoryNotExists = "Category does not exists with this name";
+
+
     public static final String valueMissing = "Some of the field is missing";
     public static final String unauthorized = "Unauthorized access";
     public static final String internalServerError = "Internal Server Error";

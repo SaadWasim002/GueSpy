@@ -27,9 +27,7 @@ public class SecurityConfig {
         log.info("Inside Security Filter");
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> 
