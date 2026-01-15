@@ -15,6 +15,7 @@ public class MessageConstants {
     public static final String categoryCreationSuccess = "Category created successfully";
     public static final String categoryAlreadyExist = "Category already exist with this name";
     public static final String categoryDeleted = "Category deleted successfully";
+    public static final String categoryUpdated = "Category updated successfully";
     public static final String categoryNotExists = "Category does not exists with this name";
 
 

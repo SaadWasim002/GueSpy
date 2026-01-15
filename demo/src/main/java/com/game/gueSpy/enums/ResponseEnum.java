@@ -21,6 +21,7 @@ public enum ResponseEnum {
     CATEGORY_ALREADY_EXISTS(MessageConstants.categoryAlreadyExist, HttpStatus.CONFLICT),
     CATEGORY_DELETED(MessageConstants.categoryDeleted, HttpStatus.OK),
     CATEGORY_NOT_EXISTS(MessageConstants.categoryNotExists, HttpStatus.NOT_FOUND),
+    CATEGORY_UPDATED(MessageConstants.categoryUpdated, HttpStatus.OK),
 
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),

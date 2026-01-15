@@ -7,6 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -30,7 +31,10 @@ public class Category {
     private Long id;
 
     private String categoryName;
-    private boolean isEnabled;
+    
+    @Column(columnDefinition = "BOOLEAN DEFAULT true")
+    private Boolean isEnabled;
+
     private int totalWords;
     private String createdBy;
 

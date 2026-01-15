@@ -14,4 +14,10 @@ import lombok.NoArgsConstructor;
 public class CategoryRequest {
     @JsonProperty("category_name")
     private String categoryName;
+
+    @JsonProperty("updated_name")
+    private String updateName;
+
+    @JsonProperty("is_enabled")
+    private Boolean isEnabled;
 }

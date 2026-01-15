@@ -69,4 +69,44 @@ public class CategoryService {
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
+
+    public ResponseEntity<?> updateCategory(CategoryRequest request){
+        log.info("User has started udpate category flow with this request body : {}", request);
+
+        if(request.getCategoryName() != null && !request.getCategoryName().isEmpty()){
+            var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName());
+
+            if(categoryOptional.isEmpty()){
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS.getStatus(), response);
+            }
+
+            Category category = categoryOptional.get();
+
+            if(request.getUpdateName() != null && !request.getUpdateName().isEmpty()){
+                var existingCategory = categoryRepository.findByCategoryNameIgnoreCase(request.getUpdateName());
+    
+                if(existingCategory.isPresent() && !existingCategory.get().getId().equals(category.getId())){
+                    GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
+                    return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS.getStatus(), response);
+                }
+                
+                category.setCategoryName(request.getUpdateName());
+            }
+
+            if(request.getIsEnabled() != null){
+                log.info("{} - {}", request.getIsEnabled(), request);
+                category.setIsEnabled(request.getIsEnabled());
+            }
+
+            categoryRepository.save(category);
+
+            log.info("Category updated Successfully");
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_UPDATED);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_UPDATED.getStatus(), response);
+        }
+        log.info("request body : {}", request);
+        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
+    }
 }   
