@@ -16,9 +16,17 @@ public class MessageConstants {
     public static final String categoryAlreadyExist = "Category already exist with this name";
     public static final String categoryDeleted = "Category deleted successfully";
     public static final String categoryUpdated = "Category updated successfully";
-    public static final String categoryNotExists = "Category does not exists with this name";
+    public static final String categoryNotExists = "Category does not exists";
     public static final String noCategoryFound = "No category found";
     public static final String categoriesRetrieved = "Categories retrieved successfully";
+
+    //Word
+    public static final String wordAdded = "Word added successfully";
+    public static final String wordDeleted = "Word deleted successfully";
+    public static final String wordAlreadyExist = "Word already exist with this name";
+    public static final String wordIdNotExists = "Word does not exists with the word id";
+    public static final String noWordFound = "No Word found for this category id";
+    public static final String wordRetrieved = "Words retrieved successfully";
 
     public static final String valueMissing = "Some of the field is missing";
     public static final String unauthorized = "Unauthorized access";
