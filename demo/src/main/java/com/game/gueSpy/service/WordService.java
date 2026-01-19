@@ -39,8 +39,8 @@ public class WordService {
         if(request.getCategoryId() != null && request.getWordName() != null && !request.getWordName().isEmpty()){
             var categoryOptional = categoryRepository.findById(request.getCategoryId());
             if(categoryOptional.isPresent()){
-
-                if(wordRepository.findByWordNameIgnoreCase(request.getWordName()).isPresent()){
+                Category category = categoryOptional.get();
+                if(wordRepository.findByWordNameIgnoreCase(request.getWordName(), category.getId()).isPresent()){
                     GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.WORD_ALREADY_EXISTS);
                     return GenericUtility.buildResponse(ResponseEnum.WORD_ALREADY_EXISTS.getStatus(), response);
                 }
@@ -53,7 +53,6 @@ public class WordService {
                         .createdBy(username)
                         .build();
                 wordRepository.save(word);
-                Category category = categoryOptional.get();
                 Integer currentTotal = category.getTotalWords();
                 category.setTotalWords(currentTotal != null ? currentTotal + 1 : 1);
                 categoryRepository.save(category);

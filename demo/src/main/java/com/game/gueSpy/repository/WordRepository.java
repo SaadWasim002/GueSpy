@@ -16,8 +16,8 @@ public interface WordRepository extends JpaRepository<Word, Long>{
     @Query("SELECT w FROM Word w WHERE w.categoryId = :categoryId")
     List<Word> findWordByCategoryId(@Param("categoryId") Long categoryId);
 
-    @Query("SELECT w FROM Word w WHERE LOWER(w.wordName) = LOWER(:wordName)")
-    Optional<Word> findByWordNameIgnoreCase(@Param("wordName") String wordName);
+    @Query("SELECT w FROM Word w WHERE LOWER(w.wordName) = LOWER(:wordName) and w.categoryId = :categoryId")
+    Optional<Word> findByWordNameIgnoreCase(@Param("wordName") String wordName, @Param("categoryId") Long categoryId);
 
     @Modifying
     @Query("DELETE FROM Word w WHERE w.categoryId = :categoryId")
