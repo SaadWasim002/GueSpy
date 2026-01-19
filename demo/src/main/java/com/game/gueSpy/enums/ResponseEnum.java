@@ -27,6 +27,11 @@ public enum ResponseEnum {
 
     //Word
     WORD_ADDED(MessageConstants.wordAdded, HttpStatus.CREATED),
+    WORD_DELETED(MessageConstants.wordDeleted, HttpStatus.OK),
+    WORD_ID_NOT_EXISTS(MessageConstants.wordIdNotExists, HttpStatus.NOT_FOUND),
+    WORD_RETRIEVED(MessageConstants.wordRetrieved, HttpStatus.OK),
+    NO_WORD_FOUND(MessageConstants.noWordFound, HttpStatus.NOT_FOUND),
+    WORD_ALREADY_EXISTS(MessageConstants.wordAlreadyExist, HttpStatus.CONFLICT),
 
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),

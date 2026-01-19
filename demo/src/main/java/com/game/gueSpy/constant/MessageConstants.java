@@ -22,6 +22,12 @@ public class MessageConstants {
 
     //Word
     public static final String wordAdded = "Word added successfully";
+    public static final String wordDeleted = "Word deleted successfully";
+    public static final String wordAlreadyExist = "Word already exist with this name";
+    public static final String wordIdNotExists = "Word does not exists with the word id";
+    public static final String noWordFound = "No Word found for this category id";
+    public static final String wordRetrieved = "Words retrieved successfully";
+
     public static final String valueMissing = "Some of the field is missing";
     public static final String unauthorized = "Unauthorized access";
     public static final String internalServerError = "Internal Server Error";

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
@@ -14,6 +15,7 @@ import com.game.gueSpy.dto.response.CategoryResponse;
 import com.game.gueSpy.entity.Category;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.repository.CategoryRepository;
+import com.game.gueSpy.repository.WordRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 public class CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private WordRepository wordRepository;
 
     public ResponseEntity<?> createNewCategory(CategoryRequest request){
         log.info("User has started category creation flow with this request body : {}", request);
@@ -50,6 +55,7 @@ public class CategoryService {
         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
     }
 
+    @Transactional
     public ResponseEntity<?> deleteCategory(String categoryName){
         log.info("User has started delete category flow with this category name : {}", categoryName);
 
@@ -63,6 +69,8 @@ public class CategoryService {
 
             Category category = categoryOptional.get();
             categoryRepository.deleteById(category.getId());
+
+            wordRepository.deleteWordByCategoryId(category.getId());
 
             log.info("Category deleted Successfully");
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_DELETED);
@@ -125,7 +133,7 @@ public class CategoryService {
         return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED.getStatus(), response);
     }
     
-     private CategoryResponse buildCategoryResponse(ResponseEnum responseEnum, List<Category> categories) {
+    private CategoryResponse buildCategoryResponse(ResponseEnum responseEnum, List<Category> categories) {
         return CategoryResponse.builder()
                 .status(responseEnum.getStatus())
                 .message(responseEnum.getMessage())
