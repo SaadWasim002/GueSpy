@@ -35,7 +35,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Registration failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 
@@ -51,7 +51,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Login failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 }

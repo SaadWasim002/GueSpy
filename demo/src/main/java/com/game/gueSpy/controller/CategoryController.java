@@ -40,7 +40,7 @@ public class CategoryController {
         } catch (Exception e) {
             log.error("Category creation failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 
@@ -57,7 +57,7 @@ public class CategoryController {
         } catch (Exception e) {
             log.error("Category deletion failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 
@@ -74,7 +74,7 @@ public class CategoryController {
         } catch (Exception e) {
             log.error("Category update failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 
@@ -90,7 +90,7 @@ public class CategoryController {
         } catch (Exception e) {
             log.error("Failed to retrieve categories", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 }

@@ -36,7 +36,7 @@ public class AuthService {
 
             if(userRepository.findByEmail(request.getEmail()).isPresent()){
                 GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_ALREADY_EXIST);
-                return GenericUtility.buildResponse(ResponseEnum.USER_ALREADY_EXIST.getStatus(), response);
+                return GenericUtility.buildResponse(ResponseEnum.USER_ALREADY_EXIST, response);
             }
 
             User user = User.builder()
@@ -50,11 +50,11 @@ public class AuthService {
 
             userRepository.save(user);
             AuthResponse response = buildAuthResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, token);
-            return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS.getStatus(), response);
+            return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, response);
         }
         log.info("request body : {}", request);
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
     }
 
     public ResponseEntity<?> userLogin(AuthRequest request){
@@ -71,21 +71,21 @@ public class AuthService {
                 if(passwordEncoder.matches(request.getPassword(), password)){
                     String token = jwtUtil.generateToken(foundUser);
                     AuthResponse response = buildAuthResponse(ResponseEnum.LOGIN_SUCCESS, token);
-                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_SUCCESS.getStatus(), response);
+                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_SUCCESS, response);
                 }
                 else{
                     GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.LOGIN_FAILURE);
-                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_FAILURE.getStatus(), response);
+                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_FAILURE, response);
                 }
             }
             else{
                 GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS);
-                    return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS.getStatus(), response);
+                    return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, response);
             }
         }
         log.info("request body : {}", request);
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING.getStatus(), response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
     }
 
     private AuthResponse buildAuthResponse(ResponseEnum responseEnum, String token) {
