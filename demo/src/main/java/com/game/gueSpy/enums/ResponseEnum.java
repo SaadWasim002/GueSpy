@@ -33,11 +33,21 @@ public enum ResponseEnum {
     NO_WORD_FOUND(MessageConstants.noWordFound, HttpStatus.NOT_FOUND),
     WORD_ALREADY_EXISTS(MessageConstants.wordAlreadyExist, HttpStatus.CONFLICT),
 
+    //Config
+    CONFIG_CREATED(MessageConstants.configCreated, HttpStatus.CREATED),
+    CONFIG_REFRESHED(MessageConstants.configRefreshed, HttpStatus.OK),
+    CONFIG_ALREADY_EXISTS(MessageConstants.configAlreadyExists, HttpStatus.CONFLICT),
+    CONFIG_UPDATED(MessageConstants.configUpdated, HttpStatus.OK),
+    CONFIG_NOT_EXISTS(MessageConstants.configNotExists, HttpStatus.NOT_FOUND),
+    CONFIG_RETRIEVED(MessageConstants.configRetrieved, HttpStatus.OK),
+    NO_CONFIG_FOUND(MessageConstants.noConfigFound, HttpStatus.NOT_FOUND),
+
+
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED),
     TESTING(MessageConstants.testing, HttpStatus.OK);
-        
+    
     private String message;
     private HttpStatus status;
 

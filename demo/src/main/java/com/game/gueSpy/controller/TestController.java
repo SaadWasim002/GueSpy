@@ -19,6 +19,6 @@ public class TestController {
     )
     public ResponseEntity<?> testing(){
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.TESTING);
-        return GenericUtility.buildResponse(ResponseEnum.TESTING.getStatus(), response);
+        return GenericUtility.buildResponse(ResponseEnum.TESTING, response);
     }
 }

@@ -3,59 +3,55 @@ package com.game.gueSpy.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.GenericResponse;
-import com.game.gueSpy.dto.request.CategoryRequest;
+import com.game.gueSpy.dto.request.AppConfigRequest;
 import com.game.gueSpy.enums.ResponseEnum;
-import com.game.gueSpy.service.CategoryService;
+import com.game.gueSpy.service.ConfigService;
 import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/category")
-public class CategoryController {
+@RequestMapping("/config")
+public class ConfigController {
+
     @Autowired
-    private CategoryService categoryService;
+    private ConfigService configService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
         path = "/create",
-        name = "create category",
+        name = "Create Config",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> create(@RequestBody CategoryRequest request){
+    public ResponseEntity<?> createConfig(@RequestBody AppConfigRequest request) {
         try {
-            return categoryService.createNewCategory(request);
+            return configService.createNewConfig(request);
         } catch (Exception e) {
-            log.error("Category creation failed", e);
+            log.error("Error creating config", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping(
-        path = "/delete",
-        name = "delete category",
-        consumes = "application/json",
-        produces = "application/json"
-    )
-    public ResponseEntity<?> delete(@RequestParam String categoryName){
+    @GetMapping(path = "/refresh", name = "Refresh Config Cache")
+    public ResponseEntity<?> refreshConfig() {
         try {
-            return categoryService.deleteCategory(categoryName);
+            configService.refresh();
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CONFIG_REFRESHED);
+            return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED, response);
         } catch (Exception e) {
-            log.error("Category deletion failed", e);
+            log.error("Error refreshing config", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
@@ -64,31 +60,27 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(
         path = "/update",
-        name = "update category",
+        name = "Update Config",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> update(@RequestBody CategoryRequest request){
+    public ResponseEntity<?> updateConfig(@RequestBody AppConfigRequest request) {
         try {
-            return categoryService.updateCategory(request);
+            return configService.updateConfig(request);
         } catch (Exception e) {
-            log.error("Category update failed", e);
+            log.error("Error updating config", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
     }
 
-    @GetMapping(
-        path = "/get",
-        name = "Get all Categories",
-        consumes = "application/json",
-        produces = "application/json"
-    )
-    public ResponseEntity<?> get(){
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(path = "/get", name = "Get All Configs")
+    public ResponseEntity<?> getAllConfigs() {
         try {
-            return categoryService.getAllCategory();
+            return configService.getAllConfigs();
         } catch (Exception e) {
-            log.error("Failed to retrieve categories", e);
+            log.error("Error getting configs", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
