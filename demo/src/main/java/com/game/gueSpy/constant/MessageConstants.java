@@ -33,4 +33,12 @@ public class MessageConstants {
     public static final String internalServerError = "Internal Server Error";
     public static final String testing = "Testing";
 
+    //CONFIG
+    public static final String configCreated = "Configuration created successfully";
+    public static final String configRefreshed = "Configuration cache refreshed successfully";
+    public static final String configAlreadyExists = "Configuration with this key already exists";
+    public static final String configUpdated = "Configuration updated successfully";
+    public static final String configNotExists = "Configuration does not exist";
+    public static final String configRetrieved = "Configuration retrieved successfully";
+    public static final String noConfigFound = "No configuration found";
 }

@@ -1,6 +1,5 @@
 package com.game.gueSpy.utility;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.game.gueSpy.dto.GenericResponse;
