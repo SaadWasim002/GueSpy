@@ -1,5 +1,6 @@
 package com.game.gueSpy.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,7 @@ import com.game.gueSpy.entity.Group;
 public interface GroupRepository extends JpaRepository<Group, Long>{
     @Query("SELECT g FROM Group g WHERE LOWER(g.groupName) = LOWER(:groupName)")
     Optional<Group> findByGroupNameIgnoreCase(@Param("groupName") String groupName);
+
+    @Query("SELECT g FROM Group g WHERE g.userId = :userId")
+    List<Group> findAllGroupForUser(@Param("userId") Long userId);
 }
