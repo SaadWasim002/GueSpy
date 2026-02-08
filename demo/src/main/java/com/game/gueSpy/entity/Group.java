@@ -20,15 +20,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "groups")
+@Table(name = "`groups`")
 public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String userId;
-    private String GroupName;
-    
+    private Long userId;
+    private String groupName;
+
     @Convert(converter = PlayerConverter.class)
     @Column(columnDefinition = "TEXT")
     private Player players; 
