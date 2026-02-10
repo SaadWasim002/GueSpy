@@ -9,8 +9,12 @@ import com.game.gueSpy.dto.AuthRequest;
 import com.game.gueSpy.dto.AuthResponse;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.entity.User;
+import com.game.gueSpy.entity.UserGameDetail;
+import com.game.gueSpy.enums.GameStatus;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.enums.Role;
+import com.game.gueSpy.model.GameData;
+import com.game.gueSpy.repository.UserGameDetailsRepository;
 import com.game.gueSpy.repository.UserRepository;
 import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
@@ -28,6 +32,9 @@ public class AuthService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserGameDetailsRepository userGameDetailsRepository;
     
     public ResponseEntity<?> userRegister(AuthRequest request){
         log.info("User has started register flow with this request body : {}", request);
@@ -47,8 +54,9 @@ public class AuthService {
                     .build();
             
             String token = jwtUtil.generateToken(user);
-
+            
             userRepository.save(user);
+            createUserGameDetailsEntry(user.getId());
             AuthResponse response = buildAuthResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, token);
             return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, response);
         }
@@ -94,5 +102,24 @@ public class AuthService {
                 .message(responseEnum.getMessage())
                 .token(token)
                 .build();
+    }
+
+    private void createUserGameDetailsEntry(Long userId){
+
+        GameData gameData = GameData.builder()
+                    .selectedCategoryId(null)
+                    .selectedGroupId(null)
+                    .selectedWordId(null)
+                    .currentSpy(null)
+                    .numberOfSpy(null)
+                    .build();
+        
+        UserGameDetail userGameDetail = UserGameDetail.builder()
+                    .userId(userId)
+                    .gameData(gameData)
+                    .usedWords(null)
+                    .gameStatus(GameStatus.NOT_STARTED)
+                    .build();
+        userGameDetailsRepository.save(userGameDetail);
     }
 }

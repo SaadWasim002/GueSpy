@@ -8,12 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
+import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.CategoryService;
 import com.game.gueSpy.utility.GenericUtility;
@@ -89,6 +91,22 @@ public class CategoryController {
             return categoryService.getAllCategory();
         } catch (Exception e) {
             log.error("Failed to retrieve categories", e);
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+        }
+    }
+
+     @PostMapping(
+        path = "/select",
+        name = "select category",
+        consumes = "application/json",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> select(@RequestHeader(value = "x-User-Id", required = true) Long userId, @RequestBody SelectionRequest request){
+        try {
+            return categoryService.selectCategory(userId, request.getId());
+        } catch (Exception e) {
+            log.error("Category creation failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
