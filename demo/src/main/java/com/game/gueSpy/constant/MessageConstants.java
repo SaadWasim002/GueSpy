@@ -19,6 +19,7 @@ public class MessageConstants {
     public static final String categoryNotExists = "Category does not exists";
     public static final String noCategoryFound = "No category found";
     public static final String categoriesRetrieved = "Categories retrieved successfully";
+    public static final String categorySelected = "Category selected successfully";
 
     //Word
     public static final String wordAdded = "Word added successfully";
@@ -41,4 +42,14 @@ public class MessageConstants {
     public static final String configNotExists = "Configuration does not exist";
     public static final String configRetrieved = "Configuration retrieved successfully";
     public static final String noConfigFound = "No configuration found";
+
+    //GROUP
+    public static final String groupCreationSuccess = "Group created successfully";
+    public static final String groupAlreadyExist = "Group already exists";
+    public static final String groupRetrieved = "Group retrieved successfully";
+    public static final String noGroupFound = "No group found";
+
+    //USER_GAME_DETAILS
+    public static final String invalidGameStatus = "Invalid game status";
+    public static final String userGameDetailNotExists = "User game details does not exists for the user";
 }

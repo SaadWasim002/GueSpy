@@ -29,8 +29,8 @@ public class GroupService {
 
         if(request.getGroupName() != null && !request.getGroupName().isEmpty() && request.getPlayers() != null && !request.getPlayers().isEmpty()){
             if(groupRepository.findByGroupNameIgnoreCase(request.getGroupName()).isPresent()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS, response);
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GROUP_ALREADY_EXISTS);
+                return GenericUtility.buildResponse(ResponseEnum.GROUP_ALREADY_EXISTS, response);
             }
             Player players = Player.builder()
                     .playerNames(request.getPlayers())
@@ -43,8 +43,8 @@ public class GroupService {
                     .build();
             groupRepository.save(group);           
             log.info("Group created Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_CREATE_SUCCESS);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_CREATE_SUCCESS, response);
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GROUP_CREATED);
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_CREATED, response);
         }
         log.info("request body : {}", request);
         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
@@ -56,23 +56,23 @@ public class GroupService {
         if(groupId != null){
             Group group = groupRepository.findById(groupId).get();
             if(group == null){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_CATEGORY_FOUND);
-                return GenericUtility.buildResponse(ResponseEnum.NO_CATEGORY_FOUND, response);
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_GROUP_FOUND);
+                return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND, response);
             }
-            DisplayGroupResponse response = buildDisplayGroupResponse(ResponseEnum.CATEGORY_RETRIEVED, group);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED, response);   
+            DisplayGroupResponse response = buildDisplayGroupResponse(ResponseEnum.GROUP_RETRIEVED, group);
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_RETRIEVED, response);   
         }
         else{
             List<Group> groups = groupRepository.findAllGroupForUser(userId);
         
             if(groups.isEmpty()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_CATEGORY_FOUND);
-                return GenericUtility.buildResponse(ResponseEnum.NO_CATEGORY_FOUND, response);
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_GROUP_FOUND);
+                return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND, response);
             }
             log.info("Group retrieved successfully");
             
-            DisplayAllGroupResponse response = buildDisplayAllGroupResponse(ResponseEnum.CATEGORY_RETRIEVED, groups);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED, response);
+            DisplayAllGroupResponse response = buildDisplayAllGroupResponse(ResponseEnum.GROUP_RETRIEVED, groups);
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_RETRIEVED, response);
         }
        
     }

@@ -24,6 +24,7 @@ public enum ResponseEnum {
     CATEGORY_UPDATED(MessageConstants.categoryUpdated, HttpStatus.OK),
     CATEGORY_RETRIEVED(MessageConstants.categoriesRetrieved, HttpStatus.OK),
     NO_CATEGORY_FOUND(MessageConstants.noCategoryFound, HttpStatus.NOT_FOUND),
+    CATEGORY_SELECTED(MessageConstants.categorySelected, HttpStatus.OK),
 
     //Word
     WORD_ADDED(MessageConstants.wordAdded, HttpStatus.CREATED),
@@ -32,6 +33,12 @@ public enum ResponseEnum {
     WORD_RETRIEVED(MessageConstants.wordRetrieved, HttpStatus.OK),
     NO_WORD_FOUND(MessageConstants.noWordFound, HttpStatus.NOT_FOUND),
     WORD_ALREADY_EXISTS(MessageConstants.wordAlreadyExist, HttpStatus.CONFLICT),
+
+    //Group
+    GROUP_CREATED(MessageConstants.groupCreationSuccess, HttpStatus.CREATED),
+    GROUP_ALREADY_EXISTS(MessageConstants.groupAlreadyExist, HttpStatus.CONFLICT),
+    GROUP_RETRIEVED(MessageConstants.groupRetrieved, HttpStatus.OK),
+    NO_GROUP_FOUND(MessageConstants.noGroupFound, HttpStatus.NOT_FOUND),
 
     //Config
     CONFIG_CREATED(MessageConstants.configCreated, HttpStatus.CREATED),
@@ -42,6 +49,9 @@ public enum ResponseEnum {
     CONFIG_RETRIEVED(MessageConstants.configRetrieved, HttpStatus.OK),
     NO_CONFIG_FOUND(MessageConstants.noConfigFound, HttpStatus.NOT_FOUND),
 
+    //USER_GAME_DETAILS
+    INVALID_GAME_STATUS(MessageConstants.invalidGameStatus, HttpStatus.BAD_REQUEST),
+    USER_GAME_DETAILS_NOT_EXISTS(MessageConstants.userGameDetailNotExists, HttpStatus.NOT_FOUND),
 
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),

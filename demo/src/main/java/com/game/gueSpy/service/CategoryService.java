@@ -13,8 +13,12 @@ import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
 import com.game.gueSpy.dto.response.CategoryResponse;
 import com.game.gueSpy.entity.Category;
+import com.game.gueSpy.entity.UserGameDetail;
+import com.game.gueSpy.enums.GameStatus;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.model.GameData;
 import com.game.gueSpy.repository.CategoryRepository;
+import com.game.gueSpy.repository.UserGameDetailsRepository;
 import com.game.gueSpy.repository.WordRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
@@ -28,6 +32,9 @@ public class CategoryService {
 
     @Autowired
     private WordRepository wordRepository;
+
+    @Autowired
+    private UserGameDetailsRepository userGameDetailsRepository;
 
     public ResponseEntity<?> createNewCategory(CategoryRequest request){
         log.info("User has started category creation flow with this request body : {}", request);
@@ -133,11 +140,43 @@ public class CategoryService {
         return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED, response);
     }
     
+    @Transactional
+    public ResponseEntity<?> selectCategory(Long userId, Long categoryId){
+        log.info("User has started select category flow");
+        if(categoryId == null){
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        }
+
+        var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+        if(userGameDetailsOptional.isPresent()){
+            UserGameDetail userGameDetail = userGameDetailsOptional.get();
+            GameStatus gameStatus = userGameDetail.getGameStatus();
+            if(gameStatus == GameStatus.NOT_STARTED || gameStatus == GameStatus.CATEGORY_SELECTION){
+                updateUserGameDetails(userGameDetail, categoryId);
+                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_SELECTED);
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_SELECTED, response);// category selected
+            }
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INVALID_GAME_STATUS);
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS, response);// Game status not valid to update
+        }
+        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
+        return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);// User game details doesnt exist for the user
+
+    }
+
     private CategoryResponse buildCategoryResponse(ResponseEnum responseEnum, List<Category> categories) {
         return CategoryResponse.builder()
                 .status(responseEnum.getStatus())
                 .message(responseEnum.getMessage())
                 .categories(categories)
                 .build();
+    }
+
+    private void updateUserGameDetails(UserGameDetail userGameDetail, Long categoryId){
+        GameData gameData = userGameDetail.getGameData();
+        gameData.setSelectedCategoryId(categoryId);
+        userGameDetail.setGameData(gameData);
+        userGameDetail.setGameStatus(GameStatus.GROUP_SELECTION);
     }
 }   
