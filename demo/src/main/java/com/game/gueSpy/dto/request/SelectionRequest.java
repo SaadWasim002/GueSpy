@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CategorySelectionRequest {
-    @JsonProperty("category_id")
-    private Long categoryId;
+public class SelectionRequest {
+    @JsonProperty("id")
+    private Long id;
 }

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
-import com.game.gueSpy.dto.request.CategorySelectionRequest;
+import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.CategoryService;
 import com.game.gueSpy.utility.GenericUtility;
@@ -102,9 +102,9 @@ public class CategoryController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@RequestHeader(value = "x-User-Id", required = true) Long userId, @RequestBody CategorySelectionRequest request){
+    public ResponseEntity<?> select(@RequestHeader(value = "x-User-Id", required = true) Long userId, @RequestBody SelectionRequest request){
         try {
-            return categoryService.selectCategory(userId, request.getCategoryId());
+            return categoryService.selectCategory(userId, request.getId());
         } catch (Exception e) {
             log.error("Category creation failed", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);

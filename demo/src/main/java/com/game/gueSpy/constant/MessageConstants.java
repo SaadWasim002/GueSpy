@@ -48,6 +48,7 @@ public class MessageConstants {
     public static final String groupAlreadyExist = "Group already exists";
     public static final String groupRetrieved = "Group retrieved successfully";
     public static final String noGroupFound = "No group found";
+    public static final String groupSelected = "Group selected successfully";
 
     //USER_GAME_DETAILS
     public static final String invalidGameStatus = "Invalid game status";

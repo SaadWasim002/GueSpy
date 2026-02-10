@@ -39,6 +39,7 @@ public enum ResponseEnum {
     GROUP_ALREADY_EXISTS(MessageConstants.groupAlreadyExist, HttpStatus.CONFLICT),
     GROUP_RETRIEVED(MessageConstants.groupRetrieved, HttpStatus.OK),
     NO_GROUP_FOUND(MessageConstants.noGroupFound, HttpStatus.NOT_FOUND),
+    GROUP_SELECTED(MessageConstants.groupSelected, HttpStatus.OK),
 
     //Config
     CONFIG_CREATED(MessageConstants.configCreated, HttpStatus.CREATED),
