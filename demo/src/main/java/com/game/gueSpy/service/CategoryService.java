@@ -148,6 +148,11 @@ public class CategoryService {
             return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
         }
 
+        if(categoryRepository.findById(categoryId).isEmpty()){
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS, response);
+        }
+
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
         if(userGameDetailsOptional.isPresent()){
             UserGameDetail userGameDetail = userGameDetailsOptional.get();
