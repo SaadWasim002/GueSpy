@@ -114,6 +114,8 @@ public class AuthService {
                     .selectedWordId(null)
                     .currentSpy(null)
                     .numberOfSpy(null)
+                    .currentPlayerNumber(null)
+                    .currentScreenType(null)
                     .build();
         
         UserGameDetail userGameDetail = UserGameDetail.builder()

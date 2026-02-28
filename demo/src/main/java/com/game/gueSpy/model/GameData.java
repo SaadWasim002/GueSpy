@@ -2,6 +2,8 @@ package com.game.gueSpy.model;
 
 import java.util.List;
 
+import com.game.gueSpy.enums.ScreenType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +21,6 @@ public class GameData {
     private Long selectedGroupId;
     private Integer numberOfSpy;
     private List<Integer> currentSpy;
+    private Integer currentPlayerNumber;
+    private ScreenType currentScreenType;
 }

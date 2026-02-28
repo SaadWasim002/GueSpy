@@ -2,6 +2,7 @@ package com.game.gueSpy.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -40,7 +41,7 @@ public class GameEngineController {
         }
     }
 
-     @PostMapping(
+    @PostMapping(
         path = "/reset",
         name = "reset game",
         consumes = "application/json",
@@ -51,6 +52,21 @@ public class GameEngineController {
             return gameEngineService.resetGame(userId);
         } catch (Exception e) {
             log.error("Failed to reset game{}", e);
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+        }
+    }
+
+    @GetMapping(
+        path = "/role-reveal",
+        name = "role reveal",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> reveal(@RequestHeader(value = "X-User-Id", required = true) Long userId){
+        try {
+            return gameEngineService.roleReveal(userId);
+        } catch (Exception e) {
+            log.error("Failed to reveal role{}", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }

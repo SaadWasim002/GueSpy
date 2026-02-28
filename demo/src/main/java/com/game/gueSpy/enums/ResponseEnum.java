@@ -57,6 +57,7 @@ public enum ResponseEnum {
     //GAME_ENGINE
     GAME_ENGINE_SUCCESS(MessageConstants.gameEngineSuccess, HttpStatus.OK),
     GAME_RESET_SUCCESS(MessageConstants.gameResetSuccess, HttpStatus.OK),
+    ROLE_REVEAL_SCREEN_SUCCESS(MessageConstants.roleRevealScreenSuccess, HttpStatus.OK),
 
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),

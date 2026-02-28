@@ -37,6 +37,7 @@ public class MessageConstants {
     //GAME_ENGINE
     public static final String gameEngineSuccess = "Game Engine started successfully";
     public static final String gameResetSuccess = "Game reset successfully";
+    public static final String roleRevealScreenSuccess = "Role reveal screen loaded successfully";
 
     //CONFIG
     public static final String configCreated = "Configuration created successfully";
