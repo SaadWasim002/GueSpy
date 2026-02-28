@@ -1,5 +1,7 @@
 package com.game.gueSpy.service;
 
+import java.util.ArrayList;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -112,12 +114,14 @@ public class AuthService {
                     .selectedWordId(null)
                     .currentSpy(null)
                     .numberOfSpy(null)
+                    .currentPlayerNumber(null)
+                    .currentScreenType(null)
                     .build();
         
         UserGameDetail userGameDetail = UserGameDetail.builder()
                     .userId(userId)
                     .gameData(gameData)
-                    .usedWords(null)
+                    .usedWords(new ArrayList<>())
                     .gameStatus(GameStatus.NOT_STARTED)
                     .build();
         userGameDetailsRepository.save(userGameDetail);

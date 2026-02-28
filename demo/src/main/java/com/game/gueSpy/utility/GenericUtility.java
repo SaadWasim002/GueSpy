@@ -3,6 +3,7 @@ package com.game.gueSpy.utility;
 import org.springframework.http.ResponseEntity;
 
 import com.game.gueSpy.dto.GenericResponse;
+import com.game.gueSpy.enums.GameStatus;
 import com.game.gueSpy.enums.ResponseEnum;
 
 public class GenericUtility {
@@ -17,5 +18,9 @@ public class GenericUtility {
                 .status(responseEnum.getStatus())
                 .message(responseEnum.getMessage())
                 .build();
+    }
+
+    public static boolean isValidGameStatus(GameStatus currentGameStatus, GameStatus expectedGameStatus){
+        return currentGameStatus == expectedGameStatus;
     }
 }
