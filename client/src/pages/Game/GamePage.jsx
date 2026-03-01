@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CategorySelectionScreen from './CategorySelectionScreen';
 import InitialGameScreen from './InitialGameScreen';
+import GameOptionSelectionScreen from './GameOptionSelectionScreen';
 import GroupSelectionScreen from './GroupSelectionScreen';
 
 const GamePage = () => {
@@ -32,7 +33,12 @@ const GamePage = () => {
     return <GroupSelectionScreen />;
   }
 
+  if (gameStatus === 'GAME_OPTION_SELECTION') {
+    return <GameOptionSelectionScreen />;
+  }
+
   // For any other existing game state, show the initial screen to continue or reset.
+  // This now correctly handles 'NOT_STARTED' as well.
   if (gameStatus) {
     return <InitialGameScreen />;
   }

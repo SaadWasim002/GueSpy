@@ -7,3 +7,7 @@ export const getScreen = () => {
 export const resetGame = () => {
   return api.post('/game-engine/reset');
 };
+
+export const setGameOptions = (options) => {
+  return api.post('/game-engine/game-option', options);
+};
