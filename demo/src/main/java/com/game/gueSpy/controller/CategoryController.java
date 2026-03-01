@@ -17,6 +17,7 @@ import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
 import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.service.CategoryService;
 import com.game.gueSpy.utility.GenericUtility;
 
@@ -28,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
@@ -83,7 +87,6 @@ public class CategoryController {
     @GetMapping(
         path = "/get",
         name = "Get all Categories",
-        consumes = "application/json",
         produces = "application/json"
     )
     public ResponseEntity<?> get(){
@@ -102,8 +105,9 @@ public class CategoryController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@RequestHeader(value = "x-User-Id", required = true) Long userId, @RequestBody SelectionRequest request){
+    public ResponseEntity<?> select(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody SelectionRequest request){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
             return categoryService.selectCategory(userId, request.getId());
         } catch (Exception e) {
             log.error("Category creation failed", e);

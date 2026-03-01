@@ -14,6 +14,7 @@ import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GroupRequest;
 import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.service.GroupService;
 import com.game.gueSpy.utility.GenericUtility;
 
@@ -27,14 +28,18 @@ public class GroupController {
     @Autowired
     private GroupService groupService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @PostMapping(
         path = "/create",
         name = "Create the group",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> create(@RequestHeader(value = "X-User-Id", required = true) Long userId, @RequestBody GroupRequest request){
+    public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody GroupRequest request){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
             return groupService.createNewGroup(request, userId);
         } catch (Exception e) {
             log.error("Failed to create new group {}", e);
@@ -49,8 +54,9 @@ public class GroupController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> get(@RequestHeader(value = "X-User-Id", required = true) Long userId, @RequestParam(required = false) Long groupId){
+    public ResponseEntity<?> get(@RequestHeader(value = "Authorization", required = true) String token, @RequestParam(required = false) Long groupId){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
             return groupService.getAllGroupForTheUser(userId, groupId);
         } catch (Exception e) {
             log.error("Failed to retrieve group {}", e);
@@ -65,8 +71,9 @@ public class GroupController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@RequestHeader(value = "X-User-Id", required = true) Long userId, @RequestBody SelectionRequest request){
+    public ResponseEntity<?> select(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody SelectionRequest request){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
             return groupService.selectGroup(userId, request.getId());
         } catch (Exception e) {
             log.error("Failed to select new group {}", e);
