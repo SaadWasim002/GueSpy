@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CategorySelectionScreen from './CategorySelectionScreen';
 import InitialGameScreen from './InitialGameScreen';
+import GroupSelectionScreen from './GroupSelectionScreen';
 
 const GamePage = () => {
   const { gameStatus, loading, error, fetchScreen } = useGame();
@@ -23,10 +24,12 @@ const GamePage = () => {
     return <div style={{ color: 'var(--error-color)', textAlign: 'center', marginTop: '5rem' }}>{error}</div>;
   }
 
-  // The user wants to see the category selection screen only when the status is exactly that.
-  // For a new game (NOT_STARTED), they first see the InitialGameScreen.
-  if (gameStatus === 'CATEGORY_SELECTION' || gameStatus == 'NOT_STARTED') {
+  if (gameStatus === 'CATEGORY_SELECTION' || gameStatus === 'NOT_STARTED') {
     return <CategorySelectionScreen />;
+  }
+
+  if (gameStatus === 'GROUP_SELECTION') {
+    return <GroupSelectionScreen />;
   }
 
   // For any other existing game state, show the initial screen to continue or reset.

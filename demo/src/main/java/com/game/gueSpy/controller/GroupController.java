@@ -34,7 +34,6 @@ public class GroupController {
     @PostMapping(
         path = "/create",
         name = "Create the group",
-        consumes = "application/json",
         produces = "application/json"
     )
     public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody GroupRequest request){
@@ -51,7 +50,6 @@ public class GroupController {
     @GetMapping(
         path = "/get",
         name = "Create the group",
-        consumes = "application/json",
         produces = "application/json"
     )
     public ResponseEntity<?> get(@RequestHeader(value = "Authorization", required = true) String token, @RequestParam(required = false) Long groupId){
@@ -68,7 +66,6 @@ public class GroupController {
     @PostMapping(
         path = "/select",
         name = "select the group",
-        consumes = "application/json",
         produces = "application/json"
     )
     public ResponseEntity<?> select(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody SelectionRequest request){

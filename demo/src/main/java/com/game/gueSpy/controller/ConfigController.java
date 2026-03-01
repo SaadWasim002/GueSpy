@@ -74,7 +74,6 @@ public class ConfigController {
         }
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/get", name = "Get All Configs")
     public ResponseEntity<?> getAllConfigs() {
         try {
