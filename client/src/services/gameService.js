@@ -11,3 +11,7 @@ export const resetGame = () => {
 export const setGameOptions = (options) => {
   return api.post('/game-engine/game-option', options);
 };
+
+export const revealRole = () => {
+  return api.get('/game-engine/role-reveal');
+};

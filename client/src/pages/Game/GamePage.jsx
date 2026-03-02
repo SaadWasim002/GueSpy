@@ -5,6 +5,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CategorySelectionScreen from './CategorySelectionScreen';
 import InitialGameScreen from './InitialGameScreen';
 import GameOptionSelectionScreen from './GameOptionSelectionScreen';
+import WordSpyRevealScreen from './WordSpyRevealScreen';
 import GroupSelectionScreen from './GroupSelectionScreen';
 
 const GamePage = () => {
@@ -25,6 +26,7 @@ const GamePage = () => {
     return <div style={{ color: 'var(--error-color)', textAlign: 'center', marginTop: '5rem' }}>{error}</div>;
   }
 
+  // Correcting the flow to ensure NOT_STARTED shows the InitialGameScreen.
   if (gameStatus === 'CATEGORY_SELECTION' || gameStatus === 'NOT_STARTED') {
     return <CategorySelectionScreen />;
   }
@@ -35,6 +37,10 @@ const GamePage = () => {
 
   if (gameStatus === 'GAME_OPTION_SELECTION') {
     return <GameOptionSelectionScreen />;
+  }
+
+  if (gameStatus === 'WORD_AND_SPY_REVEAL') {
+    return <WordSpyRevealScreen />;
   }
 
   // For any other existing game state, show the initial screen to continue or reset.
