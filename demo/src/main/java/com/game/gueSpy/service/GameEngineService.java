@@ -54,6 +54,9 @@ public class GameEngineService {
     @Autowired
     private ConfigService configService;
 
+    @Autowired
+    private GenericUtility genericUtility;
+
     public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
         log.info("User has started the game option engine with this request body : {}", request);
         if(request.getNumberOfSpy() == null){
@@ -202,11 +205,14 @@ public class GameEngineService {
         if(userGameDetail.getGameStatus().equals(GameStatus.DISCUSSION_TIME)){
             Long discussionStartTime = userGameDetail.getGameData().getDiscussionStartTime();
             long endTime = discussionStartTime + configService.getLong(ConfigName.discussionDuration) * 1000;
+            List<String> players = genericUtility.getPlayerNames(userGameDetail);
             data.setDiscussionStartTime(discussionStartTime);
+            data.setPlayers(players);
             if(System.currentTimeMillis() > endTime){
                 userGameDetail.setGameStatus(GameStatus.VOTING);
                 userGameDetailsRepository.save(userGameDetail);
                 data.setDiscussionStartTime(null);
+                data.setPlayers(null);
             }
         }
 

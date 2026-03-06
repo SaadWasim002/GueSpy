@@ -13,7 +13,7 @@ const DiscussionTimeScreen = () => {
 
     const discussionStartTime = screenData?.discussionStartTime;
     console.log("Discussion: " + discussionStartTime);
-    const players = group?.players?.playerNames || [];
+    const players = screenData?.players || [];
 
     // Local state for the component
     const [duration, setDuration] = useState(null);

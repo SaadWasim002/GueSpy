@@ -1,5 +1,7 @@
 package com.game.gueSpy.dto.response;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
@@ -14,4 +16,5 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DataResponse {
     private Long discussionStartTime;
+    private List<String> players;
 }
