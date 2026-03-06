@@ -6,7 +6,7 @@ import Button from '../../components/common/Button';
 import './InitialGameScreen.css';
 
 const InitialGameScreen = () => {
-  const { gameStatus, fetchScreen } = useGame();
+  const { gameStatus, fetchScreen, setHasInteracted } = useGame();
   const { logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,6 +18,7 @@ const InitialGameScreen = () => {
       await resetGame();
       // After resetting, fetch the new screen state, which should be CATEGORY_SELECTION
       await fetchScreen();
+      setHasInteracted(); // Proceed to the new game screen
     } catch (err) {
       console.error("Failed to start a new game:", err);
       setError('Could not start a new game. Please try again.');
@@ -27,9 +28,8 @@ const InitialGameScreen = () => {
   };
 
   const handleContinue = () => {
-    // The GamePage component will already render the correct screen based on gameStatus.
-    // This is a placeholder action. A more advanced implementation might navigate to a specific sub-route.
-    alert(`Continuing game with status: ${gameStatus}. The correct screen should be rendered if you close this alert.`);
+    // Signal that the user has interacted, allowing GamePage to render the correct game screen.
+    setHasInteracted();
   };
 
   const hasExistingGame = gameStatus !== 'NOT_STARTED';
