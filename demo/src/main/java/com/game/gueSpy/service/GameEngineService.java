@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.game.gueSpy.constant.UITexts;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GameOptionRequest;
+import com.game.gueSpy.dto.response.GameStatusResponse;
 import com.game.gueSpy.dto.response.PlayerDetails;
 import com.game.gueSpy.dto.response.RoleRevealResponse;
 import com.game.gueSpy.dto.response.ScreenData;
@@ -174,6 +175,29 @@ public class GameEngineService {
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR); // Or a more specific error like BAD_REQUEST
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
+    }
+
+    public ResponseEntity<?> getGameStatus(Long userId){
+        log.info("User has started the get game status");
+        if(userId == null){
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        }
+
+        var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+        if(userGameDetailsOptional.isEmpty()){
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
+            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
+        }
+
+        UserGameDetail userGameDetail = userGameDetailsOptional.get();
+
+        GameStatusResponse response = GameStatusResponse.builder()
+                .gameStatus(userGameDetail.getGameStatus())
+                .message(ResponseEnum.GAME_STATUS_SUCCESS.getMessage())
+                .status(ResponseEnum.GAME_STATUS_SUCCESS.getStatus())
+                .build();
+        return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, response);
     }
 
     private void setCurrentPlayerAndScreenType(UserGameDetail userGameDetail, GameData gameData){

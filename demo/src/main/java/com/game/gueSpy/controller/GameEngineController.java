@@ -13,6 +13,7 @@ import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GameOptionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.GameEngineService;
+import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +26,21 @@ public class GameEngineController {
     @Autowired
     private GameEngineService gameEngineService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @PostMapping(
         path = "/game-option",
         name = "select game option",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> gameOption(@RequestHeader(value = "X-User-Id", required = true) Long userId, @RequestBody GameOptionRequest request){
+    public ResponseEntity<?> gameOption(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody GameOptionRequest request){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
+            if (userId == null) {
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+            }
             return gameEngineService.gameOptionEngine(request, userId);
         } catch (Exception e) {
             log.error("Failed to select game options {}", e);
@@ -44,11 +52,14 @@ public class GameEngineController {
     @PostMapping(
         path = "/reset",
         name = "reset game",
-        consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> reset(@RequestHeader(value = "X-User-Id", required = true) Long userId){
+    public ResponseEntity<?> reset(@RequestHeader(value = "Authorization", required = true) String token){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
+            if (userId == null) {
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+            }
             return gameEngineService.resetGame(userId);
         } catch (Exception e) {
             log.error("Failed to reset game{}", e);
@@ -62,11 +73,34 @@ public class GameEngineController {
         name = "role reveal",
         produces = "application/json"
     )
-    public ResponseEntity<?> reveal(@RequestHeader(value = "X-User-Id", required = true) Long userId){
+    public ResponseEntity<?> reveal(@RequestHeader(value = "Authorization", required = true) String token){
         try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
+            if (userId == null) {
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+            }
             return gameEngineService.roleReveal(userId);
         } catch (Exception e) {
             log.error("Failed to reveal role{}", e);
+            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+        }
+    }
+
+    @GetMapping(
+        path = "/get-screen",
+        name = "get the current game status",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> getScreen(@RequestHeader(value = "Authorization", required = true) String token){
+        try {
+            Long userId = jwtUtil.extractUserId(token.substring(7));
+            if (userId == null) {
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+            }
+            return gameEngineService.getGameStatus(userId);
+        } catch (Exception e) {
+            log.error("Failed to get game status{}", e);
             GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
         }
