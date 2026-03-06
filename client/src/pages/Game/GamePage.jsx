@@ -7,6 +7,7 @@ import InitialGameScreen from './InitialGameScreen';
 import GameOptionSelectionScreen from './GameOptionSelectionScreen';
 import WordSpyRevealScreen from './WordSpyRevealScreen';
 import GroupSelectionScreen from './GroupSelectionScreen';
+import DiscussionTimeScreen from './DiscussionTimeScreen';
 
 const GamePage = () => {
   const { gameStatus, loading, error, fetchScreen } = useGame();
@@ -41,6 +42,10 @@ const GamePage = () => {
 
   if (gameStatus === 'WORD_AND_SPY_REVEAL') {
     return <WordSpyRevealScreen />;
+  }
+
+  if (gameStatus === 'DISCUSSION_TIME') {
+    return <DiscussionTimeScreen />;
   }
 
   // For any other existing game state, show the initial screen to continue or reset.

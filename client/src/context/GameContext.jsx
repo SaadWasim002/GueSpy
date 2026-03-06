@@ -23,7 +23,7 @@ export const GameProvider = ({ children }) => {
       const response = await getScreen();
       setGameState({
         gameStatus: response.data.gameStatus,
-        screenData: response.data.screenData,
+        screenData: response.data.data,
         loading: false,
         error: null,
       });
