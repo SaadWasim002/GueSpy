@@ -39,7 +39,6 @@ api.interceptors.response.use(
 
       // Redirect to the login page. This will cause a full page refresh,
       // clearing all application state and forcing re-authentication.
-      // We avoid using React Router's navigate here because this is outside a component.
       window.location.href = '/login';
     }
     return Promise.reject(error);
