@@ -116,6 +116,7 @@ public class AuthService {
                     .numberOfSpy(null)
                     .currentPlayerNumber(null)
                     .currentScreenType(null)
+                    .discussionStartTime(null)
                     .build();
         
         UserGameDetail userGameDetail = UserGameDetail.builder()

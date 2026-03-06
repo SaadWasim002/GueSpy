@@ -8,6 +8,7 @@ public enum GameStatus {
     GAME_OPTION_SELECTION,
     WORD_AND_SPY_REVEAL,
     DISCUSSION_TIME,
+    VOTING,
     SCORING
 }
 /* 

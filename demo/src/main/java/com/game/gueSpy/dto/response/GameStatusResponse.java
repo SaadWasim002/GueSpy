@@ -1,5 +1,9 @@
 package com.game.gueSpy.dto.response;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.enums.GameStatus;
 
@@ -16,4 +20,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class GameStatusResponse extends GenericResponse{
     private GameStatus gameStatus;
+
+    @JsonProperty("data")
+    private DataResponse data;
 }

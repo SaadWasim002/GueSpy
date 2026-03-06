@@ -23,4 +23,5 @@ public class GameData {
     private List<Integer> currentSpy;
     private Integer currentPlayerNumber;
     private ScreenType currentScreenType;
+    private Long discussionStartTime;
 }
