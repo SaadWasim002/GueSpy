@@ -7,9 +7,10 @@ import InitialGameScreen from './InitialGameScreen';
 import GameOptionSelectionScreen from './GameOptionSelectionScreen';
 import WordSpyRevealScreen from './WordSpyRevealScreen';
 import GroupSelectionScreen from './GroupSelectionScreen';
+import DiscussionTimeScreen from './DiscussionTimeScreen';
 
 const GamePage = () => {
-  const { gameStatus, loading, error, fetchScreen } = useGame();
+  const { gameStatus, loading, error, fetchScreen, hasInteracted } = useGame();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -26,31 +27,28 @@ const GamePage = () => {
     return <div style={{ color: 'var(--error-color)', textAlign: 'center', marginTop: '5rem' }}>{error}</div>;
   }
 
-  // Correcting the flow to ensure NOT_STARTED shows the InitialGameScreen.
-  if (gameStatus === 'CATEGORY_SELECTION' || gameStatus === 'NOT_STARTED') {
-    return <CategorySelectionScreen />;
-  }
-
-  if (gameStatus === 'GROUP_SELECTION') {
-    return <GroupSelectionScreen />;
-  }
-
-  if (gameStatus === 'GAME_OPTION_SELECTION') {
-    return <GameOptionSelectionScreen />;
-  }
-
-  if (gameStatus === 'WORD_AND_SPY_REVEAL') {
-    return <WordSpyRevealScreen />;
-  }
-
-  // For any other existing game state, show the initial screen to continue or reset.
-  // This now correctly handles 'NOT_STARTED' as well.
-  if (gameStatus) {
+  // Always show the initial screen first until the user clicks "Continue" or "New Game".
+  if (!hasInteracted) {
     return <InitialGameScreen />;
   }
 
-  // Fallback for when there's no status
-  return null;
+  // After interaction, route to the correct game screen based on the status.
+  switch (gameStatus) {
+    case 'NOT_STARTED':
+      return <CategorySelectionScreen />;
+    case 'CATEGORY_SELECTION':
+      return <CategorySelectionScreen />;
+    case 'GROUP_SELECTION':
+      return <GroupSelectionScreen />;
+    case 'GAME_OPTION_SELECTION':
+      return <GameOptionSelectionScreen />;
+    case 'WORD_AND_SPY_REVEAL':
+      return <WordSpyRevealScreen />;
+    case 'DISCUSSION_TIME':
+      return <DiscussionTimeScreen />;
+    default:
+      return <InitialGameScreen />;
+  }
 };
 
 export default GamePage;

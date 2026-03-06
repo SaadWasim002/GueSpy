@@ -99,8 +99,13 @@ This document is intended for frontend developers, UI/UX designers, and quality 
     - **Request Headers**:  `Authorization: Bearer <token>`
     - **Expected Response**: A DTO containing `gameStatus` (e.g., `NOT_STARTED`, `CATEGORY_SELECTION`, `GROUP_SELECTION`, etc.) and `ScreenData` relevant to the current status.
     - **Logic**:
-        - If `gameStatus` is `NOT_STARTED` or `CATEGORY_SELECTION`, navigate to the Category Selection Screen.
-        - (Future: Handle other `gameStatus` values to navigate to `GROUP_SELECTION`, `GAME_OPTION_SELECTION`, etc.)
+        - The frontend will navigate to the appropriate screen based on the `gameStatus` value.
+        - `NOT_STARTED` or `CATEGORY_SELECTION`: Navigate to Category Selection Screen.
+        - `GROUP_SELECTION`: Navigate to Group Selection Screen.
+        - `GAME_OPTION_SELECTION`: Navigate to Game Option Selection Screen.
+        - `WORD_AND_SPY_REVEAL`: Navigate to Word and Spy Reveal Screen.
+        - `DISCUSSION_TIME`: Navigate to Discussion Time Screen.
+        - (Future: Handle other `gameStatus` values like `VOTING`, `GAME_OVER`, etc.)
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.4. Category Selection Screen
@@ -399,6 +404,35 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for role reveal."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
+#### 3.2.9. Discussion Time Screen (`DISCUSSION_TIME`)
+- **Description**: This screen is for the discussion phase of the game. A timer is displayed, and players discuss to find the spy. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `DISCUSSION_TIME`.
+- **UI**:
+    - A clear title: "Discussion Time".
+    - A prominent countdown timer.
+    - A list of players, possibly with their status (e.g., "In Game").
+- **Logic**:
+    - When this screen loads, the frontend receives `discussionStartTime` from the `GET /game-engine/get-screen` API.
+    - The frontend also needs to fetch the `discussion_duration` from the `GET /config/get` endpoint.
+    - The countdown timer's end time is calculated as `discussionStartTime + (discussion_duration * 1000)`.
+    - The timer should display the remaining time by calculating the difference between the end time and the current time.
+    - Once the timer reaches zero, the frontend should start polling the `GET /game-engine/get-screen` API every 1 second.
+    - Polling continues until the `gameStatus` changes, expecting to transition to the `VOTING` screen.
+- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Success (200 OK) with `DISCUSSION_TIME` status**:
+        ```json
+        {
+            "data": {
+                "discussionStartTime": 1772825506080
+            },
+            "gameStatus": "DISCUSSION_TIME",
+            "message": "Game Status loaded successfully",
+            "status": "200 OK"
+        }
+        ```
+    - **Error Handling**: Standard error handling applies as with other `get-screen` calls.
+- **API Endpoint (Configuration)**: `GET http://localhost:8080/config/get`
+    - **Logic**: Fetch the configuration with `key: "discussion_duration"` to calculate the timer.
 
 
 
@@ -491,6 +525,7 @@ Based on the frontend requirements, the following enhancement is necessary for a
         - `max_group_allowed`: Maximum number of groups a user can create.
         - `min_spy_allowed`: Minimum number of spies allowed in a game.
         - `max_spy_allowed`: Maximum number of spies allowed in a game.
+        - `discussion_duration`: Duration for the discussion phase in seconds.
     - **Note**: The `userId` for this endpoint should be extracted from the JWT token by the backend.
 
 4.  **`roleDescriptionText` for Spies**:

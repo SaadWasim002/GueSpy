@@ -13,9 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.game.gueSpy.constant.ConfigName;
 import com.game.gueSpy.constant.UITexts;
 import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GameOptionRequest;
+import com.game.gueSpy.dto.response.DataResponse;
 import com.game.gueSpy.dto.response.GameStatusResponse;
 import com.game.gueSpy.dto.response.PlayerDetails;
 import com.game.gueSpy.dto.response.RoleRevealResponse;
@@ -48,6 +50,12 @@ public class GameEngineService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ConfigService configService;
+
+    @Autowired
+    private GenericUtility genericUtility;
 
     public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
         log.info("User has started the game option engine with this request body : {}", request);
@@ -126,7 +134,8 @@ public class GameEngineService {
                 .setSelectedGroupId(null)
                 .setSelectedWordId(null)
                 .setCurrentPlayerNumber(null)
-                .setCurrentScreenType(null);
+                .setCurrentScreenType(null)
+                .setDiscussionStartTime(null);
 
         userGameDetail.setGameData(gameData);
 
@@ -191,9 +200,25 @@ public class GameEngineService {
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
+        DataResponse data = DataResponse.builder().build();
+
+        if(userGameDetail.getGameStatus().equals(GameStatus.DISCUSSION_TIME)){
+            Long discussionStartTime = userGameDetail.getGameData().getDiscussionStartTime();
+            long endTime = discussionStartTime + configService.getLong(ConfigName.discussionDuration) * 1000;
+            List<String> players = genericUtility.getPlayerNames(userGameDetail);
+            data.setDiscussionStartTime(discussionStartTime);
+            data.setPlayers(players);
+            if(System.currentTimeMillis() > endTime){
+                userGameDetail.setGameStatus(GameStatus.VOTING);
+                userGameDetailsRepository.save(userGameDetail);
+                data.setDiscussionStartTime(null);
+                data.setPlayers(null);
+            }
+        }
 
         GameStatusResponse response = GameStatusResponse.builder()
                 .gameStatus(userGameDetail.getGameStatus())
+                .data(data)
                 .message(ResponseEnum.GAME_STATUS_SUCCESS.getMessage())
                 .status(ResponseEnum.GAME_STATUS_SUCCESS.getStatus())
                 .build();
@@ -255,6 +280,7 @@ public class GameEngineService {
         if(totalPlayer == gameData.getCurrentPlayerNumber() && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL){
             isLast = true;
             userGameDetail.setGameStatus(GameStatus.DISCUSSION_TIME);
+            gameData.setDiscussionStartTime(System.currentTimeMillis());
         }
         String displayText;
         if(gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE){

@@ -10,6 +10,7 @@ export const GameProvider = ({ children }) => {
     screenData: null,
     loading: true,
     error: null,
+    hasInteracted: false, // New state to track initial user interaction
   });
   const { isAuthenticated } = useAuth();
 
@@ -21,24 +22,31 @@ export const GameProvider = ({ children }) => {
     setGameState(s => ({ ...s, loading: true, error: null }));
     try {
       const response = await getScreen();
-      setGameState({
+      setGameState(s => ({
+        ...s,
         gameStatus: response.data.gameStatus,
-        screenData: response.data.screenData,
+        screenData: response.data.data,
         loading: false,
         error: null,
-      });
+      }));
     } catch (error) {
       console.error("Failed to fetch game screen:", error);
-      setGameState({
+      setGameState(s => ({
+        ...s,
         gameStatus: null,
         screenData: null,
         loading: false,
         error: "Failed to load game state. Please try again.",
-      });
+      }));
     }
   }, [isAuthenticated]);
 
-  const value = { ...gameState, fetchScreen };
+  // Sets the interaction flag to true, allowing the app to move past the initial screen
+  const setHasInteracted = useCallback(() => {
+    setGameState(s => ({ ...s, hasInteracted: true }));
+  }, []);
+
+  const value = { ...gameState, fetchScreen, setHasInteracted };
 
   return (
     <GameContext.Provider value={value}>
