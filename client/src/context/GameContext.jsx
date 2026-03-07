@@ -24,7 +24,7 @@ export const GameProvider = ({ children }) => {
       const response = await getScreen();
       setGameState(s => ({
         ...s,
-        gameStatus: response.data.gameStatus,
+        gameStatus: response.data.data.gameStatus,
         screenData: response.data.data,
         loading: false,
         error: null,

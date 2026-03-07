@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.WordRequest;
 import com.game.gueSpy.dto.response.WordsResponse;
 import com.game.gueSpy.entity.Category;
@@ -39,8 +38,7 @@ public class WordService {
             if(categoryOptional.isPresent()){
                 Category category = categoryOptional.get();
                 if(wordRepository.findByWordNameIgnoreCase(request.getWordName(), category.getId()).isPresent()){
-                    GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.WORD_ALREADY_EXISTS);
-                    return GenericUtility.buildResponse(ResponseEnum.WORD_ALREADY_EXISTS, response);
+                    return GenericUtility.buildResponse(ResponseEnum.WORD_ALREADY_EXISTS);
                 }
 
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -55,17 +53,14 @@ public class WordService {
                 category.setTotalWords(currentTotal != null ? currentTotal + 1 : 1);
                 categoryRepository.save(category);
                 log.info("Category created Successfully");
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.WORD_ADDED);
-                return GenericUtility.buildResponse(ResponseEnum.WORD_ADDED, response);
+                return GenericUtility.buildResponse(ResponseEnum.WORD_ADDED);
             }
 
             log.info("Category not found with the id {}", request.getCategoryId());
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     @Transactional
@@ -76,8 +71,7 @@ public class WordService {
             var wordOptional = wordRepository.findById(wordId);
 
             if(wordOptional.isEmpty()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.WORD_ID_NOT_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.WORD_ID_NOT_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.WORD_ID_NOT_EXISTS);
             }
         
             Word word = wordOptional.get();
@@ -88,11 +82,9 @@ public class WordService {
             category.setTotalWords(currentTotal != null ? currentTotal - 1 : 1);
 
             log.info("Word deleted Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.WORD_DELETED);
-            return GenericUtility.buildResponse(ResponseEnum.WORD_DELETED, response);
+            return GenericUtility.buildResponse(ResponseEnum.WORD_DELETED);
         }
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> getAllWords(Long categoryId){
@@ -100,19 +92,16 @@ public class WordService {
         List<Word> words = wordRepository.findWordByCategoryId(categoryId);
         
         if(words.isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_WORD_FOUND);
-            return GenericUtility.buildResponse(ResponseEnum.NO_WORD_FOUND, response);
+            return GenericUtility.buildResponse(ResponseEnum.NO_WORD_FOUND);
         }
         log.info("Words retrieved successfully");
         Category category = categoryRepository.findById(categoryId).get();
-        WordsResponse response = buildWOrdsResponse(ResponseEnum.WORD_RETRIEVED, words, category);
-        return GenericUtility.buildResponse(ResponseEnum.WORD_RETRIEVED, response);
+        WordsResponse wordData = buildWOrdsResponse(ResponseEnum.WORD_RETRIEVED, words, category);
+        return GenericUtility.buildResponse(ResponseEnum.WORD_RETRIEVED, wordData);
     }
 
     private WordsResponse buildWOrdsResponse(ResponseEnum responseEnum, List<Word> words, Category category) {
         return WordsResponse.builder()
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
                 .words(words)
                 .totalWords(category.getTotalWords())
                 .categoryName(category.getCategoryName())

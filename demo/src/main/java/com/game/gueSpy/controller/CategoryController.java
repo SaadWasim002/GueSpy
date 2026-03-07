@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
 import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
@@ -45,8 +44,7 @@ public class CategoryController {
             return categoryService.createNewCategory(request);
         } catch (Exception e) {
             log.error("Category creation failed", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -62,8 +60,7 @@ public class CategoryController {
             return categoryService.deleteCategory(categoryName);
         } catch (Exception e) {
             log.error("Category deletion failed", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -79,8 +76,7 @@ public class CategoryController {
             return categoryService.updateCategory(request);
         } catch (Exception e) {
             log.error("Category update failed", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -94,8 +90,7 @@ public class CategoryController {
             return categoryService.getAllCategory();
         } catch (Exception e) {
             log.error("Failed to retrieve categories", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -111,8 +106,7 @@ public class CategoryController {
             return categoryService.selectCategory(userId, request.getId());
         } catch (Exception e) {
             log.error("Category creation failed", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 }

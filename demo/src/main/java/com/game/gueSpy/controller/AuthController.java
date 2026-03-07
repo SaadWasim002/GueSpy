@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.game.gueSpy.dto.AuthRequest;
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.AuthService;
 import com.game.gueSpy.utility.GenericUtility;
@@ -34,8 +33,7 @@ public class AuthController {
             return authService.userRegister(request);
         } catch (Exception e) {
             log.error("Registration failed", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -50,8 +48,7 @@ public class AuthController {
             return authService.userLogin(request);
         } catch (Exception e) {
             log.error("Login failed", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 }

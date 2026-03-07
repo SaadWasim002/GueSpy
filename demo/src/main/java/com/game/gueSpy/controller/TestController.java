@@ -4,7 +4,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.utility.GenericUtility;
 
@@ -18,7 +17,6 @@ public class TestController {
         name = "TEST"
     )
     public ResponseEntity<?> testing(){
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.TESTING);
-        return GenericUtility.buildResponse(ResponseEnum.TESTING, response);
+        return GenericUtility.buildResponse(ResponseEnum.TESTING);
     }
 }

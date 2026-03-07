@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GameOptionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.GameEngineService;
@@ -39,13 +38,12 @@ public class GameEngineController {
         try {
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
             }
             return gameEngineService.gameOptionEngine(request, userId);
         } catch (Exception e) {
             log.error("Failed to select game options {}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -58,13 +56,12 @@ public class GameEngineController {
         try {
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
             }
             return gameEngineService.resetGame(userId);
         } catch (Exception e) {
             log.error("Failed to reset game{}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -77,13 +74,12 @@ public class GameEngineController {
         try {
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
             }
             return gameEngineService.roleReveal(userId);
         } catch (Exception e) {
             log.error("Failed to reveal role{}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -96,13 +92,12 @@ public class GameEngineController {
         try {
             Long userId = jwtUtil.extractUserId(token.substring(7));
             if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS));
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
             }
             return gameEngineService.getGameStatus(userId);
         } catch (Exception e) {
             log.error("Failed to get game status{}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 }

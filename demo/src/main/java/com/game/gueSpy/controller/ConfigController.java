@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.AppConfigRequest;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.ConfigService;
@@ -38,8 +37,7 @@ public class ConfigController {
             return configService.createNewConfig(request);
         } catch (Exception e) {
             log.error("Error creating config", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -48,12 +46,10 @@ public class ConfigController {
     public ResponseEntity<?> refreshConfig() {
         try {
             configService.refresh();
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CONFIG_REFRESHED);
-            return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED, response);
+            return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED);
         } catch (Exception e) {
             log.error("Error refreshing config", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -69,8 +65,7 @@ public class ConfigController {
             return configService.updateConfig(request);
         } catch (Exception e) {
             log.error("Error updating config", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -80,8 +75,7 @@ public class ConfigController {
             return configService.getAllConfigs();
         } catch (Exception e) {
             log.error("Error getting configs", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GroupRequest;
 import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
@@ -42,8 +41,7 @@ public class GroupController {
             return groupService.createNewGroup(request, userId);
         } catch (Exception e) {
             log.error("Failed to create new group {}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -58,8 +56,7 @@ public class GroupController {
             return groupService.getAllGroupForTheUser(userId, groupId);
         } catch (Exception e) {
             log.error("Failed to retrieve group {}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -74,8 +71,7 @@ public class GroupController {
             return groupService.selectGroup(userId, request.getId());
         } catch (Exception e) {
             log.error("Failed to select new group {}", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 }

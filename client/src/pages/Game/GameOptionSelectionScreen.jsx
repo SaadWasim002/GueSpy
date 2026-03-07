@@ -18,7 +18,7 @@ const GameOptionSelectionScreen = () => {
       setLoading(true);
       try {
         const response = await getConfigs();
-        const configs = response.data.configs || [];
+        const configs = response.data.data.configs || [];
         const min = configs.find(c => c.key === 'min_spy_allowed')?.value || 1;
         const max = configs.find(c => c.key === 'max_spy_allowed')?.value || 1;
         const minSpies = parseInt(min, 10);

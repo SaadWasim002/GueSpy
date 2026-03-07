@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import com.game.gueSpy.dto.AuthRequest;
 import com.game.gueSpy.dto.AuthResponse;
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.entity.User;
 import com.game.gueSpy.entity.UserGameDetail;
 import com.game.gueSpy.enums.GameStatus;
@@ -44,8 +43,7 @@ public class AuthService {
         !request.getUsername().isEmpty() && !request.getEmail().isEmpty() && !request.getPassword().isEmpty()){
 
             if(userRepository.findByEmail(request.getEmail()).isPresent()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_ALREADY_EXIST);
-                return GenericUtility.buildResponse(ResponseEnum.USER_ALREADY_EXIST, response);
+                return GenericUtility.buildResponse(ResponseEnum.USER_ALREADY_EXIST);
             }
 
             User user = User.builder()
@@ -59,12 +57,11 @@ public class AuthService {
             
             userRepository.save(user);
             createUserGameDetailsEntry(user.getId());
-            AuthResponse response = buildAuthResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, token);
-            return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, response);
+            AuthResponse Authdata = AuthResponse.builder().token(token).build();
+            return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, Authdata);
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> userLogin(AuthRequest request){
@@ -80,30 +77,19 @@ public class AuthService {
 
                 if(passwordEncoder.matches(request.getPassword(), password)){
                     String token = jwtUtil.generateToken(foundUser);
-                    AuthResponse response = buildAuthResponse(ResponseEnum.LOGIN_SUCCESS, token);
-                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_SUCCESS, response);
+                    AuthResponse Authdata = AuthResponse.builder().token(token).build();
+                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_SUCCESS, Authdata);
                 }
                 else{
-                    GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.LOGIN_FAILURE);
-                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_FAILURE, response);
+                    return GenericUtility.buildResponse(ResponseEnum.LOGIN_FAILURE);
                 }
             }
             else{
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_NOT_EXISTS);
-                    return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
             }
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
-    }
-
-    private AuthResponse buildAuthResponse(ResponseEnum responseEnum, String token) {
-        return AuthResponse.builder()
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
-                .token(token)
-                .build();
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     private void createUserGameDetailsEntry(Long userId){

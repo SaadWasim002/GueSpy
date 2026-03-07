@@ -30,7 +30,7 @@ const WordSpyRevealScreen = () => {
         // As per your request, call revealRole() immediately
         // to get the first screen in the sequence.
         const response = await revealRole();
-        setCurrentScreen(response.data.screenData);
+        setCurrentScreen(response.data.data);
       } catch (err) {
         setError('An error occurred starting the role reveal. Please try again.');
         console.error(err);
@@ -55,7 +55,7 @@ const WordSpyRevealScreen = () => {
     setError('');
     try {
       const response = await revealRole();
-      setCurrentScreen(response.data.screenData);
+      setCurrentScreen(response.data.data);
     } catch (err) {
       setError('An error occurred during the role reveal. Please try again.');
       console.error(err);

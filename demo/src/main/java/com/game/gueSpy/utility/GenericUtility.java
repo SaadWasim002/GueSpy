@@ -18,17 +18,26 @@ public class GenericUtility {
 
     @Autowired
     private GroupRepository groupRepository;
-    
-    public static ResponseEntity<?> buildResponse(ResponseEnum responseEnum, Object response){
-        return ResponseEntity.status(responseEnum.getStatus())
+
+    public static <T> ResponseEntity<GenericResponse<T>> buildResponse(ResponseEnum responseEnum, T data) {
+        GenericResponse<T> response = GenericResponse.<T>builder()
+                .status(responseEnum.getStatus())
+                .message(responseEnum.getMessage())
+                .data(data)
+                .build();
+
+        return ResponseEntity
+                .status(responseEnum.getStatus())
                 .body(response);
     }
 
-    public static GenericResponse buildGenericResponse(ResponseEnum responseEnum) {
-        return GenericResponse.builder()
+    public static ResponseEntity<GenericResponse<Void>> buildResponse(ResponseEnum responseEnum) {
+        GenericResponse<Void> response = GenericResponse.<Void>builder()
                 .status(responseEnum.getStatus())
                 .message(responseEnum.getMessage())
                 .build();
+
+        return ResponseEntity.status(responseEnum.getStatus()).body(response);
     }
 
     public static boolean isValidGameStatus(GameStatus currentGameStatus, GameStatus expectedGameStatus){

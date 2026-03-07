@@ -25,7 +25,7 @@ const DiscussionTimeScreen = () => {
         const fetchConfig = async () => {
             try {
                 const response = await getConfigs();
-                const configs = response.data.configs || [];
+                const configs = response.data.data.configs || [];
                 const durationConfig = configs.find(c => c.key === 'discussion_duration');
                 if (durationConfig && durationConfig.value) {
                     const value = Number(durationConfig.value);
@@ -70,7 +70,7 @@ const DiscussionTimeScreen = () => {
             try {
                 const response = await getScreen();
                 // When status changes, update state and stop polling
-                if (response.data.gameStatus !== 'DISCUSSION_TIME') {
+                if (response.data.data.gameStatus !== 'DISCUSSION_TIME') {
                     // fetchScreen will update the global game state via context,
                     // causing GamePage to render the correct new screen.
                     await fetchScreen();

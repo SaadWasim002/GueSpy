@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.AppConfigRequest;
 import com.game.gueSpy.dto.response.AppConfigResponse;
 import com.game.gueSpy.entity.AppConfig;
@@ -38,8 +37,7 @@ public class ConfigService {
         if(request.getKey() != null && !request.getKey().isEmpty() && request.getValue() != null && !request.getValue().isEmpty()){
             
             if(appConfigRepository.findByKey(request.getKey()).isPresent()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CONFIG_ALREADY_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.CONFIG_ALREADY_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.CONFIG_ALREADY_EXISTS);
             }
 
             AppConfig config = AppConfig.builder()
@@ -52,12 +50,10 @@ public class ConfigService {
             refresh(); // Refresh cache to include new config
             
             log.info("Config created Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CONFIG_CREATED);
-            return GenericUtility.buildResponse(ResponseEnum.CONFIG_CREATED, response);
+            return GenericUtility.buildResponse(ResponseEnum.CONFIG_CREATED);
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> updateConfig(AppConfigRequest request) {
@@ -66,8 +62,7 @@ public class ConfigService {
             var configOptional = appConfigRepository.findByKey(request.getKey());
             
             if (configOptional.isEmpty()) {
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CONFIG_NOT_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.CONFIG_NOT_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.CONFIG_NOT_EXISTS);
             }
 
             AppConfig config = configOptional.get();
@@ -79,12 +74,10 @@ public class ConfigService {
             refresh(); // Refresh cache to reflect updates
 
             log.info("Config updated Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CONFIG_UPDATED);
-            return GenericUtility.buildResponse(ResponseEnum.CONFIG_UPDATED, response);
+            return GenericUtility.buildResponse(ResponseEnum.CONFIG_UPDATED);
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> getAllConfigs() {
@@ -92,17 +85,12 @@ public class ConfigService {
         List<AppConfig> configs = appConfigRepository.findAll();
         
         if (configs.isEmpty()) {
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_CONFIG_FOUND);
-            return GenericUtility.buildResponse(ResponseEnum.NO_CONFIG_FOUND, response);
+            return GenericUtility.buildResponse(ResponseEnum.NO_CONFIG_FOUND);
         }
         
         log.info("Configs retrieved successfully");
-        AppConfigResponse response = AppConfigResponse.builder()
-                .status(ResponseEnum.CONFIG_RETRIEVED.getStatus())
-                .message(ResponseEnum.CONFIG_RETRIEVED.getMessage())
-                .configs(configs)
-                .build();
-        return GenericUtility.buildResponse(ResponseEnum.CONFIG_RETRIEVED, response);
+        AppConfigResponse configData = AppConfigResponse.builder().configs(configs).build();
+        return GenericUtility.buildResponse(ResponseEnum.CONFIG_RETRIEVED, configData);
     }
 
     public void refresh(){

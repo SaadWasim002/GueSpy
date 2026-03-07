@@ -15,12 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.game.gueSpy.constant.ConfigName;
 import com.game.gueSpy.constant.UITexts;
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GameOptionRequest;
-import com.game.gueSpy.dto.response.DataResponse;
-import com.game.gueSpy.dto.response.GameStatusResponse;
+import com.game.gueSpy.dto.response.GameStatusData;
 import com.game.gueSpy.dto.response.PlayerDetails;
-import com.game.gueSpy.dto.response.RoleRevealResponse;
 import com.game.gueSpy.dto.response.ScreenData;
 import com.game.gueSpy.entity.Group;
 import com.game.gueSpy.entity.UserGameDetail;
@@ -60,21 +57,18 @@ public class GameEngineService {
     public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
         log.info("User has started the game option engine with this request body : {}", request);
         if(request.getNumberOfSpy() == null){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
         if(userGameDetailsOptional.isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
 
         if(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.GAME_OPTION_SELECTION)){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INVALID_GAME_STATUS);
-            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS, response);
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
         }
 
         GameData gameData = userGameDetail.getGameData();
@@ -87,8 +81,7 @@ public class GameEngineService {
             userGameDetail.setGameStatus(GameStatus.CATEGORY_SELECTION);
             userGameDetailsRepository.save(userGameDetail);
 
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
         }
 
         Long wordId = getRandomWordId(gameData.getSelectedCategoryId(), userGameDetail.getUsedWords());
@@ -106,21 +99,18 @@ public class GameEngineService {
         userGameDetail.setGameStatus(GameStatus.WORD_AND_SPY_REVEAL);
         userGameDetailsRepository.save(userGameDetail);
 
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GAME_ENGINE_SUCCESS);
-        return GenericUtility.buildResponse(ResponseEnum.GAME_ENGINE_SUCCESS, response);
+        return GenericUtility.buildResponse(ResponseEnum.GAME_ENGINE_SUCCESS);
 
     }
 
     public ResponseEntity<?> resetGame(Long userId){
         log.info("User has started the reset game data flow");
         if(userId == null){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
         if(userGameDetailsOptional.isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
@@ -141,8 +131,7 @@ public class GameEngineService {
 
         userGameDetailsRepository.save(userGameDetail);
 
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GAME_RESET_SUCCESS);
-        return GenericUtility.buildResponse(ResponseEnum.GAME_RESET_SUCCESS, response);
+        return GenericUtility.buildResponse(ResponseEnum.GAME_RESET_SUCCESS);
 
     }
 
@@ -150,21 +139,18 @@ public class GameEngineService {
     public ResponseEntity<?> roleReveal(Long userId){
         log.info("User has started the role revealflow");
         if(userId == null){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
         if(userGameDetailsOptional.isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
 
         if(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.WORD_AND_SPY_REVEAL)){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INVALID_GAME_STATUS);
-            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS, response);
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
         }
         GameData gameData = userGameDetail.getGameData();
         setCurrentPlayerAndScreenType(userGameDetail, gameData);
@@ -174,33 +160,28 @@ public class GameEngineService {
             ScreenData screenData = buildScreenData(userGameDetail, gameData, playerDetails);
 
             userGameDetailsRepository.save(userGameDetail);
-
-            RoleRevealResponse roleRevealResponse = buildRoleRevealResponse(ResponseEnum.ROLE_REVEAL_SCREEN_SUCCESS, screenData);
-            return GenericUtility.buildResponse(ResponseEnum.ROLE_REVEAL_SCREEN_SUCCESS, roleRevealResponse);
+            return GenericUtility.buildResponse(ResponseEnum.ROLE_REVEAL_SCREEN_SUCCESS, screenData);
         } catch (IllegalStateException e) {
             log.error("Error during role reveal for userId {}: {}", userId, e.getMessage());
             // Reset the game and return an internal server error or a more specific error
             resetGame(userId);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR); // Or a more specific error like BAD_REQUEST
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
     public ResponseEntity<?> getGameStatus(Long userId){
         log.info("User has started the get game status");
         if(userId == null){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
         if(userGameDetailsOptional.isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
-        DataResponse data = DataResponse.builder().build();
+        GameStatusData data = GameStatusData.builder().build();
 
         if(userGameDetail.getGameStatus().equals(GameStatus.DISCUSSION_TIME)){
             Long discussionStartTime = userGameDetail.getGameData().getDiscussionStartTime();
@@ -215,14 +196,8 @@ public class GameEngineService {
                 data.setPlayers(null);
             }
         }
-
-        GameStatusResponse response = GameStatusResponse.builder()
-                .gameStatus(userGameDetail.getGameStatus())
-                .data(data)
-                .message(ResponseEnum.GAME_STATUS_SUCCESS.getMessage())
-                .status(ResponseEnum.GAME_STATUS_SUCCESS.getStatus())
-                .build();
-        return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, response);
+        data.setGameStatus(userGameDetail.getGameStatus());
+        return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, data);
     }
 
     private void setCurrentPlayerAndScreenType(UserGameDetail userGameDetail, GameData gameData){
@@ -243,6 +218,24 @@ public class GameEngineService {
         }
         userGameDetail.setGameData(gameData);
     }
+
+    // public ResponseEntity<?> getVotingScreenData(Long userId){
+    //     log.info("User has started the voting screen flow");
+    //     if(userId == null){
+    //         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
+    //         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+    //     }
+
+    //     var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+    //     if(userGameDetailsOptional.isEmpty()){
+    //         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
+    //         return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
+    //     }
+
+    //     UserGameDetail userGameDetail = userGameDetailsOptional.get();
+
+
+    // }
 
     private PlayerDetails buildPlayerDetails(UserGameDetail userGameDetail, GameData gameData){
         var groupOptional = groupRepository.findById(userGameDetail.getGameData().getSelectedGroupId());
@@ -365,13 +358,5 @@ public class GameEngineService {
                 word.setWordId(new ArrayList<>(Collections.emptyList()));
             }
         }
-    }
-
-    private RoleRevealResponse buildRoleRevealResponse(ResponseEnum responseEnum, ScreenData screenData){
-        return RoleRevealResponse.builder() 
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
-                .screenData(screenData)
-                .build();
     }
 }

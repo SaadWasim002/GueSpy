@@ -23,8 +23,8 @@ const GroupSelectionScreen = () => {
     try {
       const [groupsResponse, configResponse] = await Promise.all([getGroups(), getConfigs()]);
       // API response wraps the array in a `groups` or `configs` property.
-      setGroups(groupsResponse.data.groups || []);
-      const max = (configResponse.data.configs || []).find(c => c.key === 'max_group_allowed')?.value || 10;
+      setGroups(groupsResponse.data.data.groups || []);
+      const max = (configResponse.data.data.configs || []).find(c => c.key === 'max_group_allowed')?.value || 10;
       setMaxGroups(parseInt(max, 10));
       setError('');
     } catch (err) {
