@@ -8,6 +8,7 @@ import GameOptionSelectionScreen from './GameOptionSelectionScreen';
 import WordSpyRevealScreen from './WordSpyRevealScreen';
 import GroupSelectionScreen from './GroupSelectionScreen';
 import DiscussionTimeScreen from './DiscussionTimeScreen';
+import VotingScreen from './VotingScreen';
 
 const GamePage = () => {
   const { gameStatus, loading, error, fetchScreen, hasInteracted } = useGame();
@@ -46,6 +47,9 @@ const GamePage = () => {
       return <WordSpyRevealScreen />;
     case 'DISCUSSION_TIME':
       return <DiscussionTimeScreen />;
+    case 'VOTING':
+      return <VotingScreen />;
+    // The "Continue" button there will be disabled if there's no game to continue.
     default:
       return <InitialGameScreen />;
   }
