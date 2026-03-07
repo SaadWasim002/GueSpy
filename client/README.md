@@ -30,6 +30,8 @@ This document is intended for frontend developers, UI/UX designers, and quality 
 
 ## 3. Functional Requirements
 
+This section details the functional requirements of the application. All successful API responses that return data follow a consistent structure where the payload is nested under a `data` key, alongside `message` and `status` keys.
+
 ### 3.1. Authentication Module
 
 #### 3.1.1. User Registration
@@ -44,7 +46,16 @@ This document is intended for frontend developers, UI/UX designers, and quality 
     - "Already have an account? Login": Navigates to the login screen.
 - **API Endpoint**: `POST http://localhost:8080/auth/register`
     - **Request**: `{ "username": "...", "email": "...", "password": "..." }`
-    - **Success (201 CREATED)**: Display a success message (e.g., "Registration successful! Please log in."), store the received JWT token and extract the `userId` from the token. Automatically log the user in or redirect to the login screen.
+    - **Success (201 CREATED)**: Display a success message (e.g., "Registration successful! Please log in."), store the received JWT token from the `data.token` field, and extract the `userId` from it. Automatically log the user in or redirect to the login screen.
+        ```json
+        {
+            "data": {
+                "token": "eyJhbGciOiJIUzI1NiJ9..."
+            },
+            "message": "User registered successfully",
+            "status": "201 CREATED"
+        }
+        ```
     - **Error (409 CONFLICT)**: Display "User already exists with this email."
     - **Error (400 BAD_REQUEST)**: Display "Some fields are missing or invalid."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
@@ -59,7 +70,16 @@ This document is intended for frontend developers, UI/UX designers, and quality 
     - "Don't have an account? Register": Navigates to the registration screen.
 - **API Endpoint**: `POST http://localhost:8080/auth/login`
     - **Request**: `{ "email": "...", "password": "..." }`
-    - **Success (200 OK)**: Display "Login Successful", store the received JWT token and extract the `userId` from the token. Redirect to the Initial Game Screen.
+    - **Success (200 OK)**: Display "Login Successful", store the received JWT token from the `data.token` field, and extract the `userId` from it. Redirect to the Initial Game Screen.
+        ```json
+        {
+            "data": {
+                "token": "eyJhbGciOiJIUzI1NiJ9..."
+            },
+            "message": "Login Successful",
+            "status": "200 OK"
+        }
+        ```
     - **Error (401 UNAUTHORIZED)**: Display "Incorrect email or password."
     - **Error (404 NOT_FOUND)**: Display "No user exists with this email."
     - **Error (400 BAD_REQUEST)**: Display "Email and password are required."
@@ -97,7 +117,7 @@ This document is intended for frontend developers, UI/UX designers, and quality 
     2.  Immediately after a successful "New Game" reset.
 - **API Endpoint**: `GET http://localhost:8080/game-engine/get-screen`
     - **Request Headers**:  `Authorization: Bearer <token>`
-    - **Expected Response**: A DTO containing `gameStatus` (e.g., `NOT_STARTED`, `CATEGORY_SELECTION`, `GROUP_SELECTION`, etc.) and `ScreenData` relevant to the current status.
+    - **Expected Response**: A DTO containing `gameStatus` at the root level, and other screen-specific data within a `data` object.
     - **Logic**:
         - The frontend will navigate to the appropriate screen based on the `gameStatus` value.
         - `NOT_STARTED` or `CATEGORY_SELECTION`: Navigate to Category Selection Screen.
@@ -105,6 +125,7 @@ This document is intended for frontend developers, UI/UX designers, and quality 
         - `GAME_OPTION_SELECTION`: Navigate to Game Option Selection Screen.
         - `WORD_AND_SPY_REVEAL`: Navigate to Word and Spy Reveal Screen.
         - `DISCUSSION_TIME`: Navigate to Discussion Time Screen.
+        - `VOTING`: Navigate to Voting Screen.
         - (Future: Handle other `gameStatus` values like `VOTING`, `GAME_OVER`, etc.)
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
@@ -122,13 +143,33 @@ This document is intended for frontend developers, UI/UX designers, and quality 
     - A "Continue" or "Next" button to confirm the selection (optional, or selection can trigger immediate progression).
 - **API Endpoint (Get Categories)**: `GET http://localhost:8080/category/get`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Success (200 OK)**: Display the list of categories.
+    - **Success (200 OK)**: Display the list of categories from the `data.categories` array in the response.
+        ```json
+        {
+            "data": {
+                "categories": [
+                    {
+                        "id": 1,
+                        "categoryName": "Movies",
+                        "totalWords": 50
+                    },
+                    {
+                        "id": 2,
+                        "categoryName": "Sports",
+                        "totalWords": 35
+                    }
+                ]
+            },
+            "message": "Categories retrieved successfully",
+            "status": "200 OK"
+        }
+        ```
     - **Error (404 NOT_FOUND - NO_CATEGORY_FOUND)**: Display "No categories available. Please check back later."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 - **API Endpoint (Select Category)**: `POST http://localhost:8080/category/select`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: `{ "id": <selectedCategoryId> }`
-    - **Success (200 OK)**: Display "Category selected successfully." The frontend must then immediately call `GET /game-engine/get-screen` to determine the next screen (expected to be `GROUP_SELECTION`).
+    - **Success (200 OK)**: Display "Category selected successfully." The frontend must then immediately call `GET /game-engine/get-screen` to determine the next screen (expected to be `GROUP_SELECTION`). The response contains no data.
     - **Error (404 NOT_FOUND - CATEGORY_NOT_EXISTS)**: Display "Selected category does not exist or is no longer available."
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for category selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
@@ -317,29 +358,29 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
 - **UI**:
     - **Common Elements**: A prominent "Continue" button to proceed to the next player's turn or the next game phase.
     - **Screen Type: `PASS_DEVICE`**:
-        - Displays a clear instruction like "Pass the device to [Player Name]" (from `screenData.displayText`).
+        - Displays a clear instruction like "Pass the device to [Player Name]" (from `data.displayText`).
         - Visually represent a player (e.g., an avatar or icon, potentially with a placeholder image).
         - The "Continue" button should be clearly visible.
     - **Screen Type: `ROLE_REVEAL`**:
-        - Displays the player's role (e.g., "You are NOT a SPY" or "You are SPY") prominently (from `screenData.displayText`).
-        - Displays the player's name (from `screenData.playerDetails.playerName`).
-        - **For Non-Spies (`screenData.playerDetails.isSpy: false`)**:
-            - Displays the `screenData.categoryName`.
-            - Displays the `screenData.wordName`.
-            - Displays the `screenData.roleDescriptionText` (if provided and relevant).
-        - **For Spies (`screenData.playerDetails.isSpy: true`)**:
-            - Displays the `screenData.categoryName`.
-            - Displays the `screenData.roleDescriptionText` (if provided and relevant, e.g., a specific spy instruction).
-            - The `screenData.wordName` **must not** be displayed.
+        - Displays the player's role (e.g., "You are NOT a SPY" or "You are SPY") prominently (from `data.displayText`).
+        - Displays the player's name (from `data.playerDetails.playerName`).
+        - **For Non-Spies (`data.playerDetails.isSpy: false`)**:
+            - Displays the `data.categoryName`.
+            - Displays the `data.wordName`.
+            - Displays the `data.roleDescriptionText` (if provided and relevant).
+        - **For Spies (`data.playerDetails.isSpy: true`)**:
+            - Displays the `data.categoryName`.
+            - Displays the `data.roleDescriptionText` (if provided and relevant, e.g., a specific spy instruction).
+            - The `data.wordName` **must not** be displayed.
         - The "Continue" button should be clearly visible.
 - **API Endpoint**: `POST http://localhost:8080/game-engine/role-reveal`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**:
-        - **Response Type 1: `PASS_DEVICE`**:
+        - **Response Type 1: `PASS_DEVICE`**: The payload is in the `data` object.
             ```json
             { // Example response for PASS_DEVICE screen
                 "message": "Role reveal screen loaded successfully",
-                "screenData": {
+                "data": {
                     "categoryName": "test1",
                     "displayText": "Pass the device to Sayam",
                     "isLast": false,
@@ -355,12 +396,12 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
                 "status": "200 OK"
             }
             ```
-            *   Frontend should display the `displayText` and wait for user interaction (e.g., clicking "Continue").
-        - **Response Type 2: `ROLE_REVEAL` (Non-Spy)**:
+            *   Frontend should display the `data.displayText` and wait for user interaction (e.g., clicking "Continue").
+        - **Response Type 2: `ROLE_REVEAL` (Non-Spy)**: The payload is in the `data` object.
             ```json
             { // Example response for ROLE_REVEAL (Non-Spy) screen
                 "message": "Role reveal screen loaded successfully",
-                "screenData": {
+                "data": {
                     "categoryName": "test1",
                     "displayText": "You are NOT a SPY",
                     "isLast": false,
@@ -376,12 +417,12 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
                 "status": "200 OK"
             }
             ```
-            *   Frontend displays the role, player name, category, and word.
-        - **Response Type 3: `ROLE_REVEAL` (Spy)**:
+            *   Frontend displays the role (`data.displayText`), player name (`data.playerDetails.playerName`), category (`data.categoryName`), and word (`data.wordName`).
+        - **Response Type 3: `ROLE_REVEAL` (Spy)**: The payload is in the `data` object.
             ```json
             { // Example response for ROLE_REVEAL (Spy) screen
                 "message": "Role reveal screen loaded successfully",
-                "screenData": {
+                "data": {
                     "categoryName": "test1",
                     "displayText": "You are SPY",
                     "isLast": false,
@@ -397,10 +438,10 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
                 "status": "200 OK"
             }
             ```
-            *   Frontend displays the role and player name. It **must hide** the `wordName` for spies.
+            *   Frontend displays the role (`data.displayText`) and player name (`data.playerDetails.playerName`). It **must hide** the `data.wordName` for spies.
     - **Logic**:
-        - The frontend will repeatedly call this API until `screenData.isLast` is `true`.
-        - Once `isLast` is `true`, the frontend should then call `GET /game-engine/get-screen` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
+        - The frontend will repeatedly call this API until `data.isLast` is `true`.
+        - Once `data.isLast` is `true`, the frontend should then call `GET /game-engine/get-screen` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for role reveal."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
@@ -411,7 +452,7 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
     - A prominent countdown timer.
     - A list of players, possibly with their status (e.g., "In Game").
 - **Logic**:
-    - When this screen loads, the frontend receives `discussionStartTime` from the `GET /game-engine/get-screen` API.
+    - When this screen loads, the frontend receives `discussionStartTime` from the `data` object in the `GET /game-engine/get-screen` API response.
     - The frontend also needs to fetch the `discussion_duration` from the `GET /config/get` endpoint.
     - The countdown timer's end time is calculated as `discussionStartTime + (discussion_duration * 1000)`.
     - The timer should display the remaining time by calculating the difference between the end time and the current time.
@@ -433,6 +474,58 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
     - **Error Handling**: Standard error handling applies as with other `get-screen` calls.
 - **API Endpoint (Configuration)**: `GET http://localhost:8080/config/get`
     - **Logic**: Fetch the configuration with `key: "discussion_duration"` to calculate the timer.
+
+#### 3.2.10. Voting Screen (`VOTING`)
+- **Description**: This screen allows players to vote for who they believe is the spy. The screen updates for each player's turn until all votes are cast. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `VOTING`.
+- **UI**:
+    - A clear header, e.g., "Voting Time" (from `data.displayTextHeader`).
+    - An instruction for the current player, e.g., "Sayam, choose one player who you think is the spy" (constructed from `data.currentPlayerName` and `data.displayText`).
+    - A list or grid of player cards from `data.votingList`.
+    - Each player card should be selectable and display the `playerName`.
+    - A "Submit Vote" button, which becomes active after a player is selected.
+- **Logic**:
+    - When the `gameStatus` is `VOTING`, the frontend's first action is to call `GET /game-engine/voting` to get the data for the current voter.
+    - The UI is rendered based on the response. The `votingList` excludes the `currentPlayerName`.
+    - When the user selects a player and clicks "Submit Vote", the frontend calls `POST /game-engine/vote` with the selected `player_id`.
+    - After a successful vote, the frontend immediately calls `GET /game-engine/voting` again to get the data for the next player's turn.
+    - This cycle continues. The `data.isLast` flag in the `GET /game-engine/voting` response indicates if the current vote is the final one.
+    - If `isLast` was `true` for the current turn, after that player votes, the frontend must call `GET /game-engine/get-screen` to transition to the next game phase (e.g., `VOTE_RESULT` or `GAME_OVER`).
+- **API Endpoint (Get Voting Screen Data)**: `GET http://localhost:8080/game-engine/voting`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Success (200 OK)**:
+        ```json
+        {
+            "data": {
+                "currentPlayerName": "Sayam",
+                "displayText": "Choose one player who you think is the spy",
+                "displayTextHeader": "Voting Time",
+                "isLast": false,
+                "votingList": [
+                    { "playerId": 2, "playerName": "Sunny" },
+                    { "playerId": 3, "playerName": "Sarah" }
+                ]
+            },
+            "message": "Voting Screen fetched successfully",
+            "status": "200 OK"
+        }
+        ```
+    - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for voting."
+    - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
+- **API Endpoint (Cast Vote)**: `POST http://localhost:8080/game-engine/vote?player_id=<selected_player_id>`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Success (200 OK)**:
+        ```json
+        {
+            "data": null,
+            "message": "Vote cast successfully",
+            "status": "200 OK"
+        }
+        ```
+        *   After this response, the frontend proceeds with the logic described above (either call `/game-engine/voting` again or `/game-engine/get-screen`).
+    - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for voting."
+    - **Error (400 BAD_REQUEST - INVALID_VOTE)**: Display "You cannot vote for this player." or "It's not your turn to vote."
+    - **Error (404 NOT_FOUND - PLAYER_NOT_FOUND)**: Display "The player you voted for does not exist."
+    - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 
 
