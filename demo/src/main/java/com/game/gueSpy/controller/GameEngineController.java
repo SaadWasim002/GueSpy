@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GameOptionRequest;
@@ -115,5 +116,20 @@ public class GameEngineController {
         }
 
         return gameEngineService.getVotingScreen(userId);
+    }
+
+    @PostMapping(
+        path = "/vote",
+        name = "voting",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> vote(@RequestHeader(value = "Authorization", required = true) String token, @RequestParam(value = "player_id", required = true) Integer playerId){
+        Long userId = jwtUtil.extractUserId(token.substring(7));
+
+        if (userId == null) {
+            throw new GameException(ResponseEnum.USER_NOT_EXISTS);
+        }
+
+        return gameEngineService.vote(userId, playerId);
     }
 }

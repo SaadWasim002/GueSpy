@@ -2,8 +2,10 @@ package com.game.gueSpy.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -28,6 +30,7 @@ import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.enums.ScreenType;
 import com.game.gueSpy.model.GameData;
 import com.game.gueSpy.model.UsedWords;
+import com.game.gueSpy.model.VotingData;
 import com.game.gueSpy.repository.CategoryRepository;
 import com.game.gueSpy.repository.GroupRepository;
 import com.game.gueSpy.repository.UserGameDetailsRepository;
@@ -127,7 +130,8 @@ public class GameEngineService {
                 .setSelectedWordId(null)
                 .setCurrentPlayerNumber(null)
                 .setCurrentScreenType(null)
-                .setDiscussionStartTime(null);
+                .setDiscussionStartTime(null)
+                .setVotingData(null);
 
         userGameDetail.setGameData(gameData);
 
@@ -230,6 +234,21 @@ public class GameEngineService {
         GenericUtility.validate(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.VOTING), ResponseEnum.INVALID_GAME_STATUS);
 
         return GenericUtility.buildResponse(ResponseEnum.VOTING_SCREEN_SUCCESS , buildVotingScreenData(userGameDetail));
+    }
+
+    @Transactional
+    public ResponseEntity<?> vote(Long userId, Integer playerId){
+        log.info("User has started the voting screen flow");
+        GenericUtility.validate(userId == null || playerId == null, ResponseEnum.VALUES_MISSING);
+        var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+        GenericUtility.validate(userGameDetailsOptional.isEmpty(), ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
+
+        UserGameDetail userGameDetail = userGameDetailsOptional.get();
+        GenericUtility.validate(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.VOTING), ResponseEnum.INVALID_GAME_STATUS);
+
+        updateUserGameDetailWithNewVote(userGameDetail, playerId);
+
+        return GenericUtility.buildResponse(ResponseEnum.VOTING_SUCCESS);
     }
 
     private PlayerDetails buildPlayerDetails(UserGameDetail userGameDetail, GameData gameData){
@@ -380,5 +399,30 @@ public class GameEngineService {
                     .displayTextHeader(UITexts.VOTING_HEADER)
                     .build();
 
+    }
+
+    private void updateUserGameDetailWithNewVote(UserGameDetail userGameDetail, Integer playerId){
+        Integer currentPlayerNumber = userGameDetail.getGameData().getCurrentPlayerNumber();
+        Integer playerListSize = genericUtility.getPlayerNames(userGameDetail).size();
+        GenericUtility.validate(playerListSize < playerId || playerId <= 0, ResponseEnum.INVALID_DATA); // player id should be from 1 to playerList.size 
+        GenericUtility.validate(playerId == currentPlayerNumber, ResponseEnum.INVALID_DATA);
+        VotingData votingData = userGameDetail.getGameData().getVotingData();
+        Map<Integer, Integer> votes = new HashMap<>();
+        if(votingData != null){
+            votes = userGameDetail.getGameData().getVotingData().getVotes();
+        }
+        else{
+            votingData = VotingData.builder().votes(votes).build();
+            userGameDetail.getGameData().setVotingData(votingData);
+        }
+
+        votes = (votingData.getVotes() != null)? votingData.getVotes() : new HashMap<>();
+        votes.put(playerId, votes.getOrDefault(playerId, 0) + 1);
+
+        userGameDetail.getGameData().setCurrentPlayerNumber(currentPlayerNumber + 1);
+        if(playerListSize == currentPlayerNumber){
+            userGameDetail.setGameStatus(GameStatus.SCORING);
+        }
+        userGameDetailsRepository.save(userGameDetail);
     }
 }
