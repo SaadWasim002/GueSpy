@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.WordRequest;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.WordService;
@@ -38,8 +37,7 @@ public class WordController {
             return wordService.addNewWord(request);
         } catch (Exception e) {
             log.error("Failed to add new word", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -55,8 +53,7 @@ public class WordController {
             return wordService.deleteWord(wordId);
         } catch (Exception e) {
             log.error("Failed to delete word", e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -71,8 +68,7 @@ public class WordController {
             return wordService.getAllWords(categoryId);
         } catch (Exception e) {
             log.error("Failed to retrieved words for the category id {}", categoryId, e);
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR, response);
+            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
     }
 }

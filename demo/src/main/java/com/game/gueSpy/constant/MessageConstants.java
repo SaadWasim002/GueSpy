@@ -32,6 +32,7 @@ public class MessageConstants {
     public static final String valueMissing = "Some of the field is missing";
     public static final String unauthorized = "Unauthorized access";
     public static final String internalServerError = "Internal Server Error";
+    public static final String invalidData = "Invalid Data Provided";
     public static final String testing = "Testing";
 
     //GAME_ENGINE
@@ -39,6 +40,8 @@ public class MessageConstants {
     public static final String gameResetSuccess = "Game reset successfully";
     public static final String roleRevealScreenSuccess = "Role reveal screen loaded successfully";
     public static final String gameStatusSuccess = "Game Status loaded successfully";
+    public static final String votingScreenSuccess = "Voting Screen fetched successfully";
+    public static final String votingSuccess = "Successfully voted player";
 
     //CONFIG
     public static final String configCreated = "Configuration created successfully";

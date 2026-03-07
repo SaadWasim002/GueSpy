@@ -1,7 +1,7 @@
 package com.game.gueSpy.dto.response;
 
 import java.util.List;
-import com.game.gueSpy.entity.AppConfig;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +11,10 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AppConfigResponse{ 
-    private List<AppConfig> configs;
+public class VotingScreenResponse{
+    private String displayTextHeader;
+    private String displayText;
+    private String currentPlayerName;
+    private List<VotingPlayer> votingList;
+    private Boolean isLast;
 }

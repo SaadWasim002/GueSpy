@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.CategoryRequest;
 import com.game.gueSpy.dto.response.CategoryResponse;
 import com.game.gueSpy.entity.Category;
@@ -41,9 +40,9 @@ public class CategoryService {
 
         if(request.getCategoryName() != null && !request.getCategoryName().isEmpty()){
             if(categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName()).isPresent()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
             }
+
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             Category category = Category.builder()
@@ -52,14 +51,13 @@ public class CategoryService {
                     .totalWords(0)
                     .createdBy(username)
                     .build();
+
             categoryRepository.save(category);
             log.info("Category created Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_CREATE_SUCCESS);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_CREATE_SUCCESS, response);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_CREATE_SUCCESS);
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     @Transactional
@@ -70,8 +68,7 @@ public class CategoryService {
             var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(categoryName);
 
             if(categoryOptional.isEmpty()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
             }
 
             Category category = categoryOptional.get();
@@ -80,11 +77,9 @@ public class CategoryService {
             wordRepository.deleteWordByCategoryId(category.getId());
 
             log.info("Category deleted Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_DELETED);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_DELETED, response);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_DELETED);
         }
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> updateCategory(CategoryRequest request){
@@ -94,8 +89,7 @@ public class CategoryService {
             var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName());
 
             if(categoryOptional.isEmpty()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
             }
 
             Category category = categoryOptional.get();
@@ -104,8 +98,7 @@ public class CategoryService {
                 var existingCategory = categoryRepository.findByCategoryNameIgnoreCase(request.getUpdateName());
     
                 if(existingCategory.isPresent() && !existingCategory.get().getId().equals(category.getId())){
-                    GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
-                    return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS, response);
+                    return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
                 }
                 
                 category.setCategoryName(request.getUpdateName());
@@ -118,12 +111,10 @@ public class CategoryService {
             categoryRepository.save(category);
 
             log.info("Category updated Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_UPDATED);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_UPDATED, response);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_UPDATED);
         }
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> getAllCategory(){
@@ -131,26 +122,23 @@ public class CategoryService {
         List<Category> categories = categoryRepository.findAll();
         
         if(categories.isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_CATEGORY_FOUND);
-            return GenericUtility.buildResponse(ResponseEnum.NO_CATEGORY_FOUND, response);
+            return GenericUtility.buildResponse(ResponseEnum.NO_CATEGORY_FOUND);
         }
         log.info("Categories retrieved successfully");
         
-        CategoryResponse response = buildCategoryResponse(ResponseEnum.CATEGORY_RETRIEVED, categories);
-        return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED, response);
+        CategoryResponse categoryData = CategoryResponse.builder().categories(categories).build();
+        return GenericUtility.buildResponse(ResponseEnum.CATEGORY_RETRIEVED, categoryData);
     }
     
     @Transactional
     public ResponseEntity<?> selectCategory(Long userId, Long categoryId){
         log.info("User has started select category flow");
         if(categoryId == null){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         if(categoryRepository.findById(categoryId).isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS, response);
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -159,23 +147,12 @@ public class CategoryService {
             GameStatus gameStatus = userGameDetail.getGameStatus();
             if(gameStatus == GameStatus.NOT_STARTED || gameStatus == GameStatus.CATEGORY_SELECTION){
                 updateUserGameDetails(userGameDetail, categoryId);
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.CATEGORY_SELECTED);
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_SELECTED, response);// category selected
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_SELECTED);// category selected
             }
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INVALID_GAME_STATUS);
-            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS, response);// Game status not valid to update
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);// Game status not valid to update
         }
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-        return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);// User game details doesnt exist for the user
+        return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);// User game details doesnt exist for the user
 
-    }
-
-    private CategoryResponse buildCategoryResponse(ResponseEnum responseEnum, List<Category> categories) {
-        return CategoryResponse.builder()
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
-                .categories(categories)
-                .build();
     }
 
     private void updateUserGameDetails(UserGameDetail userGameDetail, Long categoryId){

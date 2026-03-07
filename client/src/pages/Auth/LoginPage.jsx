@@ -33,7 +33,7 @@ const LoginPage = () => {
 
     try {
       const response = await loginUser(formData);
-      auth.login(response.data.token);
+      auth.login(response.data.data.token);
       // As per PRD, redirect to the initial game screen.
       // We'll create a placeholder route for it.
       navigate('/game');

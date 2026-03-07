@@ -11,6 +11,7 @@ import com.game.gueSpy.entity.Group;
 import com.game.gueSpy.entity.UserGameDetail;
 import com.game.gueSpy.enums.GameStatus;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.exception.GameException;
 import com.game.gueSpy.repository.GroupRepository;
 
 @Component
@@ -18,17 +19,26 @@ public class GenericUtility {
 
     @Autowired
     private GroupRepository groupRepository;
-    
-    public static ResponseEntity<?> buildResponse(ResponseEnum responseEnum, Object response){
-        return ResponseEntity.status(responseEnum.getStatus())
+
+    public static <T> ResponseEntity<GenericResponse<T>> buildResponse(ResponseEnum responseEnum, T data) {
+        GenericResponse<T> response = GenericResponse.<T>builder()
+                .status(responseEnum.getStatus())
+                .message(responseEnum.getMessage())
+                .data(data)
+                .build();
+
+        return ResponseEntity
+                .status(responseEnum.getStatus())
                 .body(response);
     }
 
-    public static GenericResponse buildGenericResponse(ResponseEnum responseEnum) {
-        return GenericResponse.builder()
+    public static ResponseEntity<GenericResponse<Void>> buildResponse(ResponseEnum responseEnum) {
+        GenericResponse<Void> response = GenericResponse.<Void>builder()
                 .status(responseEnum.getStatus())
                 .message(responseEnum.getMessage())
                 .build();
+
+        return ResponseEntity.status(responseEnum.getStatus()).body(response);
     }
 
     public static boolean isValidGameStatus(GameStatus currentGameStatus, GameStatus expectedGameStatus){
@@ -40,5 +50,11 @@ public class GenericUtility {
         var groupOptional = groupRepository.findById(groupId);
         Group group = groupOptional.get();
         return group.getPlayers().getPlayerNames();
+    }
+
+    public static void validate(boolean condition, ResponseEnum responseEnum) {
+        if (condition) {
+            throw new GameException(responseEnum);
+        }
     }
 }

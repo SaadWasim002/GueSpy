@@ -59,10 +59,13 @@ public enum ResponseEnum {
     GAME_RESET_SUCCESS(MessageConstants.gameResetSuccess, HttpStatus.OK),
     ROLE_REVEAL_SCREEN_SUCCESS(MessageConstants.roleRevealScreenSuccess, HttpStatus.OK),
     GAME_STATUS_SUCCESS(MessageConstants.gameStatusSuccess, HttpStatus.OK),
+    VOTING_SCREEN_SUCCESS(MessageConstants.votingScreenSuccess , HttpStatus.OK),
+    VOTING_SUCCESS(MessageConstants.votingSuccess , HttpStatus.OK),
 
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED),
+    INVALID_DATA(MessageConstants.invalidData, HttpStatus.OK),
     TESTING(MessageConstants.testing, HttpStatus.OK);
     
     private String message;

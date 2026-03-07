@@ -24,4 +24,5 @@ public class GameData {
     private Integer currentPlayerNumber;
     private ScreenType currentScreenType;
     private Long discussionStartTime;
+    private VotingData votingData;
 }

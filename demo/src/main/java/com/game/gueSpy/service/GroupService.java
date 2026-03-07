@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.game.gueSpy.dto.GenericResponse;
 import com.game.gueSpy.dto.request.GroupRequest;
 import com.game.gueSpy.dto.response.DisplayAllGroupResponse;
 import com.game.gueSpy.dto.response.DisplayGroupResponse;
@@ -37,8 +36,7 @@ public class GroupService {
 
         if(request.getGroupName() != null && !request.getGroupName().isEmpty() && request.getPlayers() != null && !request.getPlayers().isEmpty()){
             if(groupRepository.findByGroupNameIgnoreCaseForTheUserId(request.getGroupName(), userId).isPresent()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GROUP_ALREADY_EXISTS);
-                return GenericUtility.buildResponse(ResponseEnum.GROUP_ALREADY_EXISTS, response);
+                return GenericUtility.buildResponse(ResponseEnum.GROUP_ALREADY_EXISTS);
             }
             Player players = Player.builder()
                     .playerNames(request.getPlayers())
@@ -51,36 +49,34 @@ public class GroupService {
                     .build();
             groupRepository.save(group);           
             log.info("Group created Successfully");
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GROUP_CREATED);
-            return GenericUtility.buildResponse(ResponseEnum.GROUP_CREATED, response);
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_CREATED);
         }
+        
         log.info("request body : {}", request);
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
     }
 
     public ResponseEntity<?> getAllGroupForTheUser(Long userId, Long groupId){
         log.info("User has started get all group flow for the userId: {}", userId);
         if(groupId != null){
-            Group group = groupRepository.findById(groupId).get();
-            if(group == null){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_GROUP_FOUND);
-                return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND, response);
+            var groupOptional = groupRepository.findById(groupId);
+            if(groupOptional.isEmpty()){
+                return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND);
             }
-            DisplayGroupResponse response = buildDisplayGroupResponse(ResponseEnum.GROUP_RETRIEVED, group);
-            return GenericUtility.buildResponse(ResponseEnum.GROUP_RETRIEVED, response);   
+            Group group = groupOptional.get();
+            DisplayGroupResponse groupData = DisplayGroupResponse.builder().group(group).build();
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_RETRIEVED, groupData);   
         }
         else{
             List<Group> groups = groupRepository.findAllGroupForUser(userId);
         
             if(groups.isEmpty()){
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_GROUP_FOUND);
-                return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND, response);
+                return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND);
             }
             log.info("Group retrieved successfully");
             
-            DisplayAllGroupResponse response = buildDisplayAllGroupResponse(ResponseEnum.GROUP_RETRIEVED, groups);
-            return GenericUtility.buildResponse(ResponseEnum.GROUP_RETRIEVED, response);
+            DisplayAllGroupResponse groupData = DisplayAllGroupResponse.builder().groups(groups).build();
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_RETRIEVED, groupData);
         }
        
     }
@@ -89,13 +85,11 @@ public class GroupService {
     public ResponseEntity<?> selectGroup(Long userId, Long groupId){
         log.info("User has started select group flow");
         if(groupId == null){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         if(groupRepository.findById(groupId).isEmpty()){
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.NO_GROUP_FOUND);
-            return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND, response);
+            return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -104,31 +98,12 @@ public class GroupService {
             GameStatus gameStatus = userGameDetail.getGameStatus();
             if(gameStatus == GameStatus.GROUP_SELECTION){
                 updateUserGameDetails(userGameDetail, groupId);
-                GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.GROUP_SELECTED);
-                return GenericUtility.buildResponse(ResponseEnum.GROUP_SELECTED, response);// category selected
+                return GenericUtility.buildResponse(ResponseEnum.GROUP_SELECTED);// category selected
             }
-            GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.INVALID_GAME_STATUS);
-            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS, response);// Game status not valid to update
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);// Game status not valid to update
         }
-        GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-        return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);// User game details doesnt exist for the user
+        return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);// User game details doesnt exist for the user
 
-    }
-
-     private DisplayAllGroupResponse buildDisplayAllGroupResponse(ResponseEnum responseEnum, List<Group> groups) {
-        return DisplayAllGroupResponse.builder()
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
-                .groups(groups)
-                .build();
-    }
-
-    private DisplayGroupResponse buildDisplayGroupResponse(ResponseEnum responseEnum, Group group) {
-        return DisplayGroupResponse.builder()
-                .status(responseEnum.getStatus())
-                .message(responseEnum.getMessage())
-                .group(group)
-                .build();
     }
 
     private void updateUserGameDetails(UserGameDetail userGameDetail, Long groupId){
@@ -136,5 +111,6 @@ public class GroupService {
         gameData.setSelectedGroupId(groupId);
         userGameDetail.setGameData(gameData);
         userGameDetail.setGameStatus(GameStatus.GAME_OPTION_SELECTION);
+        userGameDetailsRepository.save(userGameDetail);
     }
 }

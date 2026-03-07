@@ -16,7 +16,7 @@ const CategorySelectionScreen = () => {
     const loadCategories = async () => {
       try {
         const response = await getCategories();
-        setCategories(response.data.categories); // Access the 'categories' array from the response
+        setCategories(response.data.data.categories); // Access the 'categories' array from the response
       } catch (err) {
         if (err.response?.status === 404) {
           setError('No categories available. Please check back later.');
