@@ -19,6 +19,8 @@ import com.game.gueSpy.dto.request.GameOptionRequest;
 import com.game.gueSpy.dto.response.GameStatusData;
 import com.game.gueSpy.dto.response.PlayerDetails;
 import com.game.gueSpy.dto.response.ScreenData;
+import com.game.gueSpy.dto.response.VotingPlayer;
+import com.game.gueSpy.dto.response.VotingScreenResponse;
 import com.game.gueSpy.entity.Group;
 import com.game.gueSpy.entity.UserGameDetail;
 import com.game.gueSpy.enums.GameStatus;
@@ -158,7 +160,6 @@ public class GameEngineService {
         try {
             PlayerDetails playerDetails = buildPlayerDetails(userGameDetail, gameData);
             ScreenData screenData = buildScreenData(userGameDetail, gameData, playerDetails);
-
             userGameDetailsRepository.save(userGameDetail);
             return GenericUtility.buildResponse(ResponseEnum.ROLE_REVEAL_SCREEN_SUCCESS, screenData);
         } catch (IllegalStateException e) {
@@ -219,23 +220,17 @@ public class GameEngineService {
         userGameDetail.setGameData(gameData);
     }
 
-    // public ResponseEntity<?> getVotingScreenData(Long userId){
-    //     log.info("User has started the voting screen flow");
-    //     if(userId == null){
-    //         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.VALUES_MISSING);
-    //         return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING, response);
-    //     }
+    public ResponseEntity<?> getVotingScreen(Long userId){
+        log.info("User has started the voting screen flow");
+        GenericUtility.validate(userId == null, ResponseEnum.VALUES_MISSING);
+        var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+        GenericUtility.validate(userGameDetailsOptional.isEmpty(), ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
 
-    //     var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
-    //     if(userGameDetailsOptional.isEmpty()){
-    //         GenericResponse response = GenericUtility.buildGenericResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
-    //         return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS, response);
-    //     }
+        UserGameDetail userGameDetail = userGameDetailsOptional.get();
+        GenericUtility.validate(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.VOTING), ResponseEnum.INVALID_GAME_STATUS);
 
-    //     UserGameDetail userGameDetail = userGameDetailsOptional.get();
-
-
-    // }
+        return GenericUtility.buildResponse(ResponseEnum.VOTING_SCREEN_SUCCESS , buildVotingScreenData(userGameDetail));
+    }
 
     private PlayerDetails buildPlayerDetails(UserGameDetail userGameDetail, GameData gameData){
         var groupOptional = groupRepository.findById(userGameDetail.getGameData().getSelectedGroupId());
@@ -274,6 +269,7 @@ public class GameEngineService {
             isLast = true;
             userGameDetail.setGameStatus(GameStatus.DISCUSSION_TIME);
             gameData.setDiscussionStartTime(System.currentTimeMillis());
+            gameData.setCurrentPlayerNumber(1);
         }
         String displayText;
         if(gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE){
@@ -358,5 +354,31 @@ public class GameEngineService {
                 word.setWordId(new ArrayList<>(Collections.emptyList()));
             }
         }
+    }
+
+    private VotingScreenResponse buildVotingScreenData(UserGameDetail userGameDetail){
+        List<String> players = genericUtility.getPlayerNames(userGameDetail);
+        Integer currentPlayerNumber = userGameDetail.getGameData().getCurrentPlayerNumber();
+        String currentPlayerName = players.get(currentPlayerNumber - 1);
+        List<VotingPlayer> votingList = new ArrayList<>(Collections.emptyList());
+        for(String player : players){
+            if(!player.equals(currentPlayerName)){
+                VotingPlayer votingPlayer = VotingPlayer.builder().playerId(players.indexOf(player) + 1).playerName(player).build();
+                votingList.add(votingPlayer);
+            }
+        }
+        Boolean isLast = false;
+        if(currentPlayerNumber == players.size()){
+            isLast = true;
+        }
+
+        return VotingScreenResponse.builder()
+                    .currentPlayerName(currentPlayerName)
+                    .votingList(votingList)
+                    .isLast(isLast)
+                    .displayText(UITexts.VOTING_TEXT)
+                    .displayTextHeader(UITexts.VOTING_HEADER)
+                    .build();
+
     }
 }

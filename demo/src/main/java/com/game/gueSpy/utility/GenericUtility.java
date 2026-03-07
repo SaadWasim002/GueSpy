@@ -11,6 +11,7 @@ import com.game.gueSpy.entity.Group;
 import com.game.gueSpy.entity.UserGameDetail;
 import com.game.gueSpy.enums.GameStatus;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.exception.GameException;
 import com.game.gueSpy.repository.GroupRepository;
 
 @Component
@@ -49,5 +50,11 @@ public class GenericUtility {
         var groupOptional = groupRepository.findById(groupId);
         Group group = groupOptional.get();
         return group.getPlayers().getPlayerNames();
+    }
+
+    public static void validate(boolean condition, ResponseEnum responseEnum) {
+        if (condition) {
+            throw new GameException(responseEnum);
+        }
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GameOptionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.exception.GameException;
 import com.game.gueSpy.service.GameEngineService;
 import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
@@ -99,5 +100,20 @@ public class GameEngineController {
             log.error("Failed to get game status{}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping(
+        path = "/voting",
+        name = "get the current voting Screen",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> votingScreen(@RequestHeader(value = "Authorization", required = true) String token){
+        Long userId = jwtUtil.extractUserId(token.substring(7));
+
+        if (userId == null) {
+            throw new GameException(ResponseEnum.USER_NOT_EXISTS);
+        }
+
+        return gameEngineService.getVotingScreen(userId);
     }
 }
