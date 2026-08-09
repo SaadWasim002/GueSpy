@@ -284,7 +284,7 @@ public class GameEngineService {
 
         Boolean isLast = false;
         Integer totalPlayer = groupOptional.get().getPlayers().getPlayerNames().size();
-        if(totalPlayer == gameData.getCurrentPlayerNumber() && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL){
+        if(totalPlayer.equals(gameData.getCurrentPlayerNumber()) && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL){
             isLast = true;
             userGameDetail.setGameStatus(GameStatus.DISCUSSION_TIME);
             gameData.setDiscussionStartTime(System.currentTimeMillis());
@@ -353,7 +353,7 @@ public class GameEngineService {
 
     private void addUsedWord(List<UsedWords> usedWords, Long categoryId, Long wordId){
         for(UsedWords word : usedWords){
-            if(word.getCategoryId() == categoryId){
+            if(word.getCategoryId().equals(categoryId)){
                 word.getWordId().add(wordId);
                 return;
             }
@@ -369,7 +369,7 @@ public class GameEngineService {
 
     private void resetUsedWordForTheCategory(Long categoryId, List<UsedWords> usedWords){
         for(UsedWords word : usedWords){
-            if(word.getCategoryId() == categoryId){
+            if(word.getCategoryId().equals(categoryId)){
                 word.setWordId(new ArrayList<>(Collections.emptyList()));
             }
         }
@@ -405,7 +405,7 @@ public class GameEngineService {
         Integer currentPlayerNumber = userGameDetail.getGameData().getCurrentPlayerNumber();
         Integer playerListSize = genericUtility.getPlayerNames(userGameDetail).size();
         GenericUtility.validate(playerListSize < playerId || playerId <= 0, ResponseEnum.INVALID_DATA); // player id should be from 1 to playerList.size 
-        GenericUtility.validate(playerId == currentPlayerNumber, ResponseEnum.INVALID_DATA);
+        GenericUtility.validate(playerId.equals(currentPlayerNumber), ResponseEnum.INVALID_DATA);
         VotingData votingData = userGameDetail.getGameData().getVotingData();
         Map<Integer, Integer> votes = new HashMap<>();
         if(votingData != null){
@@ -420,7 +420,7 @@ public class GameEngineService {
         votes.put(playerId, votes.getOrDefault(playerId, 0) + 1);
 
         userGameDetail.getGameData().setCurrentPlayerNumber(currentPlayerNumber + 1);
-        if(playerListSize == currentPlayerNumber){
+        if(playerListSize.equals(currentPlayerNumber)){
             userGameDetail.setGameStatus(GameStatus.SCORING);
         }
         userGameDetailsRepository.save(userGameDetail);
