@@ -1,6 +1,5 @@
 package com.game.gueSpy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,17 +19,17 @@ import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.service.CategoryService;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/category")
+@RequiredArgsConstructor
 public class CategoryController {
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(

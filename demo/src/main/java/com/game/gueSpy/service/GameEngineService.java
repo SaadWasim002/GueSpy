@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,28 +35,24 @@ import com.game.gueSpy.repository.GroupRepository;
 import com.game.gueSpy.repository.UserGameDetailsRepository;
 import com.game.gueSpy.repository.WordRepository;
 import com.game.gueSpy.utility.GenericUtility;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class GameEngineService {
-    @Autowired
-    private UserGameDetailsRepository userGameDetailsRepository;
+    private final UserGameDetailsRepository userGameDetailsRepository;
 
-    @Autowired
-    private WordRepository wordRepository;
+    private final WordRepository wordRepository;
 
-    @Autowired
-    private GroupRepository groupRepository;
+    private final GroupRepository groupRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private ConfigService configService;
+    private final ConfigService configService;
 
-    @Autowired
-    private GenericUtility genericUtility;
+    private final GenericUtility genericUtility;
 
     public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
         log.info("User has started the game option engine with this request body : {}", request);

@@ -2,7 +2,6 @@ package com.game.gueSpy.service;
 
 import java.util.ArrayList;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,22 +19,20 @@ import com.game.gueSpy.repository.UserRepository;
 import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserGameDetailsRepository userGameDetailsRepository;
+    private final UserGameDetailsRepository userGameDetailsRepository;
     
     public ResponseEntity<?> userRegister(AuthRequest request){
         log.info("User has started register flow with this request body : {}", request);

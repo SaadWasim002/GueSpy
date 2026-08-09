@@ -2,7 +2,6 @@ package com.game.gueSpy.security;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,14 +19,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-public class JwtFilter extends OncePerRequestFilter{
-    
-    @Autowired
-    private JwtUtil jwtUtil;
+import lombok.RequiredArgsConstructor;
 
-    @Autowired
-    private UserRepository userRepository;
+@Component
+@RequiredArgsConstructor
+public class JwtFilter extends OncePerRequestFilter{
+
+    private final JwtUtil jwtUtil;
+
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

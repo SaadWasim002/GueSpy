@@ -1,6 +1,5 @@
 package com.game.gueSpy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,15 +14,16 @@ import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.ConfigService;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/config")
+@RequiredArgsConstructor
 public class ConfigController {
 
-    @Autowired
-    private ConfigService configService;
+    private final ConfigService configService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(

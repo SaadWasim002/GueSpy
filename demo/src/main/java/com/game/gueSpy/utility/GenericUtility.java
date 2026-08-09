@@ -2,7 +2,6 @@ package com.game.gueSpy.utility;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -14,11 +13,13 @@ import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.exception.GameException;
 import com.game.gueSpy.repository.GroupRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class GenericUtility {
 
-    @Autowired
-    private GroupRepository groupRepository;
+    private final GroupRepository groupRepository;
 
     public static <T> ResponseEntity<GenericResponse<T>> buildResponse(ResponseEnum responseEnum, T data) {
         GenericResponse<T> response = GenericResponse.<T>builder()

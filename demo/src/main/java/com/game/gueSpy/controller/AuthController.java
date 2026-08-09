@@ -1,6 +1,5 @@
 package com.game.gueSpy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,15 +11,16 @@ import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.AuthService;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
-    
-    @Autowired
-    private AuthService authService;
+
+    private final AuthService authService;
 
     @PostMapping(
         path = "/register",

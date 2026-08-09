@@ -2,7 +2,6 @@ package com.game.gueSpy.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,19 +20,18 @@ import com.game.gueSpy.repository.UserGameDetailsRepository;
 import com.game.gueSpy.repository.WordRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class CategoryService {
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private WordRepository wordRepository;
+    private final WordRepository wordRepository;
 
-    @Autowired
-    private UserGameDetailsRepository userGameDetailsRepository;
+    private final UserGameDetailsRepository userGameDetailsRepository;
 
     public ResponseEntity<?> createNewCategory(CategoryRequest request){
         log.info("User has started category creation flow with this request body : {}", request);

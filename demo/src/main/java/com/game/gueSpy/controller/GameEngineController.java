@@ -1,6 +1,5 @@
 package com.game.gueSpy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,18 +16,18 @@ import com.game.gueSpy.service.GameEngineService;
 import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/game-engine")
+@RequiredArgsConstructor
 public class GameEngineController {
-    
-    @Autowired
-    private GameEngineService gameEngineService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final GameEngineService gameEngineService;
+
+    private final JwtUtil jwtUtil;
 
     @PostMapping(
         path = "/game-option",
