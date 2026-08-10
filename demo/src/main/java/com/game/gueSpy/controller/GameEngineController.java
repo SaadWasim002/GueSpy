@@ -1,19 +1,18 @@
 package com.game.gueSpy.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GameOptionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
-import com.game.gueSpy.exception.GameException;
+import com.game.gueSpy.security.UserPrincipal;
 import com.game.gueSpy.service.GameEngineService;
-import com.game.gueSpy.security.JwtUtil;
 import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.RequiredArgsConstructor;
@@ -27,21 +26,15 @@ public class GameEngineController {
 
     private final GameEngineService gameEngineService;
 
-    private final JwtUtil jwtUtil;
-
     @PostMapping(
         path = "/game-option",
         name = "select game option",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> gameOption(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody GameOptionRequest request){
+    public ResponseEntity<?> gameOption(@AuthenticationPrincipal UserPrincipal principal, @RequestBody GameOptionRequest request){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
-            }
-            return gameEngineService.gameOptionEngine(request, userId);
+            return gameEngineService.gameOptionEngine(request, principal.userId());
         } catch (Exception e) {
             log.error("Failed to select game options {}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
@@ -53,13 +46,9 @@ public class GameEngineController {
         name = "reset game",
         produces = "application/json"
     )
-    public ResponseEntity<?> reset(@RequestHeader(value = "Authorization", required = true) String token){
+    public ResponseEntity<?> reset(@AuthenticationPrincipal UserPrincipal principal){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
-            }
-            return gameEngineService.resetGame(userId);
+            return gameEngineService.resetGame(principal.userId());
         } catch (Exception e) {
             log.error("Failed to reset game{}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
@@ -71,13 +60,9 @@ public class GameEngineController {
         name = "role reveal",
         produces = "application/json"
     )
-    public ResponseEntity<?> reveal(@RequestHeader(value = "Authorization", required = true) String token){
+    public ResponseEntity<?> reveal(@AuthenticationPrincipal UserPrincipal principal){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
-            }
-            return gameEngineService.roleReveal(userId);
+            return gameEngineService.roleReveal(principal.userId());
         } catch (Exception e) {
             log.error("Failed to reveal role{}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
@@ -89,13 +74,9 @@ public class GameEngineController {
         name = "get the current game status",
         produces = "application/json"
     )
-    public ResponseEntity<?> getScreen(@RequestHeader(value = "Authorization", required = true) String token){
+    public ResponseEntity<?> getScreen(@AuthenticationPrincipal UserPrincipal principal){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            if (userId == null) {
-                return GenericUtility.buildResponse(ResponseEnum.USER_NOT_EXISTS);
-            }
-            return gameEngineService.getGameStatus(userId);
+            return gameEngineService.getGameStatus(principal.userId());
         } catch (Exception e) {
             log.error("Failed to get game status{}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
@@ -107,14 +88,8 @@ public class GameEngineController {
         name = "get the current voting Screen",
         produces = "application/json"
     )
-    public ResponseEntity<?> votingScreen(@RequestHeader(value = "Authorization", required = true) String token){
-        Long userId = jwtUtil.extractUserId(token.substring(7));
-
-        if (userId == null) {
-            throw new GameException(ResponseEnum.USER_NOT_EXISTS);
-        }
-
-        return gameEngineService.getVotingScreen(userId);
+    public ResponseEntity<?> votingScreen(@AuthenticationPrincipal UserPrincipal principal){
+        return gameEngineService.getVotingScreen(principal.userId());
     }
 
     @PostMapping(
@@ -122,13 +97,7 @@ public class GameEngineController {
         name = "voting",
         produces = "application/json"
     )
-    public ResponseEntity<?> vote(@RequestHeader(value = "Authorization", required = true) String token, @RequestParam(value = "player_id", required = true) Integer playerId){
-        Long userId = jwtUtil.extractUserId(token.substring(7));
-
-        if (userId == null) {
-            throw new GameException(ResponseEnum.USER_NOT_EXISTS);
-        }
-
-        return gameEngineService.vote(userId, playerId);
+    public ResponseEntity<?> vote(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(value = "player_id", required = true) Integer playerId){
+        return gameEngineService.vote(principal.userId(), playerId);
     }
 }

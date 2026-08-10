@@ -1,10 +1,10 @@
 package com.game.gueSpy.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.game.gueSpy.dto.request.GroupRequest;
 import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.enums.ResponseEnum;
-import com.game.gueSpy.security.JwtUtil;
+import com.game.gueSpy.security.UserPrincipal;
 import com.game.gueSpy.service.GroupService;
 import com.game.gueSpy.utility.GenericUtility;
 
@@ -27,17 +27,14 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    private final JwtUtil jwtUtil;
-
     @PostMapping(
         path = "/create",
         name = "Create the group",
         produces = "application/json"
     )
-    public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody GroupRequest request){
+    public ResponseEntity<?> create(@AuthenticationPrincipal UserPrincipal principal, @RequestBody GroupRequest request){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            return groupService.createNewGroup(request, userId);
+            return groupService.createNewGroup(request, principal.userId());
         } catch (Exception e) {
             log.error("Failed to create new group {}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
@@ -49,10 +46,9 @@ public class GroupController {
         name = "Create the group",
         produces = "application/json"
     )
-    public ResponseEntity<?> get(@RequestHeader(value = "Authorization", required = true) String token, @RequestParam(required = false) Long groupId){
+    public ResponseEntity<?> get(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(required = false) Long groupId){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            return groupService.getAllGroupForTheUser(userId, groupId);
+            return groupService.getAllGroupForTheUser(principal.userId(), groupId);
         } catch (Exception e) {
             log.error("Failed to retrieve group {}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
@@ -64,10 +60,9 @@ public class GroupController {
         name = "select the group",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@RequestHeader(value = "Authorization", required = true) String token, @RequestBody SelectionRequest request){
+    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @RequestBody SelectionRequest request){
         try {
-            Long userId = jwtUtil.extractUserId(token.substring(7));
-            return groupService.selectGroup(userId, request.getId());
+            return groupService.selectGroup(principal.userId(), request.getId());
         } catch (Exception e) {
             log.error("Failed to select new group {}", e);
             return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
