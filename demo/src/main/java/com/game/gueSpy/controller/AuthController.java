@@ -7,14 +7,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.game.gueSpy.dto.AuthRequest;
-import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.AuthService;
-import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -29,12 +25,7 @@ public class AuthController {
         produces = "application/json"
     )
     public ResponseEntity<?> register(@RequestBody AuthRequest request){
-        try {
-            return authService.userRegister(request);
-        } catch (Exception e) {
-            log.error("Registration failed", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return authService.userRegister(request);
     }
 
     @PostMapping(
@@ -44,11 +35,6 @@ public class AuthController {
         produces = "application/json"
     )
     public ResponseEntity<?> login(@RequestBody AuthRequest request){
-        try {
-            return authService.userLogin(request);
-        } catch (Exception e) {
-            log.error("Login failed", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return authService.userLogin(request);
     }
 }

@@ -15,9 +15,7 @@ import com.game.gueSpy.service.ConfigService;
 import com.game.gueSpy.utility.GenericUtility;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
 @RequestMapping("/config")
 @RequiredArgsConstructor
@@ -33,24 +31,14 @@ public class ConfigController {
         produces = "application/json"
     )
     public ResponseEntity<?> createConfig(@RequestBody AppConfigRequest request) {
-        try {
-            return configService.createNewConfig(request);
-        } catch (Exception e) {
-            log.error("Error creating config", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return configService.createNewConfig(request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/refresh", name = "Refresh Config Cache")
     public ResponseEntity<?> refreshConfig() {
-        try {
-            configService.refresh();
-            return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED);
-        } catch (Exception e) {
-            log.error("Error refreshing config", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        configService.refresh();
+        return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -61,21 +49,11 @@ public class ConfigController {
         produces = "application/json"
     )
     public ResponseEntity<?> updateConfig(@RequestBody AppConfigRequest request) {
-        try {
-            return configService.updateConfig(request);
-        } catch (Exception e) {
-            log.error("Error updating config", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return configService.updateConfig(request);
     }
 
     @GetMapping(path = "/get", name = "Get All Configs")
     public ResponseEntity<?> getAllConfigs() {
-        try {
-            return configService.getAllConfigs();
-        } catch (Exception e) {
-            log.error("Error getting configs", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return configService.getAllConfigs();
     }
 }
