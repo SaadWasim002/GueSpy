@@ -65,6 +65,9 @@ public enum ResponseEnum {
     VALUES_MISSING(MessageConstants.valueMissing, HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(MessageConstants.internalServerError, HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED(MessageConstants.unauthorized, HttpStatus.UNAUTHORIZED),
+    ACCESS_DENIED(MessageConstants.accessDenied, HttpStatus.FORBIDDEN),
+    MALFORMED_REQUEST(MessageConstants.malformedRequest, HttpStatus.BAD_REQUEST),
+    CONCURRENT_MODIFICATION(MessageConstants.concurrentModification, HttpStatus.CONFLICT),
     INVALID_DATA(MessageConstants.invalidData, HttpStatus.OK),
     TESTING(MessageConstants.testing, HttpStatus.OK);
     
