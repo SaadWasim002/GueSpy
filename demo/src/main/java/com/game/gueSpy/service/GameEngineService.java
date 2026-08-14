@@ -22,9 +22,11 @@ import com.game.gueSpy.dto.response.PlayerDetails;
 import com.game.gueSpy.dto.response.ScreenData;
 import com.game.gueSpy.dto.response.VotingPlayer;
 import com.game.gueSpy.dto.response.VotingScreenResponse;
+import com.game.gueSpy.engine.GameEngine;
 import com.game.gueSpy.entity.Group;
 import com.game.gueSpy.entity.UserGameDetail;
 import com.game.gueSpy.enums.GameStatus;
+import com.game.gueSpy.enums.GameType;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.enums.ScreenType;
 import com.game.gueSpy.model.GameData;
@@ -41,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class GameEngineService {
+public class GameEngineService implements GameEngine {
     private final UserGameDetailsRepository userGameDetailsRepository;
 
     private final WordRepository wordRepository;
@@ -54,6 +56,12 @@ public class GameEngineService {
 
     private final GenericUtility genericUtility;
 
+    @Override
+    public GameType type() {
+        return GameType.GUESPY;
+    }
+
+    @Override
     public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
         log.info("User has started the game option engine with this request body : {}", request);
         if(request.getNumberOfSpy() == null){
@@ -103,6 +111,7 @@ public class GameEngineService {
 
     }
 
+    @Override
     public ResponseEntity<?> resetGame(Long userId){
         log.info("User has started the reset game data flow");
         if(userId == null){
@@ -137,6 +146,7 @@ public class GameEngineService {
     }
 
     @Transactional
+    @Override
     public ResponseEntity<?> roleReveal(Long userId){
         log.info("User has started the role revealflow");
         if(userId == null){
@@ -169,6 +179,7 @@ public class GameEngineService {
         }
     }
 
+    @Override
     public ResponseEntity<?> getGameStatus(Long userId){
         log.info("User has started the get game status");
         if(userId == null){
@@ -219,6 +230,7 @@ public class GameEngineService {
         userGameDetail.setGameData(gameData);
     }
 
+    @Override
     public ResponseEntity<?> getVotingScreen(Long userId){
         log.info("User has started the voting screen flow");
         GenericUtility.validate(userId == null, ResponseEnum.VALUES_MISSING);
@@ -232,6 +244,7 @@ public class GameEngineService {
     }
 
     @Transactional
+    @Override
     public ResponseEntity<?> vote(Long userId, Integer playerId){
         log.info("User has started the voting screen flow");
         GenericUtility.validate(userId == null || playerId == null, ResponseEnum.VALUES_MISSING);
