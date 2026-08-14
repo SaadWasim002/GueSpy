@@ -1,0 +1,133 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-9);
+  max-width: var(--layout-max);
+  margin-inline: auto;
+  padding: var(--sp-8) var(--gutter) var(--sp-12);
+}
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: var(--text-4xl);
+  background: linear-gradient(120deg, var(--color-text), var(--accent-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin-top: var(--sp-2);
+  color: var(--color-text-muted);
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+}
+
+.sectionNote {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--sp-5);
+}
+
+.swatchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.swatch {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 7rem;
+}
+
+.chip {
+  height: 3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.chipLabel {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  color: var(--color-text-faint);
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--sp-1);
+}
+
+.cardBody {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.ringDemo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.typeSpecimen {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.typeSpecimen > span {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}

@@ -21,4 +21,5 @@ export { Spinner, LoadingBlock } from "./Spinner/Spinner";
 export { StepTrail } from "./StepTrail/StepTrail";
 export { Stepper } from "./Stepper/Stepper";
 export { TextInput } from "./TextInput/TextInput";
-export { ToastProvider, useToast } from "./Toast/ToastProvider";
+export { ToastProvider } from "./Toast/ToastProvider";
+export { useToast } from "./Toast/toastContext";

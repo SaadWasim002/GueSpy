@@ -1,10 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { cn } from "../../lib/cn";
+import { ToastContext } from "./toastContext";
 import styles from "./Toast.module.css";
-
-const ToastContext = createContext(null);
 
 const DEFAULT_DURATION = 4500;
 
@@ -138,10 +137,4 @@ export function ToastProvider({ children }) {
       )}
     </ToastContext.Provider>
   );
-}
-
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) throw new Error("useToast must be used inside a <ToastProvider>");
-  return context;
 }
