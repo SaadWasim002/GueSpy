@@ -140,6 +140,7 @@ public class CategoryService {
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+        
         if(userGameDetailsOptional.isPresent()){
             UserGameDetail userGameDetail = userGameDetailsOptional.get();
             GameStatus gameStatus = userGameDetail.getGameStatus();

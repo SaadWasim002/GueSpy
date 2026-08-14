@@ -25,4 +25,7 @@ public class GameData {
     private ScreenType currentScreenType;
     private Long discussionStartTime;
     private VotingData votingData;
+    private Integer caughtSpy;            // spy voted out, awaiting their guess decision (SPY_GUESS)
+    private Integer lastEliminatedPlayer; // most recent innocent voted out (ROUND_END screen)
+    private Integer roundNumber;          // 1-based voting round counter
 }

@@ -83,4 +83,14 @@ public class GameEngineController {
         Long userId = principal.userId();
         return gameEngineResolver.resolveForUser(userId).vote(userId, playerId);
     }
+
+    @PostMapping(
+        path = "/next-round",
+        name = "advance to the next round",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> nextRound(@AuthenticationPrincipal UserPrincipal principal){
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).nextRound(userId);
+    }
 }

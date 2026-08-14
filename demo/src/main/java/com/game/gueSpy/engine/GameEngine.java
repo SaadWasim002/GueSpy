@@ -32,4 +32,6 @@ public interface GameEngine {
     ResponseEntity<?> getVotingScreen(Long userId);
 
     ResponseEntity<?> vote(Long userId, Integer playerId);
+
+    ResponseEntity<?> nextRound(Long userId);
 }
