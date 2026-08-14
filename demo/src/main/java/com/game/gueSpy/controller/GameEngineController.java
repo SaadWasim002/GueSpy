@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GameOptionRequest;
+import com.game.gueSpy.engine.GameEngineResolver;
 import com.game.gueSpy.security.UserPrincipal;
-import com.game.gueSpy.service.GameEngineService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GameEngineController {
 
-    private final GameEngineService gameEngineService;
+    private final GameEngineResolver gameEngineResolver;
 
     @PostMapping(
         path = "/game-option",
@@ -30,7 +30,8 @@ public class GameEngineController {
         produces = "application/json"
     )
     public ResponseEntity<?> gameOption(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody GameOptionRequest request){
-        return gameEngineService.gameOptionEngine(request, principal.userId());
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).gameOptionEngine(request, userId);
     }
 
     @PostMapping(
@@ -39,7 +40,8 @@ public class GameEngineController {
         produces = "application/json"
     )
     public ResponseEntity<?> reset(@AuthenticationPrincipal UserPrincipal principal){
-        return gameEngineService.resetGame(principal.userId());
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).resetGame(userId);
     }
 
     @GetMapping(
@@ -48,7 +50,8 @@ public class GameEngineController {
         produces = "application/json"
     )
     public ResponseEntity<?> reveal(@AuthenticationPrincipal UserPrincipal principal){
-        return gameEngineService.roleReveal(principal.userId());
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).roleReveal(userId);
     }
 
     @GetMapping(
@@ -57,7 +60,8 @@ public class GameEngineController {
         produces = "application/json"
     )
     public ResponseEntity<?> getScreen(@AuthenticationPrincipal UserPrincipal principal){
-        return gameEngineService.getGameStatus(principal.userId());
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).getGameStatus(userId);
     }
 
     @GetMapping(
@@ -66,7 +70,8 @@ public class GameEngineController {
         produces = "application/json"
     )
     public ResponseEntity<?> votingScreen(@AuthenticationPrincipal UserPrincipal principal){
-        return gameEngineService.getVotingScreen(principal.userId());
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).getVotingScreen(userId);
     }
 
     @PostMapping(
@@ -75,6 +80,7 @@ public class GameEngineController {
         produces = "application/json"
     )
     public ResponseEntity<?> vote(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(value = "player_id", required = true) Integer playerId){
-        return gameEngineService.vote(principal.userId(), playerId);
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).vote(userId, playerId);
     }
 }

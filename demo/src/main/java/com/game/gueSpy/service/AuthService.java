@@ -11,6 +11,7 @@ import com.game.gueSpy.dto.AuthResponse;
 import com.game.gueSpy.entity.User;
 import com.game.gueSpy.entity.UserGameDetail;
 import com.game.gueSpy.enums.GameStatus;
+import com.game.gueSpy.enums.GameType;
 import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.enums.Role;
 import com.game.gueSpy.model.GameData;
@@ -107,6 +108,7 @@ public class AuthService {
                     .gameData(gameData)
                     .usedWords(new ArrayList<>())
                     .gameStatus(GameStatus.NOT_STARTED)
+                    .gameType(GameType.GUESPY)
                     .build();
         userGameDetailsRepository.save(userGameDetail);
     }
