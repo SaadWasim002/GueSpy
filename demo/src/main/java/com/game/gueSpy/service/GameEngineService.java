@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,28 +35,24 @@ import com.game.gueSpy.repository.GroupRepository;
 import com.game.gueSpy.repository.UserGameDetailsRepository;
 import com.game.gueSpy.repository.WordRepository;
 import com.game.gueSpy.utility.GenericUtility;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class GameEngineService {
-    @Autowired
-    private UserGameDetailsRepository userGameDetailsRepository;
+    private final UserGameDetailsRepository userGameDetailsRepository;
 
-    @Autowired
-    private WordRepository wordRepository;
+    private final WordRepository wordRepository;
 
-    @Autowired
-    private GroupRepository groupRepository;
+    private final GroupRepository groupRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private ConfigService configService;
+    private final ConfigService configService;
 
-    @Autowired
-    private GenericUtility genericUtility;
+    private final GenericUtility genericUtility;
 
     public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
         log.info("User has started the game option engine with this request body : {}", request);
@@ -284,7 +279,7 @@ public class GameEngineService {
 
         Boolean isLast = false;
         Integer totalPlayer = groupOptional.get().getPlayers().getPlayerNames().size();
-        if(totalPlayer == gameData.getCurrentPlayerNumber() && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL){
+        if(totalPlayer.equals(gameData.getCurrentPlayerNumber()) && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL){
             isLast = true;
             userGameDetail.setGameStatus(GameStatus.DISCUSSION_TIME);
             gameData.setDiscussionStartTime(System.currentTimeMillis());
@@ -353,7 +348,7 @@ public class GameEngineService {
 
     private void addUsedWord(List<UsedWords> usedWords, Long categoryId, Long wordId){
         for(UsedWords word : usedWords){
-            if(word.getCategoryId() == categoryId){
+            if(word.getCategoryId().equals(categoryId)){
                 word.getWordId().add(wordId);
                 return;
             }
@@ -369,7 +364,7 @@ public class GameEngineService {
 
     private void resetUsedWordForTheCategory(Long categoryId, List<UsedWords> usedWords){
         for(UsedWords word : usedWords){
-            if(word.getCategoryId() == categoryId){
+            if(word.getCategoryId().equals(categoryId)){
                 word.setWordId(new ArrayList<>(Collections.emptyList()));
             }
         }
@@ -405,7 +400,7 @@ public class GameEngineService {
         Integer currentPlayerNumber = userGameDetail.getGameData().getCurrentPlayerNumber();
         Integer playerListSize = genericUtility.getPlayerNames(userGameDetail).size();
         GenericUtility.validate(playerListSize < playerId || playerId <= 0, ResponseEnum.INVALID_DATA); // player id should be from 1 to playerList.size 
-        GenericUtility.validate(playerId == currentPlayerNumber, ResponseEnum.INVALID_DATA);
+        GenericUtility.validate(playerId.equals(currentPlayerNumber), ResponseEnum.INVALID_DATA);
         VotingData votingData = userGameDetail.getGameData().getVotingData();
         Map<Integer, Integer> votes = new HashMap<>();
         if(votingData != null){
@@ -420,7 +415,7 @@ public class GameEngineService {
         votes.put(playerId, votes.getOrDefault(playerId, 0) + 1);
 
         userGameDetail.getGameData().setCurrentPlayerNumber(currentPlayerNumber + 1);
-        if(playerListSize == currentPlayerNumber){
+        if(playerListSize.equals(currentPlayerNumber)){
             userGameDetail.setGameStatus(GameStatus.SCORING);
         }
         userGameDetailsRepository.save(userGameDetail);

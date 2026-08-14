@@ -1,6 +1,5 @@
 package com.game.gueSpy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,15 +14,15 @@ import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.ConfigService;
 import com.game.gueSpy.utility.GenericUtility;
 
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
 @RestController
 @RequestMapping("/config")
+@RequiredArgsConstructor
 public class ConfigController {
 
-    @Autowired
-    private ConfigService configService;
+    private final ConfigService configService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
@@ -32,25 +31,15 @@ public class ConfigController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> createConfig(@RequestBody AppConfigRequest request) {
-        try {
-            return configService.createNewConfig(request);
-        } catch (Exception e) {
-            log.error("Error creating config", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<?> createConfig(@Valid @RequestBody AppConfigRequest request) {
+        return configService.createNewConfig(request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/refresh", name = "Refresh Config Cache")
     public ResponseEntity<?> refreshConfig() {
-        try {
-            configService.refresh();
-            return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED);
-        } catch (Exception e) {
-            log.error("Error refreshing config", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        configService.refresh();
+        return GenericUtility.buildResponse(ResponseEnum.CONFIG_REFRESHED);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -60,22 +49,12 @@ public class ConfigController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> updateConfig(@RequestBody AppConfigRequest request) {
-        try {
-            return configService.updateConfig(request);
-        } catch (Exception e) {
-            log.error("Error updating config", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<?> updateConfig(@Valid @RequestBody AppConfigRequest request) {
+        return configService.updateConfig(request);
     }
 
     @GetMapping(path = "/get", name = "Get All Configs")
     public ResponseEntity<?> getAllConfigs() {
-        try {
-            return configService.getAllConfigs();
-        } catch (Exception e) {
-            log.error("Error getting configs", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return configService.getAllConfigs();
     }
 }

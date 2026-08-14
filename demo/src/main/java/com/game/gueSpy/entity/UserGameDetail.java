@@ -23,6 +23,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,6 +42,9 @@ public class UserGameDetail {
     private Long id;
 
     private Long userId;
+
+    @Version
+    private Long version;
 
     @Enumerated(EnumType.STRING)
     private GameStatus gameStatus;

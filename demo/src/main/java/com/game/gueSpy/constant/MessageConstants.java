@@ -33,6 +33,9 @@ public class MessageConstants {
     public static final String unauthorized = "Unauthorized access";
     public static final String internalServerError = "Internal Server Error";
     public static final String invalidData = "Invalid Data Provided";
+    public static final String malformedRequest = "Malformed or unreadable request body";
+    public static final String accessDenied = "You do not have permission to perform this action";
+    public static final String concurrentModification = "The game was updated at the same time, please try again";
     public static final String testing = "Testing";
 
     //GAME_ENGINE

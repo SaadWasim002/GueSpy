@@ -2,7 +2,6 @@ package com.game.gueSpy.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +19,16 @@ import com.game.gueSpy.repository.GroupRepository;
 import com.game.gueSpy.repository.UserGameDetailsRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class GroupService {
-    @Autowired
-    private GroupRepository groupRepository;
+    private final GroupRepository groupRepository;
 
-    @Autowired
-    private UserGameDetailsRepository userGameDetailsRepository;
+    private final UserGameDetailsRepository userGameDetailsRepository;
 
     public ResponseEntity<?> createNewGroup(GroupRequest request, Long userId){
         log.info("User has started group creation flow with this request body : {}", request);

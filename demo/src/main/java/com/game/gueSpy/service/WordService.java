@@ -2,7 +2,6 @@ package com.game.gueSpy.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,16 +17,16 @@ import com.game.gueSpy.repository.CategoryRepository;
 import com.game.gueSpy.repository.WordRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class WordService {
-    @Autowired
-    private WordRepository wordRepository;
+    private final WordRepository wordRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public ResponseEntity<?> addNewWord(WordRequest request){

@@ -2,7 +2,6 @@ package com.game.gueSpy.security;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,14 +19,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-public class JwtFilter extends OncePerRequestFilter{
-    
-    @Autowired
-    private JwtUtil jwtUtil;
+import lombok.RequiredArgsConstructor;
 
-    @Autowired
-    private UserRepository userRepository;
+@Component
+@RequiredArgsConstructor
+public class JwtFilter extends OncePerRequestFilter{
+
+    private final JwtUtil jwtUtil;
+
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -41,13 +41,16 @@ public class JwtFilter extends OncePerRequestFilter{
                 String username = jwtUtil.extractUsername(token);
                 User user = userRepository.findByUsername(username).orElse(null);
 
-                List<GrantedAuthority> authorities = new ArrayList<>();
-                if(user != null && user.getRole() != null){
-                    authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-                }
+                if(user != null){
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    if(user.getRole() != null){
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+                    }
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    UserPrincipal principal = new UserPrincipal(user.getId(), username);
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         }
         filterChain.doFilter(request, response);

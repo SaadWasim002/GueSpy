@@ -1,6 +1,5 @@
 package com.game.gueSpy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,18 +11,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.WordRequest;
-import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.WordService;
-import com.game.gueSpy.utility.GenericUtility;
 
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
 @RestController
 @RequestMapping("/word")
+@RequiredArgsConstructor
 public class WordController {
-    @Autowired
-    private WordService wordService;
+    private final WordService wordService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
@@ -32,13 +29,8 @@ public class WordController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> add(@RequestBody WordRequest request){
-        try {
-            return wordService.addNewWord(request);
-        } catch (Exception e) {
-            log.error("Failed to add new word", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<?> add(@Valid @RequestBody WordRequest request){
+        return wordService.addNewWord(request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -49,12 +41,7 @@ public class WordController {
         produces = "application/json"
     )
     public ResponseEntity<?> delete(@RequestParam Long wordId){
-        try {
-            return wordService.deleteWord(wordId);
-        } catch (Exception e) {
-            log.error("Failed to delete word", e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return wordService.deleteWord(wordId);
     }
 
     @GetMapping(
@@ -64,11 +51,6 @@ public class WordController {
         produces = "application/json"
     )
     public ResponseEntity<?> get(@RequestParam Long categoryId){
-        try {
-            return wordService.getAllWords(categoryId);
-        } catch (Exception e) {
-            log.error("Failed to retrieved words for the category id {}", categoryId, e);
-            return GenericUtility.buildResponse(ResponseEnum.INTERNAL_SERVER_ERROR);
-        }
+        return wordService.getAllWords(categoryId);
     }
 }

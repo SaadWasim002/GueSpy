@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -16,16 +15,17 @@ import com.game.gueSpy.repository.AppConfigRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ConfigService {
-    
-    @Autowired
-    private AppConfigRepository appConfigRepository;
 
-    private Map<String, String> cache = new ConcurrentHashMap<>();
+    private final AppConfigRepository appConfigRepository;
+
+    private final Map<String, String> cache = new ConcurrentHashMap<>();
 
     @PostConstruct 
     public void loadOnStartup(){
