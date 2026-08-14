@@ -14,6 +14,7 @@ import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.security.UserPrincipal;
 import com.game.gueSpy.service.GroupService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,7 +29,7 @@ public class GroupController {
         name = "Create the group",
         produces = "application/json"
     )
-    public ResponseEntity<?> create(@AuthenticationPrincipal UserPrincipal principal, @RequestBody GroupRequest request){
+    public ResponseEntity<?> create(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody GroupRequest request){
         return groupService.createNewGroup(request, principal.userId());
     }
 
@@ -46,7 +47,7 @@ public class GroupController {
         name = "select the group",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @RequestBody SelectionRequest request){
+    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody SelectionRequest request){
         return groupService.selectGroup(principal.userId(), request.getId());
     }
 }

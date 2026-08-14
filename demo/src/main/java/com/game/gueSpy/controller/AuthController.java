@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.game.gueSpy.dto.AuthRequest;
 import com.game.gueSpy.service.AuthService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,7 +25,7 @@ public class AuthController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> register(@RequestBody AuthRequest request){
+    public ResponseEntity<?> register(@Valid @RequestBody AuthRequest request){
         return authService.userRegister(request);
     }
 
@@ -34,7 +35,7 @@ public class AuthController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> login(@RequestBody AuthRequest request){
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest request){
         return authService.userLogin(request);
     }
 }

@@ -14,6 +14,7 @@ import com.game.gueSpy.enums.ResponseEnum;
 import com.game.gueSpy.service.ConfigService;
 import com.game.gueSpy.utility.GenericUtility;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -30,7 +31,7 @@ public class ConfigController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> createConfig(@RequestBody AppConfigRequest request) {
+    public ResponseEntity<?> createConfig(@Valid @RequestBody AppConfigRequest request) {
         return configService.createNewConfig(request);
     }
 
@@ -48,7 +49,7 @@ public class ConfigController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> updateConfig(@RequestBody AppConfigRequest request) {
+    public ResponseEntity<?> updateConfig(@Valid @RequestBody AppConfigRequest request) {
         return configService.updateConfig(request);
     }
 

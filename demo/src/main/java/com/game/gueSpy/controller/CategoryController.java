@@ -17,6 +17,7 @@ import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.security.UserPrincipal;
 import com.game.gueSpy.service.CategoryService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -32,7 +33,7 @@ public class CategoryController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> create(@RequestBody CategoryRequest request){
+    public ResponseEntity<?> create(@Valid @RequestBody CategoryRequest request){
         return categoryService.createNewCategory(request);
     }
 
@@ -54,7 +55,7 @@ public class CategoryController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> update(@RequestBody CategoryRequest request){
+    public ResponseEntity<?> update(@Valid @RequestBody CategoryRequest request){
         return categoryService.updateCategory(request);
     }
 
@@ -73,7 +74,7 @@ public class CategoryController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @RequestBody SelectionRequest request){
+    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody SelectionRequest request){
         return categoryService.selectCategory(principal.userId(), request.getId());
     }
 }

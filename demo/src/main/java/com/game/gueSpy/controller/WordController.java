@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.game.gueSpy.dto.request.WordRequest;
 import com.game.gueSpy.service.WordService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,7 +29,7 @@ public class WordController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> add(@RequestBody WordRequest request){
+    public ResponseEntity<?> add(@Valid @RequestBody WordRequest request){
         return wordService.addNewWord(request);
     }
 

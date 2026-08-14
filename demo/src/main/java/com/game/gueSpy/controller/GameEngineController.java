@@ -13,6 +13,7 @@ import com.game.gueSpy.dto.request.GameOptionRequest;
 import com.game.gueSpy.security.UserPrincipal;
 import com.game.gueSpy.service.GameEngineService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,7 +29,7 @@ public class GameEngineController {
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> gameOption(@AuthenticationPrincipal UserPrincipal principal, @RequestBody GameOptionRequest request){
+    public ResponseEntity<?> gameOption(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody GameOptionRequest request){
         return gameEngineService.gameOptionEngine(request, principal.userId());
     }
 
