@@ -95,6 +95,24 @@ This section details the functional requirements of the application. All success
 
 ### 3.2. Game Initialization & Category Selection Module
 
+#### 3.2.0. Game Selection Screen (Games List)
+- **Description**: The platform's entry point after login. Lists the games available so the user can choose one. GueSpy is currently the only game, but this screen is built to grow.
+- **UI**:
+    - A list/grid of game cards, each showing the game's `name` (and `description`).
+    - Only games with `"enabled": true` are shown; each card is selectable.
+- **Data source**: `GET http://localhost:8080/config/get` → the config with `key: "active_games"`, whose `value` is a JSON array (string):
+    ```json
+    [
+        { "gameType": "GUESPY", "name": "GueSpy", "description": "Word-based spy party game", "enabled": true }
+    ]
+    ```
+- **Logic**:
+    - Fetch configs, find `active_games`, `JSON.parse` its value, and render the enabled games.
+    - Selecting **GueSpy** enters the game flow: call `GET /game-engine/get-screen` and route by `gameStatus` (see 3.2.3).
+    - The backend currently associates every session with GueSpy automatically, so no separate "select game" API call is required yet. `gameType` is included on each entry so that, as more games are added, the frontend can route each game to its own flow.
+- **Error (404 NOT_FOUND - NO_CONFIG_FOUND)**: Fall back to showing GueSpy only.
+- **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
+
 #### 3.2.1. Initial Game Screen
 - **Description**: The first screen a user sees after logging in or after a game reset, offering options to continue or start fresh.
 - **UI**: A central screen with two prominent, distinct buttons:
@@ -707,7 +725,7 @@ Rules the frontend should be aware of:
 - `POST http://localhost:8080/category/select`: Selects a category for the current game.
 
 ### Configuration
-- `GET http://localhost:8080/config/get`: Retrieves application configurations (e.g., player limits, spy limits, group limits).
+- `GET http://localhost:8080/config/get`: Retrieves application configurations (e.g., player limits, spy limits, `scoring_config`, and `active_games` for the game-selection screen).
 
 ---
 
@@ -729,6 +747,7 @@ The following captures the current backend status — what is already available,
         - `min_spy_allowed` / `max_spy_allowed`: Spy count bounds. Note the game logic supports **1 or 2 spies** — cap the Game Option UI at 2.
         - `discussion_duration`: Duration for the discussion phase in seconds.
         - `scoring_config`: A JSON string with the scoring rules — see **3.2.15** (the frontend does not need to read this; it's applied server-side).
+        - `active_games`: A JSON array of the games available on the platform — see **3.2.0** (the frontend reads this to render the game-selection screen).
 
 4.  **`roleDescriptionText` for Spies**:
     - **Necessity**: The current `ROLE_REVEAL` response for spies has `roleDescriptionText: null`. To provide a richer experience, especially for future features like a "spy word," this field should be populated.
