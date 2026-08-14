@@ -6,12 +6,13 @@
 This document outlines the product requirements for the GueSpy frontend application. The primary goal is to create a sleek, modern, minimalist, and dark-themed user interface that facilitates user authentication and the initial game setup flow, specifically category selection.
 
 ### 1.2. Scope
-This PRD covers the following core functionalities:
-- User Authentication: Registration, Login, and Logout.
-- Initial Game Flow: Determining game state, starting a new game, and selecting a category.
+This PRD covers the full single-device (pass-and-play) game flow:
+- User Authentication: Registration and Login (logout is client-side only).
+- Game setup: determining game state, starting/resetting a game, category selection, group (player list) selection, and game options (number of spies).
+- Gameplay: word & spy reveal, discussion timer, voting, and the multi-round outcome flow — revote, spy guess, round end, and the final scoring/result screen.
 - Global Error Handling.
 
-Future phases will cover other game screens and an ADMIN specific interface.
+The game is currently **single-device pass-and-play**: one authenticated user drives all players on one device. Future phases will cover an ADMIN interface and (eventually) multi-device play.
 
 ### 1.3. Target Audience
 This document is intended for frontend developers, UI/UX designers, and quality assurance engineers involved in the GueSpy project.
@@ -89,10 +90,8 @@ This section details the functional requirements of the application. All success
 - **Description**: Allows a logged-in user to end their session.
 - **UI**: A "Logout" button or link, typically accessible from a user profile menu or header.
 - **Actions**:
-    - On click: Clears the stored JWT token and `userId` from client-side storage and redirects to the Login/Registration screen.
-- **API Endpoint**: `POST http://localhost:8080/auth/logout`
-    - **Success (200 OK)**: Backend invalidates the token (if applicable). Frontend clears local token and redirects.
-    - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
+    - On click: Clears the stored JWT token from client-side storage and redirects to the Login/Registration screen.
+- **API Endpoint**: None. Authentication is **stateless JWT**, so there is no `/auth/logout` endpoint — logout is purely client-side (discard the stored token). The token naturally expires after ~1 hour.
 
 ### 3.2. Game Initialization & Category Selection Module
 
@@ -125,8 +124,10 @@ This section details the functional requirements of the application. All success
         - `GAME_OPTION_SELECTION`: Navigate to Game Option Selection Screen.
         - `WORD_AND_SPY_REVEAL`: Navigate to Word and Spy Reveal Screen.
         - `DISCUSSION_TIME`: Navigate to Discussion Time Screen.
-        - `VOTING`: Navigate to Voting Screen.
-        - (Future: Handle other `gameStatus` values like `VOTING`, `GAME_OVER`, etc.)
+        - `VOTING` or `REVOTE`: Navigate to Voting Screen.
+        - `SPY_GUESS`: Navigate to Spy Guess Screen (see 3.2.12).
+        - `ROUND_END`: Navigate to Round End Screen (see 3.2.13).
+        - `SCORING`: Navigate to Scoring / Result Screen (see 3.2.14).
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.4. Category Selection Screen
@@ -373,7 +374,7 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
             - Displays the `data.roleDescriptionText` (if provided and relevant, e.g., a specific spy instruction).
             - The `data.wordName` **must not** be displayed.
         - The "Continue" button should be clearly visible.
-- **API Endpoint**: `POST http://localhost:8080/game-engine/role-reveal`
+- **API Endpoint**: `GET http://localhost:8080/game-engine/role-reveal`  *(this is a GET, called once per screen)*
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**:
         - **Response Type 1: `PASS_DEVICE`**: The payload is in the `data` object.
@@ -485,11 +486,11 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
     - A "Submit Vote" button, which becomes active after a player is selected.
 - **Logic**:
     - When the `gameStatus` is `VOTING`, the frontend's first action is to call `GET /game-engine/voting` to get the data for the current voter.
-    - The UI is rendered based on the response. The `votingList` excludes the `currentPlayerName`.
+    - The UI is rendered based on the response. The `votingList` excludes the `currentPlayerName` **and any players eliminated in previous rounds** (they cannot be voted for and do not vote).
     - When the user selects a player and clicks "Submit Vote", the frontend calls `POST /game-engine/vote` with the selected `player_id`.
     - After a successful vote, the frontend immediately calls `GET /game-engine/voting` again to get the data for the next player's turn.
     - This cycle continues. The `data.isLast` flag in the `GET /game-engine/voting` response indicates if the current vote is the final one.
-    - If `isLast` was `true` for the current turn, after that player votes, the frontend must call `GET /game-engine/get-screen` to transition to the next game phase (e.g., `VOTE_RESULT` or `GAME_OVER`).
+    - If `isLast` was `true` for the current turn, after that player votes the round is resolved. The frontend must call `GET /game-engine/get-screen` to find the next state, which will be one of `REVOTE`, `SPY_GUESS`, `ROUND_END`, or `SCORING` — see **3.2.11 Round Outcome & Multi-Round Flow**.
 - **API Endpoint (Get Voting Screen Data)**: `GET http://localhost:8080/game-engine/voting`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**:
@@ -529,6 +530,111 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
 
 
 
+#### 3.2.11 Round Outcome & Multi-Round Flow
+
+Once every **active** player has cast a vote (see 3.2.10), the backend tallies the votes and moves the game to one of several states. The frontend detects the new state by calling `GET /game-engine/get-screen` after the final vote of the round.
+
+- The most-voted player is the "accused".
+- **Tie** (two or more players share the highest vote count) → `gameStatus` = `REVOTE`. The frontend re-runs the voting flow for the same active players (call `GET /game-engine/voting` again and continue as in 3.2.10). Voting and voting-submission endpoints accept both `VOTING` and `REVOTE`.
+- **Accused is an innocent** → they are eliminated. If enough players remain the game continues to another round (`ROUND_END`, see 3.2.13); if too few remain the spies win (`SCORING`, see 3.2.14).
+- **Accused is a spy** → `gameStatus` = `SPY_GUESS` (see 3.2.12): the caught spy decides whether to guess the word.
+
+Rules the frontend should be aware of:
+- **Eliminated players are excluded from every later round** — they neither vote nor appear in any `votingList`.
+- The game supports **1 or 2 spies** (chosen on the Game Option screen).
+- A round "continues" only while the number of remaining active players is above a server-configured minimum. When it drops to/below that minimum with a spy still hidden, the spies win.
+
+#### 3.2.12 Spy Guess Screen (`SPY_GUESS`)
+- **Description**: Shown when a spy has been voted out. The caught spy chooses to either **guess the secret word** (the spy team wins if correct) or **decline**. This screen is displayed when `gameStatus` is `SPY_GUESS`.
+- **UI**:
+    - Display the caught spy's name (`data.caughtSpyName`) and the `data.categoryName`.
+    - A text input for the word guess and a "Guess" button.
+    - A "Decline" button.
+    - **The secret word must NOT be shown on this screen.**
+- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+    - **Success (200 OK) with `SPY_GUESS`**:
+        ```json
+        {
+            "data": { "caughtSpyName": "Sunny", "categoryName": "Movies", "roundNumber": 2 },
+            "gameStatus": "SPY_GUESS",
+            "message": "Game Status loaded successfully",
+            "status": "200 OK"
+        }
+        ```
+- **API Endpoint (Guess the word)**: `POST http://localhost:8080/game-engine/spy-guess`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Request Body**: `{ "word": "Inception" }`
+    - **Success (200 OK)**: The game moves to `SCORING`. A **correct** guess means the spies win; a **wrong** guess means the innocents win. After the response, call `GET /game-engine/get-screen` (expected `SCORING`).
+    - **Error (400 BAD_REQUEST)**: Word is blank/invalid, or the game is not in a state that allows guessing.
+- **API Endpoint (Decline to guess)**: `POST http://localhost:8080/game-engine/spy-decline`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Success (200 OK)**: The caught spy is eliminated. If they were the **last** spy, the innocents win → `SCORING`. Otherwise the round continues → `ROUND_END` (or `SCORING` if too few players remain). After the response, call `GET /game-engine/get-screen`.
+    - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Only valid at `SPY_GUESS`.
+- **Voluntary guess**: `POST /game-engine/spy-guess` is also accepted during `DISCUSSION_TIME`, `VOTING`, and `REVOTE`, allowing a spy to proactively guess the word at any point in a round (same win/lose outcome).
+
+#### 3.2.13 Round End Screen (`ROUND_END`)
+- **Description**: An interstitial shown after an innocent is voted out (or a caught spy declines) and the game continues. It announces who was eliminated, then proceeds to the next round. Displayed when `gameStatus` is `ROUND_END`.
+- **UI**:
+    - Display "<`data.eliminatedPlayerName`> was voted out" and (optionally) the round number.
+    - A prominent "Continue" button.
+- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+    - **Success (200 OK) with `ROUND_END`**:
+        ```json
+        {
+            "data": { "eliminatedPlayerName": "Aarib", "roundNumber": 2 },
+            "gameStatus": "ROUND_END",
+            "message": "Game Status loaded successfully",
+            "status": "200 OK"
+        }
+        ```
+- **API Endpoint (Start next round)**: `POST http://localhost:8080/game-engine/next-round`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Success (200 OK)**: Starts the next round — the game returns to `DISCUSSION_TIME` (a fresh discussion timer starts), then transitions to `VOTING` exactly as in 3.2.9–3.2.10. After the response, call `GET /game-engine/get-screen`.
+    - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Only valid at `ROUND_END`.
+
+#### 3.2.14 Scoring / Result Screen (`SCORING`)
+- **Description**: The final screen, shown when the game is over. It reveals the outcome, the spies, the word, and every player's score. Displayed when `gameStatus` is `SCORING`.
+- **UI**:
+    - Prominently show who won (`data.winner`: `SPY` or `INNOCENT`).
+    - Reveal the `data.spies` (names) and the secret `data.word`.
+    - Render `data.scores` as a leaderboard (e.g., sorted by `score` descending).
+    - A "New Game" button.
+- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+    - **Success (200 OK) with `SCORING`**:
+        ```json
+        {
+            "data": {
+                "winner": "SPY",
+                "word": "Inception",
+                "spies": ["Sunny"],
+                "roundNumber": 3,
+                "scores": [
+                    { "playerNumber": 1, "playerName": "Sayam", "score": -2 },
+                    { "playerNumber": 2, "playerName": "Sunny", "score": 6 },
+                    { "playerNumber": 3, "playerName": "Sarah", "score": -2 }
+                ]
+            },
+            "gameStatus": "SCORING",
+            "message": "Game Status loaded successfully",
+            "status": "200 OK"
+        }
+        ```
+- **New Game**: `POST http://localhost:8080/game-engine/reset`, then `GET /game-engine/get-screen` (expected `CATEGORY_SELECTION`).
+- **Scoring rules (context for the UI)**: for every round the spies survive, each spy gains points and each innocent loses points; the winning side receives a bonus at the end. All point values are configured server-side (see 3.2.15), so the frontend should render whatever `scores` are returned rather than assuming fixed numbers.
+
+#### 3.2.15 Scoring Configuration (server-side)
+- The tunable scoring rules live in a single `app_config` row, `key: "scoring_config"`, whose value is a JSON object:
+    ```json
+    {
+        "minPlayersToContinue": 3,
+        "spyPointsPerRound": 1,
+        "innocentPointsPerRound": 1,
+        "spyWinBonus": 2,
+        "innocentWinBonus": 2
+    }
+    ```
+- These are applied by the backend; the frontend does not need to read them, but they explain the numbers shown on the Scoring screen.
+
 ## 4. Non-Functional Requirements
 
 ### 4.1. Performance
@@ -537,13 +643,18 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
 
 ### 4.2. Security
 - **JWT Handling**: The JWT token received upon login/registration must be securely stored client-side (e.g., `localStorage` for convenience, but `HttpOnly` cookies are more secure for production environments). The frontend will be responsible for extracting the `userId` from the JWT token.
-- **Authorization Header**: All authenticated API requests must include the `Authorization: Bearer <token>` header.
-- **User ID Header**: The `X-User-Id` header must be included in relevant API requests, with the `userId` extracted from the JWT.
-- **Role-Based Access Control**: The frontend should extract the user's `role` from the JWT to conditionally render UI elements or restrict access to certain routes (e.g., for ADMIN screens).
+- **Authorization Header**: All authenticated API requests must include the `Authorization: Bearer <token>` header. This is the **only** header the backend needs for identity — it extracts the `userId` and `role` from the token itself. (There is no `X-User-Id` header; do not send one.)
+- **Role-Based Access Control**: The frontend may extract the user's `role` from the JWT to conditionally render UI elements or restrict access to certain routes (e.g., for ADMIN screens). The backend independently enforces roles on admin endpoints (403 on violation).
 
 ### 4.3. Error Handling
-- **Specific Error Messages**: For known API error codes (e.g., 409, 401, 404), display user-friendly and specific error messages as detailed in the functional requirements.
-- **Generic 500 Error**: Any `500 Internal Server Error` from the backend should trigger a small, non-blocking pop-up/toast notification with a red background, displaying "Internal Server Error". This pop-up should be dismissible or auto-hide after a few seconds.
+- **Consistent response envelope**: **Every** backend response — success or error — is a JSON object with `status` (e.g. `"400 BAD_REQUEST"`), `message` (a human-readable string), and, on success, `data`. The frontend can display `message` directly for most errors and branch on `status`.
+- **Specific Error Messages**: For known API error codes, display user-friendly messages as detailed in the functional requirements. Status codes the backend uses:
+    - `400 BAD_REQUEST` — validation failure (missing/invalid fields; the `message` names the failing field), malformed JSON body, or an action attempted in the wrong game state (`INVALID_GAME_STATUS`).
+    - `401 UNAUTHORIZED` — missing/invalid/expired token (also returned as the envelope). Redirect to login.
+    - `403 FORBIDDEN` — authenticated but not allowed (e.g. a non-admin calling an admin endpoint).
+    - `404 NOT_FOUND` — entity does not exist.
+    - `409 CONFLICT` — a duplicate (e.g. user/category/group already exists) or a concurrent-modification conflict (two overlapping writes to the same game — safe to retry the last action).
+- **Generic 500 Error**: Any `500 Internal Server Error` should trigger a small, non-blocking toast with a red background displaying "Internal Server Error". Dismissible or auto-hide after a few seconds.
 - **Network Errors**: Handle network connectivity issues gracefully (e.g., "No internet connection").
 
 ## 5. Technical Considerations
@@ -556,7 +667,7 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
 
 ### 5.3. API Integration
 - Use a library like Axios for making HTTP requests.
-- Implement request interceptors to automatically attach the `Authorization` and `X-User-Id` headers (after extracting `userId` from the JWT).
+- Implement a request interceptor to automatically attach the `Authorization: Bearer <token>` header to authenticated requests.
 - Implement response interceptors to handle global error conditions (e.g., 401 unauthorized, 500 internal server error) and potentially refresh tokens if applicable.
 
 ### 5.4. Routing
@@ -572,13 +683,18 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
 ### Authentication
 - `POST http://localhost:8080/auth/register`: User registration.
 - `POST http://localhost:8080/auth/login`: User login.
-- `POST http://localhost:8080/auth/logout`: User logout.
+- Logout: client-side only (discard the token) — no backend endpoint.
 
 ### Game Engine
 - `POST http://localhost:8080/game-engine/reset`: Resets the current game for the user.
 - `GET http://localhost:8080/game-engine/get-screen`: Retrieves the current game screen/status for the user.
-- `POST http://localhost:8080/game-engine/role-reveal`: Advances the role reveal process for each player.
-- `POST http://localhost:8080/game-engine/game-option`: Sets game options like the number of spies.
+- `GET http://localhost:8080/game-engine/role-reveal`: Advances the role reveal process for each player (call once per screen until `data.isLast` is true).
+- `POST http://localhost:8080/game-engine/game-option`: Sets game options like the number of spies (`number_of_spy`, 1 or 2).
+- `GET http://localhost:8080/game-engine/voting`: Retrieves the current voter's voting screen (valid at `VOTING`/`REVOTE`).
+- `POST http://localhost:8080/game-engine/vote?player_id={n}`: Casts a vote for player number `n`.
+- `POST http://localhost:8080/game-engine/next-round`: Advances from `ROUND_END` into the next round.
+- `POST http://localhost:8080/game-engine/spy-guess`: A spy guesses the word (`{ "word": "..." }`).
+- `POST http://localhost:8080/game-engine/spy-decline`: A caught spy declines to guess.
 
 ### Group Management
 - `GET http://localhost:8080/group/get`: Retrieves all available groups or a specific group.
@@ -597,29 +713,22 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
 
 ## Backend Enhancements Needed for Current Scope
 
-Based on the frontend requirements, the following enhancement is necessary for a smooth frontend integration:
+The following captures the current backend status — what is already available, and what is still pending — for frontend integration:
 
+1.  **`GET /game-engine/get-screen` Endpoint** — ✅ **Implemented.** Returns the current `gameStatus` plus state-specific data in `data` (see the per-screen sections above, including the new `SPY_GUESS`/`ROUND_END`/`SCORING` payloads). The `userId` is derived from the JWT by the backend.
 
-1.  **`GET /game-engine/get-screen` Endpoint**:
-    - **Necessity**: Critical for the frontend to determine the current game state and navigate to the correct screen after login or a game reset. This endpoint is mentioned in the prompt but is not explicitly present in the provided `GameEngineService.java` or its corresponding controller.
-    - **Recommendation**: Implement a new public method in `GameEngineService` (e.g., `getCurrentScreenData(Long userId)`) that fetches `UserGameDetail` and returns a DTO containing `gameStatus` and potentially `ScreenData` (if `ScreenData` can be built without player-specific details at this stage, or a simpler DTO for initial screen determination). This method would then be exposed via a new `GET /game-engine/get-screen` endpoint in a controller. The response should ideally contain enough information for the frontend to render the appropriate screen (e.g., if `gameStatus` is `CATEGORY_SELECTION`, it might include a list of categories or a flag to fetch them).
-    - **Note**: The `userId` for this endpoint should be extracted from the JWT token by the backend.
-
-2.  **`PUT /group/get?groupId={id}` Endpoint Implementation**:
+2.  **`PUT /group/get?groupId={id}` Endpoint Implementation** — ⚠️ **Still pending** (not yet implemented on the backend):
     - **Necessity**: The frontend requires an API to update group details (name, players). The prompt states this is not yet integrated but will be in this version.
     - **Recommendation**: Implement the `PUT /group/get?groupId={id}` endpoint in the backend to handle updating group information. This would likely involve a new method in `GroupService` that takes a `groupId` and a `GroupRequest` (or a similar DTO) to update the corresponding `Group` entity.
     - **Note**: The `userId` for this endpoint should be extracted from the JWT token by the backend.
 
-3.  **Configuration Endpoints for Game Logic**:
-    - **Necessity**: The frontend needs to dynamically fetch configuration values for game rules.
-    - **Recommendation**: Ensure the `GET http://localhost:8080/config/get` endpoint provides the following keys:
+3.  **Configuration for Game Logic** — mostly ✅ available via `GET http://localhost:8080/config/get`. Keys:
         - `min_player_allowed_in_group`: Minimum number of players allowed in a group.
         - `max_player_allowed_in_group`: Maximum number of players allowed in a group.
-        - `max_group_allowed`: Maximum number of groups a user can create.
-        - `min_spy_allowed`: Minimum number of spies allowed in a game.
-        - `max_spy_allowed`: Maximum number of spies allowed in a game.
+        - `max_group_allowed`: Maximum number of groups a user can create. *(pending — not yet seeded)*
+        - `min_spy_allowed` / `max_spy_allowed`: Spy count bounds. Note the game logic supports **1 or 2 spies** — cap the Game Option UI at 2.
         - `discussion_duration`: Duration for the discussion phase in seconds.
-    - **Note**: The `userId` for this endpoint should be extracted from the JWT token by the backend.
+        - `scoring_config`: A JSON string with the scoring rules — see **3.2.15** (the frontend does not need to read this; it's applied server-side).
 
 4.  **`roleDescriptionText` for Spies**:
     - **Necessity**: The current `ROLE_REVEAL` response for spies has `roleDescriptionText: null`. To provide a richer experience, especially for future features like a "spy word," this field should be populated.
