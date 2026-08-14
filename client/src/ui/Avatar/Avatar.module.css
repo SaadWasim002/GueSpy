@@ -1,0 +1,115 @@
+.avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+  user-select: none;
+
+  /* --hue is set inline from the player's name (see Avatar.jsx). */
+  color: oklch(92% 0.06 var(--hue));
+  background: linear-gradient(
+    145deg,
+    oklch(45% 0.13 var(--hue)),
+    oklch(28% 0.1 calc(var(--hue) + 28))
+  );
+  box-shadow:
+    inset 0 1px 0 oklch(70% 0.12 var(--hue) / 45%),
+    var(--shadow-sm);
+}
+
+.xs {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: var(--text-2xs);
+}
+.sm {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: var(--text-xs);
+}
+.md {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--text-md);
+}
+.lg {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: var(--text-2xl);
+}
+.xl {
+  width: 6.5rem;
+  height: 6.5rem;
+  font-size: var(--text-3xl);
+}
+
+/* Ring states — reused wherever a player needs a status: current turn,
+   eliminated, revealed as the hidden role. */
+.ringed {
+  box-shadow:
+    inset 0 1px 0 oklch(70% 0.12 var(--hue) / 45%),
+    0 0 0 2px var(--color-bg),
+    0 0 0 4px var(--ring-color, var(--accent));
+}
+
+.active {
+  --ring-color: var(--accent);
+  animation: float-y 3s var(--ease-in-out) infinite;
+}
+
+.eliminated {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.eliminated::after {
+  content: "";
+  position: absolute;
+  inset: 50% 8% auto;
+  height: 2px;
+  background: var(--color-text-muted);
+  transform: rotate(-18deg);
+  transform-origin: center;
+}
+
+.badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  min-width: 1.25em;
+  height: 1.25em;
+  padding-inline: 0.3em;
+  font-size: max(0.6rem, 0.42em);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-overlay);
+  border: 2px solid var(--color-bg);
+  color: var(--color-text);
+}
+
+.stack {
+  display: flex;
+  align-items: center;
+}
+
+/* Overlapping row for a compact roster. */
+.stack > * + * {
+  margin-left: -0.6em;
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.overflow {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface-overlay);
+  color: var(--color-text-soft);
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+}

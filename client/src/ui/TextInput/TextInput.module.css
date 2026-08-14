@@ -1,0 +1,154 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-soft);
+  letter-spacing: var(--tracking-tight);
+}
+
+.shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-inline: var(--sp-4);
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.shell:hover:not(.disabled) {
+  border-color: var(--color-border-strong);
+}
+
+/* Focus lives on the shell, not the input, so the whole control lights up. */
+.shell:focus-within {
+  border-color: var(--accent);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 4px var(--accent-veil);
+}
+
+.invalid {
+  border-color: var(--color-danger);
+}
+
+.invalid:focus-within {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 4px var(--color-danger-soft);
+}
+
+.shake {
+  animation: shake var(--dur-slow) var(--ease-in-out);
+}
+
+.disabled {
+  opacity: 0.55;
+}
+
+.sm .input {
+  height: 2.5rem;
+  font-size: var(--text-sm);
+}
+
+.md .input {
+  height: 3rem;
+}
+
+.lg .input {
+  height: 3.5rem;
+  font-size: var(--text-lg);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.input::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* Chrome/Safari autofill repaints the field white — override it. */
+.input:-webkit-autofill,
+.input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-text);
+  -webkit-box-shadow: 0 0 0 100px var(--color-surface-sunken) inset;
+  caret-color: var(--color-text);
+}
+
+/* Centred, spaced-out input for codes and single words. */
+.centered .input {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+}
+
+.adornment {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  color: var(--color-text-faint);
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  margin-right: calc(var(--sp-2) * -1);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.toggle:hover {
+  color: var(--color-text);
+  background: var(--color-surface-overlay);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 1rem;
+  font-size: var(--text-xs);
+}
+
+.hint {
+  color: var(--color-text-faint);
+}
+
+.error {
+  color: var(--color-danger);
+  font-weight: var(--weight-medium);
+  animation: drop-in var(--dur-fast) var(--ease-out);
+}
+
+.counter {
+  margin-left: auto;
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+}

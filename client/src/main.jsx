@@ -1,19 +1,18 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router } from 'react-router-dom';
-import App from './App';
-import { AuthProvider } from './context/AuthContext';
-import { GameProvider } from './context/GameContext';
-import './index.css';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { ToastProvider } from "@/ui";
+import { Gallery } from "@/dev/Gallery/Gallery";
+import "@/styles/global.css";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Router>
-      <AuthProvider>
-        <GameProvider>
-          <App />
-        </GameProvider>
-      </AuthProvider>
-    </Router>
-  </React.StrictMode>,
+/*
+ * The router, auth and game providers land in the app-shell branch. Until
+ * then the root renders the component gallery, which keeps the design system
+ * runnable (`npm run dev`) while the screens are rebuilt on top of it.
+ */
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <ToastProvider>
+      <Gallery />
+    </ToastProvider>
+  </StrictMode>,
 );

@@ -1,0 +1,153 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.button:not(:disabled):active {
+  transform: translateY(0) scale(0.975);
+  transition-duration: var(--dur-instant);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  transform: none;
+}
+
+/* --- sizes --- */
+
+.sm {
+  height: 2.25rem;
+  padding-inline: var(--sp-4);
+  font-size: var(--text-sm);
+}
+
+.md {
+  height: 2.75rem;
+  padding-inline: var(--sp-6);
+  font-size: var(--text-md);
+}
+
+.lg {
+  height: 3.375rem;
+  padding-inline: var(--sp-7);
+  font-size: var(--text-lg);
+}
+
+/* --- variants --- */
+
+.primary {
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  color: var(--accent-contrast);
+  box-shadow:
+    var(--shadow-inset-top),
+    0 8px 24px -10px var(--accent);
+}
+
+.primary:not(:disabled):hover {
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-bright));
+  box-shadow:
+    var(--shadow-inset-top),
+    0 12px 30px -10px var(--accent);
+}
+
+.secondary {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.secondary:not(:disabled):hover {
+  background: var(--color-surface-overlay);
+  border-color: var(--accent-line);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-text-soft);
+}
+
+.ghost:not(:disabled):hover {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.danger {
+  background: var(--color-danger);
+  color: #fff;
+  box-shadow:
+    var(--shadow-inset-top),
+    0 8px 24px -10px var(--color-danger);
+}
+
+.danger:not(:disabled):hover {
+  background: color-mix(in oklab, var(--color-danger) 88%, white);
+}
+
+/* Quiet destructive action — used inside menus and cards. */
+.dangerGhost {
+  background: transparent;
+  color: var(--color-danger);
+}
+
+.dangerGhost:not(:disabled):hover {
+  background: var(--color-danger-soft);
+}
+
+/* --- modifiers --- */
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Draws attention to the one action a screen is waiting on. */
+.pulse:not(:disabled) {
+  animation: pulse-glow 2.4s var(--ease-in-out) infinite;
+}
+
+/* While loading, the label is hidden but still occupies its width so the
+   button does not resize mid-action. */
+.loading .label,
+.loading .affix {
+  opacity: 0;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.label {
+  display: inline-block;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.affix {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.1em;
+  line-height: 1;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}

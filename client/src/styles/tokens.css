@@ -1,0 +1,209 @@
+/*
+ * Design tokens — the single source of truth for the whole platform.
+ *
+ * Nothing below this file should hard-code a colour, radius, duration or
+ * shadow. Components read tokens; games re-skin by overriding the small
+ * `--accent-*` / `--game-*` group on a `[data-game]` scope (see a game
+ * module's theme.css), which is what keeps multiple games visually distinct
+ * without forking the UI kit.
+ */
+
+:root {
+  /* ---------------------------------------------------------------
+   * Palette primitives — raw values, referenced only by the semantic
+   * tokens further down. Prefer the semantic names in components.
+   * --------------------------------------------------------------- */
+  --p-ink-950: #07070d;
+  --p-ink-900: #0b0b14;
+  --p-ink-850: #10101c;
+  --p-ink-800: #161624;
+  --p-ink-700: #1e1e30;
+  --p-ink-600: #29293f;
+  --p-ink-500: #383852;
+  --p-ink-400: #4d4d6b;
+
+  --p-mist-100: #f4f4fb;
+  --p-mist-200: #d9d9ea;
+  --p-mist-300: #b0b0cb;
+  --p-mist-400: #8585a6;
+  --p-mist-500: #61617f;
+
+  --p-violet: #7c5cff;
+  --p-violet-bright: #9b82ff;
+  --p-violet-deep: #5b3fd6;
+
+  --p-rose: #ff4d6d;
+  --p-amber: #ffb648;
+  --p-mint: #3ddc97;
+  --p-cyan: #47d5ff;
+
+  /* ---------------------------------------------------------------
+   * Surfaces & text
+   * --------------------------------------------------------------- */
+  --color-bg: var(--p-ink-900);
+  --color-bg-deep: var(--p-ink-950);
+  --color-surface: var(--p-ink-850);
+  --color-surface-raised: var(--p-ink-800);
+  --color-surface-overlay: var(--p-ink-700);
+  --color-surface-sunken: var(--p-ink-950);
+
+  --color-border: rgb(255 255 255 / 8%);
+  --color-border-strong: rgb(255 255 255 / 16%);
+  --color-border-faint: rgb(255 255 255 / 4%);
+
+  --color-text: var(--p-mist-100);
+  --color-text-soft: var(--p-mist-300);
+  --color-text-muted: var(--p-mist-400);
+  --color-text-faint: var(--p-mist-500);
+  --color-text-on-accent: #0b0b14;
+
+  /* ---------------------------------------------------------------
+   * Accent — the one group a game module is expected to override.
+   * --accent-soft/-veil are pre-mixed so components never need to know
+   * the accent's colour space.
+   * --------------------------------------------------------------- */
+  --accent: var(--p-violet);
+  --accent-bright: var(--p-violet-bright);
+  --accent-deep: var(--p-violet-deep);
+  --accent-contrast: #ffffff;
+  --accent-soft: color-mix(in oklab, var(--accent) 18%, transparent);
+  --accent-veil: color-mix(in oklab, var(--accent) 8%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 40%, transparent);
+
+  /* Secondary accent, used for playful contrast (highlights, confetti). */
+  --accent-2: var(--p-cyan);
+
+  /* ---------------------------------------------------------------
+   * Status
+   * --------------------------------------------------------------- */
+  --color-success: var(--p-mint);
+  --color-success-soft: color-mix(in oklab, var(--p-mint) 16%, transparent);
+  --color-danger: var(--p-rose);
+  --color-danger-soft: color-mix(in oklab, var(--p-rose) 16%, transparent);
+  --color-warning: var(--p-amber);
+  --color-warning-soft: color-mix(in oklab, var(--p-amber) 16%, transparent);
+  --color-info: var(--p-cyan);
+  --color-info-soft: color-mix(in oklab, var(--p-cyan) 16%, transparent);
+
+  /* Role colours — shared vocabulary across every hidden-role game. */
+  --color-role-hidden: var(--p-rose);
+  --color-role-crew: var(--p-mint);
+
+  /* ---------------------------------------------------------------
+   * Typography
+   * --------------------------------------------------------------- */
+  --font-display: "Outfit", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Fluid scale: comfortable on a phone, generous on a shared laptop. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: clamp(1.0625rem, 0.98rem + 0.4vw, 1.1875rem);
+  --text-xl: clamp(1.25rem, 1.14rem + 0.55vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --text-3xl: clamp(1.875rem, 1.55rem + 1.6vw, 2.75rem);
+  --text-4xl: clamp(2.375rem, 1.85rem + 2.6vw, 4rem);
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 800;
+
+  --leading-tight: 1.12;
+  --leading-snug: 1.3;
+  --leading-normal: 1.55;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-widest: 0.14em;
+
+  /* ---------------------------------------------------------------
+   * Space — 4px base
+   * --------------------------------------------------------------- */
+  --sp-0: 0;
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-7: 2rem;
+  --sp-8: 2.5rem;
+  --sp-9: 3rem;
+  --sp-10: 4rem;
+  --sp-11: 5rem;
+  --sp-12: 6rem;
+
+  /* ---------------------------------------------------------------
+   * Radii, borders, shadows
+   * --------------------------------------------------------------- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 55%);
+  --shadow-lg: 0 20px 50px -16px rgb(0 0 0 / 70%);
+  --shadow-xl: 0 32px 80px -20px rgb(0 0 0 / 78%);
+  --shadow-glow: 0 0 0 1px var(--accent-line), 0 12px 40px -12px var(--accent-soft);
+  --shadow-inset-top: inset 0 1px 0 rgb(255 255 255 / 6%);
+
+  /* ---------------------------------------------------------------
+   * Motion — durations and easings shared by CSS and `motion`.
+   * --------------------------------------------------------------- */
+  --dur-instant: 90ms;
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 400ms;
+  --dur-slower: 700ms;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---------------------------------------------------------------
+   * Layering
+   * --------------------------------------------------------------- */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-header: 200;
+  --z-overlay: 800;
+  --z-modal: 900;
+  --z-toast: 1000;
+
+  /* ---------------------------------------------------------------
+   * Layout
+   * --------------------------------------------------------------- */
+  --layout-max: 72rem;
+  --layout-narrow: 32rem;
+  --layout-reading: 44rem;
+  --header-h: 3.75rem;
+  --gutter: clamp(var(--sp-4), 4vw, var(--sp-8));
+
+  color-scheme: dark;
+}
+
+/*
+ * Respect the OS setting. Motion tokens collapse to ~0 so every animation
+ * built on them degrades in one place rather than per component.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 1ms;
+    --dur-fast: 1ms;
+    --dur-base: 1ms;
+    --dur-slow: 1ms;
+    --dur-slower: 1ms;
+  }
+}

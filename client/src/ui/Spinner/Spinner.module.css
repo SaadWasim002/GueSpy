@@ -1,0 +1,53 @@
+.spinner {
+  display: inline-block;
+  flex: none;
+  border-radius: 50%;
+  border: var(--ring-width) solid var(--color-border-strong);
+  border-top-color: currentColor;
+  animation: spin 0.7s linear infinite;
+}
+
+.xs {
+  --ring-width: 1.5px;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.sm {
+  --ring-width: 2px;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.md {
+  --ring-width: 2.5px;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.lg {
+  --ring-width: 3px;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+/* Full-area centred spinner, for panels that are still loading. */
+.block {
+  display: grid;
+  place-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-9) var(--sp-4);
+  color: var(--accent-bright);
+}
+
+.blockLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  letter-spacing: var(--tracking-wide);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.6s;
+  }
+}

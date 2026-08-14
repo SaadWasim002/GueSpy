@@ -1,0 +1,50 @@
+/*
+ * Demo accent themes for the gallery.
+ *
+ * These exist to prove the re-skinning mechanism a real game module will use:
+ * scope a `:root[data-game="…"]` selector and override only the accent group.
+ * Every component, plus the ambient page backdrop, retints from these four
+ * declarations alone — nothing else in the kit needs to know a game exists.
+ *
+ * Note the `:root` prefix. A bare `[data-game="…"]` has the *same*
+ * specificity as the `:root` block in tokens.css, so which one wins comes
+ * down to the order the bundler happens to emit the two files in — the
+ * override silently loses whenever the theme file lands first. Qualifying it
+ * with `:root` outranks the defaults outright. Game module themes must do
+ * the same.
+ *
+ * Crimson is included as a deliberate cautionary case: its accent sits on
+ * top of --color-danger, which makes a primary button and a destructive one
+ * nearly indistinguishable. A real game should pick an accent that is
+ * clearly away from the danger and success hues.
+ */
+
+:root[data-game="violet"] {
+  --accent: #7c5cff;
+  --accent-bright: #9b82ff;
+  --accent-deep: #5b3fd6;
+  --accent-2: #47d5ff;
+}
+
+:root[data-game="crimson"] {
+  --accent: #ff4d6d;
+  --accent-bright: #ff7d95;
+  --accent-deep: #d12b4c;
+  --accent-2: #ffb648;
+}
+
+:root[data-game="mint"] {
+  --accent: #3ddc97;
+  --accent-bright: #6ff0b8;
+  --accent-deep: #1fae72;
+  --accent-2: #47d5ff;
+  --accent-contrast: #05130d;
+}
+
+:root[data-game="amber"] {
+  --accent: #ffb648;
+  --accent-bright: #ffd08a;
+  --accent-deep: #d98d1c;
+  --accent-2: #ff4d6d;
+  --accent-contrast: #1a1204;
+}

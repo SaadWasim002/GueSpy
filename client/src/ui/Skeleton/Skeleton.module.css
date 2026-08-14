@@ -1,0 +1,43 @@
+.skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(
+      90deg,
+      var(--color-surface-raised) 25%,
+      var(--color-surface-overlay) 37%,
+      var(--color-surface-raised) 63%
+    );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.text {
+  height: 0.85em;
+  border-radius: var(--radius-pill);
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.card {
+  border-radius: var(--radius-lg);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Ragged last line reads more like real text than a full-width bar. */
+.group > .text:last-child:not(:only-child) {
+  width: 60%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

@@ -1,0 +1,75 @@
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+}
+
+.button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.button:not(:disabled):hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-bright);
+}
+
+.button:not(:disabled):active {
+  transform: scale(0.9);
+  transition-duration: var(--dur-instant);
+}
+
+/* Reads as disabled but stays clickable so the limit message can fire. */
+.atLimit {
+  opacity: 0.3;
+}
+
+.atLimit:not(:disabled):hover {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.readout {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 4.5rem;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+/* Fires when a bound is hit, so the control acknowledges the press even
+   though the value did not change. */
+.bounced {
+  animation: shake var(--dur-slow) var(--ease-in-out);
+}

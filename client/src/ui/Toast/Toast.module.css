@@ -1,0 +1,120 @@
+.viewport {
+  position: fixed;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  width: min(24rem, calc(100vw - var(--sp-8)));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--tone-border, var(--color-border-strong));
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+}
+
+/* Colour lives on a left rail rather than the whole surface, so a toast
+   never fights the screen behind it for attention. */
+.toast::before {
+  content: "";
+  position: absolute;
+  inset: var(--sp-2) auto var(--sp-2) 0;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--tone-color, var(--color-text-muted));
+}
+
+.toast {
+  position: relative;
+  overflow: hidden;
+}
+
+.error {
+  --tone-color: var(--color-danger);
+  --tone-border: color-mix(in oklab, var(--color-danger) 40%, transparent);
+  background: color-mix(in oklab, var(--color-danger) 12%, var(--color-surface-raised));
+}
+
+.success {
+  --tone-color: var(--color-success);
+  --tone-border: color-mix(in oklab, var(--color-success) 40%, transparent);
+  background: color-mix(in oklab, var(--color-success) 10%, var(--color-surface-raised));
+}
+
+.info {
+  --tone-color: var(--color-info);
+  --tone-border: color-mix(in oklab, var(--color-info) 35%, transparent);
+}
+
+.warning {
+  --tone-color: var(--color-warning);
+  --tone-border: color-mix(in oklab, var(--color-warning) 40%, transparent);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 1px;
+  color: var(--tone-color, var(--color-text-muted));
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.message {
+  font-size: var(--text-sm);
+  color: var(--color-text-soft);
+  overflow-wrap: anywhere;
+}
+
+.title + .message {
+  margin-top: 2px;
+}
+
+.close {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-xs);
+  color: var(--color-text-faint);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.close:hover {
+  color: var(--color-text);
+}
+
+@media (max-width: 30rem) {
+  .viewport {
+    top: auto;
+    bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+    left: var(--sp-4);
+    right: var(--sp-4);
+    width: auto;
+    align-items: stretch;
+  }
+}
