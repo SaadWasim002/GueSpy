@@ -1,0 +1,72 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: var(--header-h);
+  padding-inline: var(--gutter);
+  background: color-mix(in oklab, var(--color-bg) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.brand:hover {
+  opacity: 0.82;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg, var(--accent-bright), var(--accent-deep));
+  color: var(--accent-contrast);
+  font-size: 0.9rem;
+}
+
+/* The second half of the wordmark carries the accent, so the brand retints
+   with whichever game is open. */
+.brandAccent {
+  color: var(--accent-bright);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.username {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-soft);
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .username {
+    display: none;
+  }
+}

@@ -18,27 +18,39 @@ export const api = axios.create({
 });
 
 const handlers = {
-  getToken: () => null,
   onUnauthorized: () => {},
   notify: () => {},
 };
 
 /**
- * Wire the client to the running app. Called once, from AuthProvider.
+ * The bearer token for outgoing requests.
+ *
+ * Held here, rather than read from React state or storage, for two reasons:
+ * the interceptor needs it synchronously at request time, and localStorage
+ * may be unavailable (private mode) without that breaking the live session.
+ * AuthProvider is the only writer.
+ */
+let currentToken = null;
+
+/** Set or clear the token used by every subsequent request. */
+export function setAuthToken(token) {
+  currentToken = token ?? null;
+}
+
+/**
+ * Wire the client's React-side callbacks. Called once, from AuthProvider.
  *
  * @param {object} next
- * @param {() => string|null} next.getToken       current bearer token
- * @param {() => void}        next.onUnauthorized session died — sign out
- * @param {(e: ApiError) => void} next.notify     surface a global failure
+ * @param {() => void}            next.onUnauthorized session died — sign out
+ * @param {(e: ApiError) => void} next.notify         surface a global failure
  */
 export function configureApi(next) {
   Object.assign(handlers, next);
 }
 
 api.interceptors.request.use((config) => {
-  const token = handlers.getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (currentToken) {
+    config.headers.Authorization = `Bearer ${currentToken}`;
   }
   // Deliberately no X-User-Id header: the backend derives the user from the
   // token itself, and sending one would imply the client can choose it.
@@ -58,7 +70,7 @@ api.interceptors.response.use(
       // Expired or invalid token. Clearing the session sends the user to
       // login via the router; the screen that made the call still sees the
       // rejection and can stop its own work.
-      handlers.onUnauthorized();
+      handlers.onUnauthorized(Boolean(currentToken));
     } else if (apiError.isServerError || apiError.isNetworkError) {
       // Faults the user can do nothing about are announced globally, so no
       // screen has to remember to handle them. Everything else (400/404/409)

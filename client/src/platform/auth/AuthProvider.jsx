@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { configureApi } from "../../lib/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { configureApi, setAuthToken } from "../../lib/api";
 import { decodeToken, isTokenExpired } from "../../lib/jwt";
 import { readStorage, removeStorage, STORAGE_KEYS, writeStorage } from "../../lib/storage";
 import { useToast } from "../../ui";
@@ -16,47 +16,53 @@ function restoreSession() {
   return { token, user: decodeToken(token) };
 }
 
+/*
+ * Restore at module load, before React renders anything.
+ *
+ * Doing this outside the component means the session is known synchronously
+ * on the very first render: no "booting" state, and no frame where a
+ * returning user with a valid token is bounced to /login. It also means the
+ * API client has the token before any screen effect can fire a request —
+ * child effects run before a parent's, so an effect-based handoff here would
+ * be too late.
+ */
+const INITIAL_SESSION = restoreSession();
+setAuthToken(INITIAL_SESSION.token);
+
 export function AuthProvider({ children }) {
   const toast = useToast();
-
-  const [session, setSession] = useState(() => restoreSession());
-  // `isBooting` covers the first synchronous restore. It exists so protected
-  // routes don't bounce a returning user to /login for one frame before the
-  // stored token is read.
-  const [isBooting, setIsBooting] = useState(true);
-
-  // The interceptor closure is installed once but must always see the
-  // *current* token, so it reads a ref rather than captured state.
-  const tokenRef = useRef(session.token);
-  tokenRef.current = session.token;
+  const [session, setSession] = useState(INITIAL_SESSION);
 
   const signOut = useCallback(() => {
+    setAuthToken(null);
     removeStorage(STORAGE_KEYS.token);
     setSession({ token: null, user: null });
   }, []);
 
   const adoptToken = useCallback((token) => {
     if (!token) throw new Error("Authentication succeeded but returned no token.");
+    // Token first: it must be live before any screen reacts to the state
+    // change by fetching.
+    setAuthToken(token);
     writeStorage(STORAGE_KEYS.token, token);
     setSession({ token, user: decodeToken(token) });
   }, []);
 
-  // Hand the HTTP client its React-side dependencies. Effects run child-first,
-  // so this is set before any screen can fire a request.
+  // Hand the HTTP client its React-side callbacks.
   useEffect(() => {
     configureApi({
-      getToken: () => tokenRef.current,
-      onUnauthorized: () => {
+      onUnauthorized: (hadToken) => {
         // Only announce an expiry the user was in a position to notice. A 401
         // while already signed out is just an unauthenticated call.
-        if (tokenRef.current) {
-          toast.error("Your session expired. Please log in again.", { dedupeKey: "session-expired" });
+        if (hadToken) {
+          toast.error("Your session expired. Please log in again.", {
+            dedupeKey: "session-expired",
+          });
         }
         signOut();
       },
       notify: (error) => toast.error(error.message, { dedupeKey: `global:${error.status}` }),
     });
-    setIsBooting(false);
   }, [toast, signOut]);
 
   // A token is valid for an hour; sign out the moment it lapses rather than
@@ -90,12 +96,11 @@ export function AuthProvider({ children }) {
     () => ({
       user: session.user,
       isAuthenticated: Boolean(session.token),
-      isBooting,
       login,
       register,
       logout: signOut,
     }),
-    [session, isBooting, login, register, signOut],
+    [session, login, register, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
