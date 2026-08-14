@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.game.gueSpy.converter.GameDataConverter;
 import com.game.gueSpy.converter.UsedWordsConverter;
 import com.game.gueSpy.enums.GameStatus;
+import com.game.gueSpy.enums.GameType;
 import com.game.gueSpy.model.GameData;
 import com.game.gueSpy.model.UsedWords;
 
@@ -48,6 +49,9 @@ public class UserGameDetail {
 
     @Enumerated(EnumType.STRING)
     private GameStatus gameStatus;
+
+    @Enumerated(EnumType.STRING)
+    private GameType gameType;
 
     @Convert(converter = GameDataConverter.class)
     @Column(columnDefinition = "TEXT")
