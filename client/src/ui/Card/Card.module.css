@@ -1,0 +1,88 @@
+.card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* --- padding --- */
+
+.padNone {
+  padding: 0;
+}
+.padSm {
+  padding: var(--sp-4);
+}
+.padMd {
+  padding: var(--sp-6);
+}
+.padLg {
+  padding: var(--sp-7);
+}
+
+/* --- tone --- */
+
+.raised {
+  background: var(--color-surface-raised);
+}
+
+/* Frosted panel for content sitting over the ambient backdrop. */
+.glass {
+  background: color-mix(in oklab, var(--color-surface) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-color: var(--color-border-strong);
+}
+
+.outline {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* --- interactive (selectable cards: categories, groups, players) --- */
+
+.interactive {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.interactive:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-lg);
+}
+
+.interactive:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  transition-duration: var(--dur-instant);
+}
+
+.interactive:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selected {
+  border-color: var(--accent);
+  background: var(--accent-veil);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Accent hairline along the top edge — a cheap way to make a hero panel
+   feel deliberate without adding chrome. */
+.accentEdge::before {
+  content: "";
+  position: absolute;
+  inset: 0 var(--sp-7) auto;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.8;
+}
