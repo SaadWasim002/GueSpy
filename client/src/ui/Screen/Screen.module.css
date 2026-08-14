@@ -6,6 +6,13 @@
   margin-inline: auto;
   padding: var(--sp-8) var(--gutter) var(--sp-9);
   min-height: 100%;
+
+  /*
+   * No fill-mode on purpose. The resting style is fully visible and the
+   * keyframes only apply while the animation runs, so a screen can never be
+   * left invisible by an animation that fails to start or finish.
+   */
+  animation: rise-in var(--dur-base) var(--ease-out);
 }
 
 .narrow {
@@ -77,8 +84,11 @@
   padding-top: var(--sp-2);
 }
 
+/* A centred screen groups its content in the middle, so the actions belong
+   directly under it — not pushed to the bottom edge by the `auto` above. */
 .actionsCentered {
   justify-content: center;
+  margin-top: var(--sp-4);
 }
 
 @media (max-width: 40rem) {
