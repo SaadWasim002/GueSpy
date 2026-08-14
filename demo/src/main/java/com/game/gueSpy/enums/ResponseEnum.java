@@ -68,6 +68,7 @@ public enum ResponseEnum {
     ACCESS_DENIED(MessageConstants.accessDenied, HttpStatus.FORBIDDEN),
     MALFORMED_REQUEST(MessageConstants.malformedRequest, HttpStatus.BAD_REQUEST),
     CONCURRENT_MODIFICATION(MessageConstants.concurrentModification, HttpStatus.CONFLICT),
+    UNSUPPORTED_GAME_TYPE(MessageConstants.unsupportedGameType, HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_DATA(MessageConstants.invalidData, HttpStatus.OK),
     TESTING(MessageConstants.testing, HttpStatus.OK);
     
