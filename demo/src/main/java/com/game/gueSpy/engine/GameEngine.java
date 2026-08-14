@@ -34,4 +34,8 @@ public interface GameEngine {
     ResponseEntity<?> vote(Long userId, Integer playerId);
 
     ResponseEntity<?> nextRound(Long userId);
+
+    ResponseEntity<?> spyGuess(Long userId, String word);
+
+    ResponseEntity<?> spyDecline(Long userId);
 }

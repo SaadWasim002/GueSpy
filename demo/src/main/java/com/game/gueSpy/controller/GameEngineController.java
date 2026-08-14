@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GameOptionRequest;
+import com.game.gueSpy.dto.request.SpyGuessRequest;
 import com.game.gueSpy.engine.GameEngineResolver;
 import com.game.gueSpy.security.UserPrincipal;
 
@@ -92,5 +93,26 @@ public class GameEngineController {
     public ResponseEntity<?> nextRound(@AuthenticationPrincipal UserPrincipal principal){
         Long userId = principal.userId();
         return gameEngineResolver.resolveForUser(userId).nextRound(userId);
+    }
+
+    @PostMapping(
+        path = "/spy-guess",
+        name = "spy guesses the word",
+        consumes = "application/json",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> spyGuess(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody SpyGuessRequest request){
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).spyGuess(userId, request.getWord());
+    }
+
+    @PostMapping(
+        path = "/spy-decline",
+        name = "spy declines to guess",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> spyDecline(@AuthenticationPrincipal UserPrincipal principal){
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).spyDecline(userId);
     }
 }
