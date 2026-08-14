@@ -11,12 +11,14 @@ import com.game.gueSpy.dto.request.AppConfigRequest;
 import com.game.gueSpy.dto.response.AppConfigResponse;
 import com.game.gueSpy.entity.AppConfig;
 import com.game.gueSpy.enums.ResponseEnum;
+import com.game.gueSpy.exception.GameException;
 import com.game.gueSpy.repository.AppConfigRepository;
 import com.game.gueSpy.utility.GenericUtility;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @Slf4j
@@ -26,6 +28,8 @@ public class ConfigService {
     private final AppConfigRepository appConfigRepository;
 
     private final Map<String, String> cache = new ConcurrentHashMap<>();
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @PostConstruct 
     public void loadOnStartup(){
@@ -117,5 +121,17 @@ public class ConfigService {
 
     public String getString(String key){
         return cache.get(key);
+    }
+
+    /** Deserialise a JSON-valued config into the given type. */
+    public <T> T getJson(String key, Class<T> type){
+        String raw = cache.get(key);
+        GenericUtility.validate(raw == null, ResponseEnum.INTERNAL_SERVER_ERROR);
+        try {
+            return OBJECT_MAPPER.readValue(raw, type);
+        } catch (Exception e){
+            log.error("Invalid JSON for config key {}: {}", key, raw, e);
+            throw new GameException(ResponseEnum.INTERNAL_SERVER_ERROR);
+        }
     }
 }
