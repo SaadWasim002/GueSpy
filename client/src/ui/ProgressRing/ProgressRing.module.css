@@ -1,0 +1,53 @@
+.ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+.svg {
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.track {
+  stroke: var(--color-border);
+}
+
+.indicator {
+  stroke: var(--ring-color, var(--accent));
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur-base) linear, stroke var(--dur-slow) var(--ease-out);
+  filter: drop-shadow(0 0 8px color-mix(in oklab, var(--ring-color, var(--accent)) 55%, transparent));
+}
+
+/* Under ~10s left the ring breathes to signal urgency. */
+.urgent .indicator {
+  animation: pulse-opacity 1s var(--ease-in-out) infinite;
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+}
+
+.caption {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}

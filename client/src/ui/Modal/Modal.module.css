@@ -1,0 +1,102 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: rgb(4 4 10 / 68%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: min(86dvh, 46rem);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.sm {
+  max-width: 24rem;
+}
+.md {
+  max-width: 32rem;
+}
+.lg {
+  max-width: 44rem;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-6) var(--sp-4);
+}
+
+.headings {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+}
+
+.description {
+  margin-top: var(--sp-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--sp-6) var(--sp-6);
+}
+
+/* No header means the body provides its own top padding. */
+.bodyOnly {
+  padding-top: var(--sp-6);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+@media (max-width: 30rem) {
+  .backdrop {
+    padding: 0;
+    place-items: end center;
+  }
+
+  /* Sheet-from-bottom on phones — closer to thumb, easier to dismiss. */
+  .panel {
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+  }
+
+  .footer {
+    padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  }
+
+  .footer > * {
+    flex: 1;
+  }
+}

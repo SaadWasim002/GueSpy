@@ -1,0 +1,54 @@
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-9) var(--sp-6);
+  text-align: center;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  background: var(--accent-veil);
+  border: 1px solid var(--accent-line);
+  color: var(--accent-bright);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 38ch;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-1);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Failure reads differently from "nothing here yet". */
+.error {
+  border-color: color-mix(in oklab, var(--color-danger) 35%, transparent);
+}
+
+.error .icon {
+  background: var(--color-danger-soft);
+  border-color: color-mix(in oklab, var(--color-danger) 35%, transparent);
+  color: var(--color-danger);
+}

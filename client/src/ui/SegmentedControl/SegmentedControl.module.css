@@ -1,0 +1,60 @@
+.group {
+  position: relative;
+  display: inline-flex;
+  padding: var(--sp-1);
+  gap: var(--sp-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+}
+
+.fullWidth {
+  display: flex;
+  width: 100%;
+}
+
+.option {
+  position: relative;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 2.5rem;
+  padding-inline: var(--sp-5);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.option:not(:disabled):hover {
+  color: var(--color-text-soft);
+}
+
+.option:disabled {
+  opacity: 0.4;
+}
+
+.active {
+  color: var(--color-text);
+}
+
+/* The sliding pill sits behind the labels and is animated by motion's
+   shared-layout, so it travels between options instead of snapping. */
+.thumb {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-overlay);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.label {
+  position: relative;
+}
