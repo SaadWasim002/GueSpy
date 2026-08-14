@@ -5,4 +5,7 @@ public class ConfigName {
 
     // Round-based scoring — a single JSON blob deserialised into ScoringConfig
     public static final String scoringConfig = "scoring_config";
+
+    // The games available on the platform (JSON array), for the game-selection screen
+    public static final String activeGames = "active_games";
 }
