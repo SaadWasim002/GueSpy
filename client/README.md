@@ -47,7 +47,9 @@ This section details the functional requirements of the application. All success
     - "Already have an account? Login": Navigates to the login screen.
 - **API Endpoint**: `POST http://localhost:8080/auth/register`
     - **Request**: `{ "username": "...", "email": "...", "password": "..." }`
-    - **Success (201 CREATED)**: Display a success message (e.g., "Registration successful! Please log in."), store the received JWT token from the `data.token` field, and extract the `userId` from it. Automatically log the user in or redirect to the login screen.
+    - **Success (201 CREATED)**: Display a success message, store the received JWT token from the `data.token` field, and sign the user straight in — the token is immediately usable, so asking for the same credentials again is pure friction.
+
+      ⚠️ **Do not rely on `userId` from a registration token.** `AuthService.userRegister` generates the token *before* saving the user, so the id is still null and the claim is omitted entirely — a registration token decodes to `{sub, role, iat, exp}`. This is harmless today because `JwtFilter` resolves identity by looking up `sub` in the database, and the frontend does not use `userId` at all. See "Known backend gaps".
         ```json
         {
             "data": {
@@ -125,7 +127,7 @@ This section details the functional requirements of the application. All success
 - **Trigger**: User clicks the "New Game" button.
 - **API Endpoint**: `POST http://localhost:8080/game-engine/reset`
     - **Request Headers**:  `Authorization: Bearer <token>` 
-    - **Success (200 OK)**: Upon successful reset, the frontend must immediately call `GET /game-engine/get-screen` to determine the next screen, which should be `CATEGORY_SELECTION`.
+    - **Success (200 OK)**: Upon successful reset, the frontend must immediately call `GET /game-engine/get-screen`. In practice this returns **`NOT_STARTED`**, not `CATEGORY_SELECTION` — both mean "pick a category", and the routing table below already maps them to the same screen.
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.3. Current Screen Determination
@@ -134,7 +136,11 @@ This section details the functional requirements of the application. All success
     2.  Immediately after a successful "New Game" reset.
 - **API Endpoint**: `GET http://localhost:8080/game-engine/get-screen`
     - **Request Headers**:  `Authorization: Bearer <token>`
-    - **Expected Response**: A DTO containing `gameStatus` at the root level, and other screen-specific data within a `data` object.
+    - **Expected Response**: `gameStatus` is **inside** the `data` object, not a sibling of it. The server returns a `GameStatusData` object *as* the payload, so every response looks like:
+        ```json
+        { "data": { "gameStatus": "NOT_STARTED" }, "message": "Game Status loaded successfully", "status": "200 OK" }
+        ```
+        State-specific fields (`discussionStartTime`, `players`, `winner`, …) sit alongside `gameStatus` in that same `data` object. *(Corrected against a running backend — earlier revisions of this document showed `gameStatus` at the response root, which would read as `undefined`.)*
     - **Logic**:
         - The frontend will navigate to the appropriate screen based on the `gameStatus` value.
         - `NOT_STARTED` or `CATEGORY_SELECTION`: Navigate to Category Selection Screen.
@@ -240,8 +246,8 @@ This section details the functional requirements of the application. All success
     - **Error (409 CONFLICT - GROUP_ALREADY_EXISTS)**: Display "A group with this name already exists."
     - **Error (400 BAD_REQUEST)**: Display "Group name and player names are required." or "Number of players out of bounds."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Update Group)**: `PUT http://localhost:8080/group/get?groupId={id}`
-    - **Description**: This endpoint is planned for the current backend version. Frontend should implement the UI and logic to call this API.
+- **API Endpoint (Update Group)**: `PUT http://localhost:8080/group/get?groupId={id}` — ⚠️ **not implemented.**
+    - `GroupController` exposes only `create`, `get` and `select`; there is no update endpoint and no delete endpoint. The UI therefore offers **neither** editing nor deleting, and says so on the screen, rather than shipping controls that could only ever fail. The spec below is retained for whenever the endpoint lands.
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: (Backend will extract `userId` from JWT)
         ```json
@@ -318,59 +324,67 @@ This section details the functional requirements of the application. All success
 
 ### 5.5. Project Structure and Modularity
 
-To ensure maintainability, scalability, and efficient collaboration, the frontend project will adhere to a well-defined, modular folder structure, reflecting top industry-level expert practices. This approach promotes clear separation of concerns, making it easier to locate, understand, and manage different parts of the application.
-
-A recommended structure for a modern React application would be:
+The frontend is built as a **platform that hosts games**, not as one game. The platform layer knows nothing about GueSpy; it knows only a contract. Adding a second game means writing a module and adding one line to the registry — no platform code changes.
 
 ```
 src/
-├── assets/                 # Static assets like images, fonts, icons
-│   ├── images/
-│   ├── fonts/
-│   └── icons/
-├── components/             # Reusable UI components (e.g., Button, InputField, Card)
-│   ├── common/             # Highly generic components (e.g., Button, Modal, LoadingSpinner)
-│   ├── auth/               # Auth-specific reusable components (e.g., AuthForm, PasswordInput)
-│   └── game/               # Game-specific reusable components (e.g., PlayerCard, CategoryCard)
-├── config/                 # Application-wide configurations (e.g., API endpoints, constants, feature flags)
-├── hooks/                  # Custom React hooks for encapsulating reusable logic (e.g., useAuth, useGame)
-├── layouts/                # Layout components (e.g., AuthLayout, GameLayout, AdminLayout)
-├── pages/                  # Top-level views/screens, often corresponding to routes
-│   ├── Auth/
-│   │   ├── LoginPage.jsx
-│   │   └── RegisterPage.jsx
-│   ├── Game/
-│   │   ├── InitialGameScreen.jsx
-│   │   ├── CategorySelectionScreen.jsx
-│   │   ├── GroupSelectionScreen.jsx
-│   │   ├── GameOptionSelectionScreen.jsx
-│   │   └── WordSpyRevealScreen.jsx
-│   └── Admin/              # Future admin screens
-├── services/               # API interaction logic, abstracting HTTP requests (e.g., authService.js, gameService.js)
-├── store/                  # State management (e.g., Redux slices, Zustand stores, or Context API providers)
-│   ├── authSlice.js        # Auth-related state
-│   ├── gameSlice.js        # Game-related state
-│   └── index.js            # Root store configuration
-├── styles/                 # Global styles, themes, utility classes, and component-specific styling
-│   ├── base/               # Global resets, typography
-│   ├── themes/             # Dark/light themes, color variables
-│   └── utils/              # Utility classes (e.g., spacing, flex helpers)
-├── utils/                  # Pure utility functions (e.g., date formatting, JWT decoding, validation helpers)
-├── App.jsx                 # Main application component, often handles routing
-├── index.js                # Entry point for the React application
-└── routes.js               # Centralized route definitions and protected routes logic
+├── app/            # Shell: providers, router, layout, header, GameHost, 404
+├── games/          # ★ One folder per game, plus the contract they implement
+│   ├── types.js    #   the GameModule contract + defineGameModule()
+│   ├── registry.js #   gameType -> module
+│   └── guespy/     #   endpoints, session adapter, screens, theme.css
+├── platform/       # Cross-game concerns: auth, config, sound, games hub
+├── ui/             # Design-system primitives (Button, Card, Modal, …)
+├── styles/         # Tokens, reset, shared keyframes, global base
+├── hooks/          # Generic hooks (useCountdown)
+├── lib/            # Non-React utilities: api client, errors, jwt, storage, sound
+├── config/         # Build-time env (API base URL)
+└── dev/            # Component gallery, mounted at /dev/ui in dev builds
 ```
 
-**Key Principles for Industry-Level Codebase:**
+#### The GameModule contract
 
-*   **Feature-based or Domain-based Grouping**: Components, pages, and related logic are grouped by feature or domain (e.g., `Auth`, `Game`). This enhances discoverability and reduces cognitive load.
-*   **Strict Separation of Concerns**: UI components, business logic, API calls, and state management are kept in distinct layers. This makes each part easier to test, maintain, and understand independently.
-*   **High Reusability**: Common UI elements and logic are developed as generic, prop-driven components and custom hooks to be reused across the application, ensuring consistency and reducing redundancy.
-*   **Clear Naming Conventions**: Consistent and descriptive naming for files, folders, and variables is crucial for team collaboration and long-term maintainability.
-*   **Scalability and Extensibility**: The structure is designed to easily accommodate new features, modules, and team members without becoming unwieldy or introducing significant refactoring.
-*   **Testability**: The modular nature naturally lends itself to easier unit, integration, and end-to-end testing.
+```js
+{
+  id,          // must equal the `gameType` in the active_games config
+  meta,        // name, tagline, emblem, player count, round length
+  modes,       // PASS_AND_PLAY | ONLINE
+  theme,       // value for [data-game], selects the module's theme.css
+  useSession,  // the game's own state adapter (see below)
+  screens,     // { serverStatus: ScreenComponent }
+  entry,       // optional "resume or restart" prompt
+}
+```
 
-This robust structure will facilitate a clean, efficient, and scalable codebase, improve developer onboarding, and streamline future development efforts, aligning with best practices in professional software engineering.
+**`useSession` is the seam that makes both play styles work.** A game supplies its own state adapter, so *how* state arrives is the game's business:
+
+- **pass-and-play** polls REST and advances on user action (GueSpy today)
+- **online multiplayer** would open a socket and push state
+
+Both return the same `{ status, data, isLoading, error, refresh }`, so `GameHost` renders either identically and never learns which it got. That is why the host contains no game-specific code.
+
+> ⚠️ Never put the whole session object in an effect's dependency array when the effect calls `refresh`. A refresh sets state, which changes the object identity, which re-runs the effect — an unbounded request loop, not a poll. Depend on `refresh`, which is a stable callback.
+
+#### Theming
+
+A game re-skins the entire app — components, focus rings, the ambient page backdrop — by overriding four `--accent-*` tokens:
+
+```css
+:root[data-game="guespy"] { --accent: …; --accent-bright: …; --accent-deep: …; --accent-2: …; }
+```
+
+The `:root` prefix is required, not stylistic: a bare `[data-game="…"]` has the same specificity as the `:root` block in `tokens.css`, so which one wins would depend on the order the bundler emits the files. Pick an accent clearly away from the danger (rose) and success (mint) hues, or primary and destructive buttons stop being distinguishable.
+
+#### Styling
+
+CSS Modules (`Component.module.css`) over a token layer. Components never hard-code a colour, radius, duration or shadow. Motion durations collapse under `prefers-reduced-motion`, so animations built on them self-disable in one place.
+
+Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `opacity: 0` and relies on a frame loop to reveal the content, and this game is passed hand to hand — tabs get backgrounded mid-transition constantly, which starves `requestAnimationFrame` and can strand a screen blank.
+
+#### Development
+
+- Dev server **must** run on Vite's default port: backend CORS allows only `http://localhost:5173`.
+- `/dev/ui` renders a live gallery of every UI primitive under an accent switcher.
 
 #### 3.2.8. Word and Spy Reveal Screen (`WORD_AND_SPY_REVEAL`)
 - **Description**: This screen guides players through revealing their roles (whether they are a spy or not) and their assigned word (for non-spies). It involves a "pass the device" mechanism to ensure each player sees their role privately. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `WORD_AND_SPY_REVEAL`.
@@ -392,7 +406,11 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
             - Displays the `data.roleDescriptionText` (if provided and relevant, e.g., a specific spy instruction).
             - The `data.wordName` **must not** be displayed.
         - The "Continue" button should be clearly visible.
-- **API Endpoint**: `GET http://localhost:8080/game-engine/role-reveal`  *(this is a GET, called once per screen)*
+- **API Endpoint**: `GET http://localhost:8080/game-engine/role-reveal`
+
+  ⚠️ **This is a GET that mutates.** Every call advances the server's cursor (`PASS_DEVICE → ROLE_REVEAL → next player`) and persists it, and there is no way to read the current screen without consuming it. It must be called **exactly once per screen shown** — a duplicate call silently skips a player's role and quietly breaks the round. In React this means guarding the initial call with a ref rather than an empty dependency array, since StrictMode runs effects twice in development, and guarding the advance button against a double tap.
+
+  A consequence worth knowing: reloading the browser mid-reveal advances one screen, because the mount has to call the endpoint to learn anything.
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**:
         - **Response Type 1: `PASS_DEVICE`**: The payload is in the `data` object.
@@ -458,6 +476,8 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
             }
             ```
             *   Frontend displays the role (`data.displayText`) and player name (`data.playerDetails.playerName`). It **must hide** the `data.wordName` for spies.
+
+            ⚠️ `wordName` is sent on **every** response, a spy's included — `buildScreenData` sets it unconditionally. Hiding it client-side is therefore cosmetic: anyone can read the secret word from the network tab. The implementation keeps the spy branch structurally separate so the word is never rendered, but the real fix is server-side. See "Known backend gaps".
     - **Logic**:
         - The frontend will repeatedly call this API until `data.isLast` is `true`.
         - Once `data.isLast` is `true`, the frontend should then call `GET /game-engine/get-screen` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
@@ -483,9 +503,10 @@ This robust structure will facilitate a clean, efficient, and scalable codebase,
         ```json
         {
             "data": {
-                "discussionStartTime": 1772825506080
+                "gameStatus": "DISCUSSION_TIME",
+                "discussionStartTime": 1772825506080,
+                "players": ["Sayam", "Sunny", "Sarah", "Aarib"]
             },
-            "gameStatus": "DISCUSSION_TIME",
             "message": "Game Status loaded successfully",
             "status": "200 OK"
         }
@@ -573,8 +594,7 @@ Rules the frontend should be aware of:
     - **Success (200 OK) with `SPY_GUESS`**:
         ```json
         {
-            "data": { "caughtSpyName": "Sunny", "categoryName": "Movies", "roundNumber": 2 },
-            "gameStatus": "SPY_GUESS",
+            "data": { "gameStatus": "SPY_GUESS", "caughtSpyName": "Sunny", "categoryName": "Movies", "roundNumber": 2 },
             "message": "Game Status loaded successfully",
             "status": "200 OK"
         }
@@ -599,8 +619,7 @@ Rules the frontend should be aware of:
     - **Success (200 OK) with `ROUND_END`**:
         ```json
         {
-            "data": { "eliminatedPlayerName": "Aarib", "roundNumber": 2 },
-            "gameStatus": "ROUND_END",
+            "data": { "gameStatus": "ROUND_END", "eliminatedPlayerName": "Aarib", "roundNumber": 2 },
             "message": "Game Status loaded successfully",
             "status": "200 OK"
         }
@@ -622,6 +641,7 @@ Rules the frontend should be aware of:
         ```json
         {
             "data": {
+                "gameStatus": "SCORING",
                 "winner": "SPY",
                 "word": "Inception",
                 "spies": ["Sunny"],
@@ -632,7 +652,6 @@ Rules the frontend should be aware of:
                     { "playerNumber": 3, "playerName": "Sarah", "score": -2 }
                 ]
             },
-            "gameStatus": "SCORING",
             "message": "Game Status loaded successfully",
             "status": "200 OK"
         }
@@ -665,8 +684,13 @@ Rules the frontend should be aware of:
 - **Role-Based Access Control**: The frontend may extract the user's `role` from the JWT to conditionally render UI elements or restrict access to certain routes (e.g., for ADMIN screens). The backend independently enforces roles on admin endpoints (403 on violation).
 
 ### 4.3. Error Handling
-- **Consistent response envelope**: **Every** backend response — success or error — is a JSON object with `status` (e.g. `"400 BAD_REQUEST"`), `message` (a human-readable string), and, on success, `data`. The frontend can display `message` directly for most errors and branch on `status`.
-- **Specific Error Messages**: For known API error codes, display user-friendly messages as detailed in the functional requirements. Status codes the backend uses:
+- **Consistent response envelope**: **Every** backend response — success or error — is a JSON object with `status` (e.g. `"400 BAD_REQUEST"`), `message` (a human-readable string), and, on success, `data`.
+
+- ⚠️ **There is no machine-readable error code on the wire.** Names used throughout this document — `NO_CATEGORY_FOUND`, `INVALID_GAME_STATUS`, `GROUP_ALREADY_EXISTS` — are server-side `ResponseEnum` constants that are **never serialised**. `GenericResponse` carries only `status`, `message` and `data`.
+
+  So a screen can only branch on **HTTP status plus the endpoint it called**, and must treat `message` as display text rather than something to match on. That is sufficient in practice, because each screen calls one endpoint at a time and the statuses are unambiguous within that context — but it is fragile, since re-wording a message must not be allowed to change behaviour. Adding a `code` field to the envelope would remove the coupling; `src/lib/apiError.js` is the single place that would need to learn about it.
+
+- **Specific Error Messages**: For known conditions, display user-friendly messages as detailed in the functional requirements, keyed on the status codes below:
     - `400 BAD_REQUEST` — validation failure (missing/invalid fields; the `message` names the failing field), malformed JSON body, or an action attempted in the wrong game state (`INVALID_GAME_STATUS`).
     - `401 UNAUTHORIZED` — missing/invalid/expired token (also returned as the envelope). Redirect to login.
     - `403 FORBIDDEN` — authenticated but not allowed (e.g. a non-admin calling an admin endpoint).
@@ -729,30 +753,42 @@ Rules the frontend should be aware of:
 
 ---
 
-## Backend Enhancements Needed for Current Scope
+## Known backend gaps
 
-The following captures the current backend status — what is already available, and what is still pending — for frontend integration:
+Found while building and verifying the frontend against a running backend. None of them block the current scope — the frontend works around each — but the workarounds are client-side and several of these are only truly fixable on the server.
 
-1.  **`GET /game-engine/get-screen` Endpoint** — ✅ **Implemented.** Returns the current `gameStatus` plus state-specific data in `data` (see the per-screen sections above, including the new `SPY_GUESS`/`ROUND_END`/`SCORING` payloads). The `userId` is derived from the JWT by the backend.
+### Correctness
 
-2.  **`PUT /group/get?groupId={id}` Endpoint Implementation** — ⚠️ **Still pending** (not yet implemented on the backend):
-    - **Necessity**: The frontend requires an API to update group details (name, players). The prompt states this is not yet integrated but will be in this version.
-    - **Recommendation**: Implement the `PUT /group/get?groupId={id}` endpoint in the backend to handle updating group information. This would likely involve a new method in `GroupService` that takes a `groupId` and a `GroupRequest` (or a similar DTO) to update the corresponding `Group` entity.
-    - **Note**: The `userId` for this endpoint should be extracted from the JWT token by the backend.
+1. **`number_of_spy` is unbounded, and an out-of-range value hangs the request.** `GameOptionRequest` validates only `@Min(1)`; nothing checks it against the player count. `GameEngineService.getRandomSpy` then runs `while (spies.size() < n)` adding random player numbers to a `Set`, which can never exceed the number of players — so **any request with `number_of_spy` greater than the player count never returns**. Equal to the player count makes everyone a spy.
+   *Fix:* add `@Max`, plus a check against the selected group's size. The UI clamps to 2, but a client cannot protect an endpoint anyone can call directly.
 
-3.  **Configuration for Game Logic** — mostly ✅ available via `GET http://localhost:8080/config/get`. Keys:
-        - `min_player_allowed_in_group`: Minimum number of players allowed in a group.
-        - `max_player_allowed_in_group`: Maximum number of players allowed in a group.
-        - `max_group_allowed`: Maximum number of groups a user can create. *(pending — not yet seeded)*
-        - `min_spy_allowed` / `max_spy_allowed`: Spy count bounds. Note the game logic supports **1 or 2 spies** — cap the Game Option UI at 2.
-        - `discussion_duration`: Duration for the discussion phase in seconds.
-        - `scoring_config`: A JSON string with the scoring rules — see **3.2.15** (the frontend does not need to read this; it's applied server-side).
-        - `active_games`: A JSON array of the games available on the platform — see **3.2.0** (the frontend reads this to render the game-selection screen).
+2. **The seeded `max_spy_allowed` is 3, but the game logic supports 1 or 2.** The two disagree; combined with (1), a 3-spy game with 3 players would hang. *Fix:* set the config row to 2.
 
-4.  **`roleDescriptionText` for Spies**:
-    - **Necessity**: The current `ROLE_REVEAL` response for spies has `roleDescriptionText: null`. To provide a richer experience, especially for future features like a "spy word," this field should be populated.
-    - **Recommendation**: The backend should populate `screenData.roleDescriptionText` for spies with relevant instructions or a specific "spy word" if that feature is implemented.
+3. **A registration token has no `userId` claim.** `AuthService.userRegister` calls `generateToken(user)` before `save(user)`, so the id is still null. *Fix:* move `generateToken` after `save`.
 
-5.  **`categoryName` for Spies**:
-    - **Necessity**: The current `ROLE_REVEAL` response for spies includes `categoryName`. While not strictly problematic, in some game variations, the spy might not know the category.
-    - **Recommendation**: Consider if `categoryName` should be `null` or empty for spies in the `ROLE_REVEAL` screenData, depending on the desired game mechanics. If the spy should know the category, it's fine as is. If not, the backend should adjust this.
+4. **`/config/get` and the game engine read different sources.** `getAllConfigs()` queries the database (`findAll()`); the engine reads an in-memory cache refreshed only on startup, on `createNewConfig`/`updateConfig`, or via `/config/refresh`. **A row edited directly in the database changes what the API reports but not what the game uses**, indefinitely. Observed live: the client counted down from ten minutes while the server ended discussion after twenty seconds.
+   *Fix:* serve `getAllConfigs()` from the same cache. Note it also uses `findAll()` where the cache uses `findActiveConfigs()`, so `/config/get` reports **inactive** rows as live.
+
+### Information leaks
+
+5. **The secret word is sent to spies.** `buildScreenData` sets `wordName` unconditionally, so a spy's own `role-reveal` response contains it. The frontend never renders it, but that is cosmetic — the network tab shows it. *Fix:* null `wordName` when `isSpy` is true. This is the one place the game hands its core secret to the player who must not have it.
+
+### API shape
+
+6. **`role-reveal` is a GET that mutates** (see 3.2.8). A non-mutating "read current screen" endpoint would remove a whole class of client-side fragility, including the reload-skips-a-screen behaviour.
+
+7. **The envelope carries no error code** (see 4.3). Adding `code` would let clients branch on something stable instead of HTTP status plus context.
+
+### Still missing
+
+8. **Group editing and deletion.** `GroupController` exposes only `create`, `get` and `select` — there is no `PUT /group/get?groupId={id}` and no delete at all. The UI deliberately offers neither rather than shipping buttons that always fail; the seam is marked in `groupService.js`.
+
+9. **`max_group_allowed`** is read by the frontend but not seeded; it falls back to a default.
+
+10. **`roleDescriptionText`** is always `null`. Populating it would allow richer spy instructions or a "spy word" variant. Separately, `categoryName` *is* sent to spies — correct for the current rules, but worth revisiting if a variant should hide it.
+
+### Configuration keys the frontend reads
+
+`min_player_allowed_in_group`, `max_player_allowed_in_group`, `max_group_allowed`, `min_spy_allowed`, `max_spy_allowed`, `discussion_duration` (seconds), `scoring_config` (JSON, see 3.2.15), `active_games` (JSON, see 3.2.0).
+
+Every one has a client-side fallback: config **tunes** the game, it never **gates** it. A missing key, a malformed value or a 404 from `/config/get` degrades to a sensible default rather than an error screen. If not, the backend should adjust this.
