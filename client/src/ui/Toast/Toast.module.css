@@ -1,6 +1,8 @@
 .viewport {
   position: fixed;
-  top: var(--sp-4);
+  /* Clear the sticky header — anchored at the viewport top, a toast lands on
+     top of the account controls it is often reporting about. */
+  top: calc(var(--header-h) + var(--sp-3));
   right: var(--sp-4);
   z-index: var(--z-toast);
   display: flex;
