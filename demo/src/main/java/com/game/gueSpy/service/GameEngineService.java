@@ -99,6 +99,15 @@ public class GameEngineService implements GameEngine {
             return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
         }
 
+        // spies must be at least 1, at most 2, and leave at least one innocent.
+        // Without this an over-count would spin getRandomSpy forever (a Set of
+        // player numbers can never grow past the player count).
+        int totalPlayers = genericUtility.getPlayerNames(userGameDetail).size();
+        int maxSpies = Math.min(2, totalPlayers - 1);
+        if(request.getNumberOfSpy() > maxSpies){
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_NUMBER_OF_SPY);
+        }
+
         Long wordId = getRandomWordId(gameData.getSelectedCategoryId(), userGameDetail.getUsedWords());
         List<Integer> listOfSpy = getRandomSpy(gameData.getSelectedGroupId(), request.getNumberOfSpy());
         
@@ -486,9 +495,12 @@ public class GameEngineService implements GameEngine {
             displayText = (playerDetails.getIsSpy()) ? UITexts.SPY_TEXT : UITexts.NON_SPY_TEXT;
         }
 
+        boolean currentPlayerIsSpy = gameData.getCurrentSpy() != null
+                && gameData.getCurrentSpy().contains(gameData.getCurrentPlayerNumber());
+
         return ScreenData.builder()
                 .categoryName(categoryOptional.get().getCategoryName())
-                .wordName(wordOptional.get().getWordName())
+                .wordName(currentPlayerIsSpy ? null : wordOptional.get().getWordName())
                 .playerDetails(playerDetails)
                 .screenType(gameData.getCurrentScreenType())
                 .isLast(isLast)

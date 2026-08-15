@@ -51,9 +51,9 @@ public class AuthService {
                     .role(Role.USER)
                     .build();
             
-            String token = jwtUtil.generateToken(user);
-            
+            // save first so the generated id is present in the token's userId claim
             userRepository.save(user);
+            String token = jwtUtil.generateToken(user);
             createUserGameDetailsEntry(user.getId());
             AuthResponse Authdata = AuthResponse.builder().token(token).build();
             return GenericUtility.buildResponse(ResponseEnum.USER_REGISTRATION_SUCCESS, Authdata);
