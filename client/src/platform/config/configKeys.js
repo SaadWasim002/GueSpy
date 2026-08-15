@@ -29,8 +29,16 @@ export const CONFIG_SCHEMA = {
   maxGroups: { key: "max_group_allowed", parse: toNumber, fallback: 10 },
   minSpies: { key: "min_spy_allowed", parse: toNumber, fallback: 1 },
   maxSpies: { key: "max_spy_allowed", parse: toNumber, fallback: 2 },
-  /** Seconds. */
-  discussionDuration: { key: "discussion_duration", parse: toNumber, fallback: 180 },
+  /*
+   * `discussion_duration` is deliberately absent.
+   *
+   * The discussion length now arrives on the get-screen payload as
+   * `discussionDuration`, which is the value the engine itself used to
+   * compute the deadline. Reading it from config instead let the two drift:
+   * /config/get serves the database while the engine serves its own cache,
+   * so a row edited directly in the database had the client counting down
+   * from ten minutes while the server ended discussion after twenty seconds.
+   */
   /** Applied server-side; the frontend reads it only to explain the numbers. */
   scoringConfig: { key: "scoring_config", parse: toJson, fallback: null },
   /**

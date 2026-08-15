@@ -6,11 +6,45 @@
   width: 100%;
 }
 
+/* Who speaks first. Given its own block above the roster because a table
+   that has to decide this for itself just sits there. */
+.starter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-veil);
+  text-align: center;
+}
+
+.starterName {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  overflow-wrap: anywhere;
+}
+
+.starterHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 34ch;
+  text-wrap: pretty;
+}
+
 .roster {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--sp-4);
+}
+
+.playerStarting .playerName {
+  color: var(--accent-bright);
+  font-weight: var(--weight-semibold);
 }
 
 .player {

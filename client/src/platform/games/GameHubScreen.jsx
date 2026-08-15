@@ -45,6 +45,28 @@ export function GameHubScreen() {
       eyebrow={user?.username ? `Hi ${user.username}` : undefined}
       title="Choose a game"
       subtitle="One device, a room full of suspects, and a word only some of you know."
+      secondary={
+        // Teaches the game to someone who has never played, without standing
+        // between everyone else and the button that starts one.
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>How a round goes</h2>
+            <span className={styles.sectionNote}>about five minutes</span>
+          </div>
+
+          <div className={styles.steps}>
+            {HOW_IT_WORKS.map((step, index) => (
+              <div key={step.title} className={styles.step}>
+                <span className={styles.stepIndex} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span className={styles.stepTitle}>{step.title}</span>
+                <span className={styles.stepBody}>{step.body}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      }
     >
       {isLoading && enabled.length === 0 ? (
         <div className={styles.loadingGrid}>
@@ -69,24 +91,6 @@ export function GameHubScreen() {
         </div>
       )}
 
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>How a round goes</h2>
-          <span className={styles.sectionNote}>about five minutes</span>
-        </div>
-
-        <div className={styles.steps}>
-          {HOW_IT_WORKS.map((step, index) => (
-            <div key={step.title} className={styles.step}>
-              <span className={styles.stepIndex} aria-hidden="true">
-                {index + 1}
-              </span>
-              <span className={styles.stepTitle}>{step.title}</span>
-              <span className={styles.stepBody}>{step.body}</span>
-            </div>
-          ))}
-        </div>
-      </section>
     </Screen>
   );
 }

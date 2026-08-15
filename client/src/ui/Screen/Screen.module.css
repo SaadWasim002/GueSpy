@@ -1,17 +1,13 @@
 .screen {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-7);
   width: 100%;
   margin-inline: auto;
-  padding: var(--sp-8) var(--gutter) var(--sp-9);
-  min-height: 100%;
+  padding-inline: var(--gutter);
 
-  /*
-   * No fill-mode on purpose. The resting style is fully visible and the
-   * keyframes only apply while the animation runs, so a screen can never be
-   * left invisible by an animation that fails to start or finish.
-   */
+  /* No fill-mode on purpose. The resting style is fully visible and the
+     keyframes only apply while the animation runs, so a screen can never be
+     left invisible by an animation that fails to start or finish. */
   animation: rise-in var(--dur-base) var(--ease-out);
 }
 
@@ -25,11 +21,24 @@
   max-width: var(--layout-max);
 }
 
-/* Vertically centres short screens (auth, handoffs, results) instead of
-   leaving them pinned to the top of a tall viewport. */
-.centered {
+/*
+ * The fold: heading, body and actions, sized to exactly one viewport.
+ *
+ * Everything a player needs to act on lives in here, so on any screen — a
+ * phone or a desktop — the essential content and its buttons are visible
+ * without scrolling. Supplementary material goes in `secondary`, below.
+ */
+.fold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  min-height: calc(100dvh - var(--header-h));
+  padding-block: var(--sp-6);
+}
+
+/* Vertically centres a short fold instead of leaving it pinned to the top. */
+.centered .fold {
   justify-content: center;
-  flex: 1;
 }
 
 .header {
@@ -71,45 +80,65 @@
   margin-inline: auto;
 }
 
+/*
+ * Takes the slack between the heading and the action row and centres the
+ * content in it, so a short screen does not leave a void above pinned
+ * buttons. Content taller than the space simply grows the fold, so centring
+ * can never push anything out of reach.
+ */
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-6);
+  justify-content: center;
+  flex: 1;
+  gap: var(--sp-5);
 }
 
+/*
+ * Actions stick to the bottom at every width, not just on phones.
+ *
+ * A long list (categories, groups, a leaderboard) scrolls its buttons off the
+ * screen otherwise, and "where did Continue go" is the same problem on a
+ * desktop as on a handset.
+ */
 .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-raised);
   display: flex;
   gap: var(--sp-3);
   margin-top: auto;
-  padding-top: var(--sp-2);
+  padding-block: var(--sp-4);
+  background: linear-gradient(to top, var(--color-bg) 62%, transparent);
 }
 
-/* A centred screen groups its content in the middle, so the actions belong
-   directly under it — not pushed to the bottom edge by the `auto` above. */
 .actionsCentered {
   justify-content: center;
-  margin-top: var(--sp-4);
+}
+
+/*
+ * Below the fold: detail, explanation, anything worth reading but never worth
+ * blocking the primary action for.
+ */
+.secondary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding-block: var(--sp-7) var(--sp-9);
+  border-top: 1px solid var(--color-border-faint);
 }
 
 @media (max-width: 40rem) {
-  .screen {
-    padding-top: var(--sp-6);
-    gap: var(--sp-6);
+  .fold {
+    gap: var(--sp-5);
   }
 
   .actions {
     flex-direction: column-reverse;
+    padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
   }
 
   .actions > * {
     width: 100%;
-  }
-
-  /* Keep the primary action reachable without scrolling on a phone. */
-  .sticky {
-    position: sticky;
-    bottom: 0;
-    padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
-    background: linear-gradient(to top, var(--color-bg) 62%, transparent);
   }
 }

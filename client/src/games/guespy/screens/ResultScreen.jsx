@@ -70,6 +70,35 @@ export function ResultScreen({ session }) {
           </Button>
         </>
       }
+      secondary={
+        // The headline is who won, the word and the spies; the table is the
+        // detail people pore over afterwards. Below the fold so "play again"
+        // is reachable the moment the result lands.
+        <div className={styles.board}>
+          <div className={styles.boardHead}>
+            <h2 className={styles.boardTitle}>Final scores</h2>
+            <span className={styles.boardNote}>spies score for every round they survived</span>
+          </div>
+
+          {ranked.map((player, index) => (
+            <motion.div
+              key={player.playerNumber ?? player.playerName}
+              className={cn(styles.row, player.score === topScore && styles.leader)}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.06 * index, type: "spring", stiffness: 420, damping: 34 }}
+            >
+              <span className={styles.rank}>{index + 1}</span>
+              <Avatar name={player.playerName} size="sm" />
+              <span className={styles.rowName}>{player.playerName}</span>
+              {spyNames.has(player.playerName) ? <Badge tone="danger">Spy</Badge> : null}
+              <span className={cn(styles.score, scoreTone(player.score ?? 0))}>
+                {formatScore(player.score ?? 0)}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      }
     >
       <Confetti />
 
@@ -109,30 +138,6 @@ export function ResultScreen({ session }) {
         </div>
       </div>
 
-      <div className={styles.board}>
-        <div className={styles.boardHead}>
-          <h2 className={styles.boardTitle}>Final scores</h2>
-          <span className={styles.boardNote}>spies score for every round they survived</span>
-        </div>
-
-        {ranked.map((player, index) => (
-          <motion.div
-            key={player.playerNumber ?? player.playerName}
-            className={cn(styles.row, player.score === topScore && styles.leader)}
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.06 * index, type: "spring", stiffness: 420, damping: 34 }}
-          >
-            <span className={styles.rank}>{index + 1}</span>
-            <Avatar name={player.playerName} size="sm" />
-            <span className={styles.rowName}>{player.playerName}</span>
-            {spyNames.has(player.playerName) ? <Badge tone="danger">Spy</Badge> : null}
-            <span className={cn(styles.score, scoreTone(player.score ?? 0))}>
-              {formatScore(player.score ?? 0)}
-            </span>
-          </motion.div>
-        ))}
-      </div>
     </Screen>
   );
 }

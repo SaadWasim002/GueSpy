@@ -2,8 +2,12 @@ import { cn } from "../../lib/cn";
 import styles from "./Screen.module.css";
 
 /**
- * The frame every screen in the app sits in: optional eyebrow/title/subtitle,
- * a body, and a footer action row that sticks to the bottom on phones.
+ * The frame every screen in the app sits in.
+ *
+ * Content is split across a fold. `children` and `actions` are sized to
+ * exactly one viewport, so on any device the essential content and its
+ * buttons are reachable without scrolling; `secondary` holds detail worth
+ * reading but never worth blocking the primary action for, and flows below.
  *
  * The entrance animation lives here rather than in each screen, so navigation
  * feels like one continuous flow across every game. It is deliberately a CSS
@@ -13,8 +17,9 @@ import styles from "./Screen.module.css";
  * time, which starves requestAnimationFrame. The CSS version's resting state
  * is fully visible, so no failure to animate can ever strand a screen blank.
  *
- * @param width   narrow | reading | wide
- * @param center  vertically centre and centre-align — for handoffs and results
+ * @param width      narrow | reading | wide
+ * @param center     vertically centre and centre-align the fold
+ * @param secondary  content rendered below the fold
  */
 export function Screen({
   eyebrow,
@@ -22,9 +27,9 @@ export function Screen({
   subtitle,
   children,
   actions,
+  secondary,
   width = "wide",
   center = false,
-  stickyActions = true,
   className,
   ...rest
 }) {
@@ -33,27 +38,23 @@ export function Screen({
       className={cn(styles.screen, styles[width], center && styles.centered, className)}
       {...rest}
     >
-      {eyebrow || title || subtitle ? (
-        <header className={cn(styles.header, center && styles.headerCentered)}>
-          {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
-          {title ? <h1 className={styles.title}>{title}</h1> : null}
-          {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
-        </header>
-      ) : null}
+      <div className={styles.fold}>
+        {eyebrow || title || subtitle ? (
+          <header className={cn(styles.header, center && styles.headerCentered)}>
+            {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
+            {title ? <h1 className={styles.title}>{title}</h1> : null}
+            {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
+          </header>
+        ) : null}
 
-      {children ? <div className={styles.body}>{children}</div> : null}
+        {children ? <div className={styles.body}>{children}</div> : null}
 
-      {actions ? (
-        <div
-          className={cn(
-            styles.actions,
-            center && styles.actionsCentered,
-            stickyActions && styles.sticky,
-          )}
-        >
-          {actions}
-        </div>
-      ) : null}
+        {actions ? (
+          <div className={cn(styles.actions, center && styles.actionsCentered)}>{actions}</div>
+        ) : null}
+      </div>
+
+      {secondary ? <div className={styles.secondary}>{secondary}</div> : null}
     </main>
   );
 }

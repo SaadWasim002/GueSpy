@@ -489,14 +489,13 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
 - **UI**:
     - A clear title: "Discussion Time".
     - A prominent countdown timer.
-    - A list of players, possibly with their status (e.g., "In Game").
+    - **The nominated starting player, stated plainly** — e.g. "Doll starts". Somebody has to speak first, and a table left to decide that for itself stalls. The same player is highlighted in the roster.
+    - A list of players still in the round.
 - **Logic**:
-    - When this screen loads, the frontend receives `discussionStartTime` from the `data` object in the `GET /game-engine/get-screen` API response.
-    - The frontend also needs to fetch the `discussion_duration` from the `GET /config/get` endpoint.
-    - The countdown timer's end time is calculated as `discussionStartTime + (discussion_duration * 1000)`.
-    - The timer should display the remaining time by calculating the difference between the end time and the current time.
-    - Once the timer reaches zero, the frontend should start polling the `GET /game-engine/get-screen` API every 1 second.
-    - Polling continues until the `gameStatus` changes, expecting to transition to the `VOTING` screen.
+    - Everything the timer needs is on the `get-screen` payload: `discussionStartTime` (epoch ms) and `discussionDuration` (**seconds**).
+    - End time = `discussionStartTime + discussionDuration * 1000`.
+    - ⚠️ **Do not read `discussion_duration` from `/config/get` for this.** The payload value is the one the engine itself used to compute the deadline, so the countdown and the server cannot disagree. Reading config instead let them drift indefinitely — `/config/get` serves the database while the engine serves its own cache (see "Known backend gaps"), which had the client counting down from ten minutes while the server ended discussion after twenty seconds.
+    - **Do not poll during discussion.** Wait out the deadline, then call `get-screen` **once**: the server flips the game to `VOTING` on the first call past it. A repeat call is only warranted if the device's clock is ahead of the server's and it still reports `DISCUSSION_TIME`; back off rather than spinning.
 - **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK) with `DISCUSSION_TIME` status**:
@@ -504,16 +503,17 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
         {
             "data": {
                 "gameStatus": "DISCUSSION_TIME",
-                "discussionStartTime": 1772825506080,
-                "players": ["Sayam", "Sunny", "Sarah", "Aarib"]
+                "discussionStartTime": 1786814625937,
+                "discussionDuration": 600,
+                "players": ["Doll", "Sayam", "Atif", "Sarah", "Ayan"],
+                "startingPlayer": "Doll"
             },
             "message": "Game Status loaded successfully",
             "status": "200 OK"
         }
         ```
+    - ⚠️ **`startingPlayer` is re-randomised on every call.** `populateDiscussionTimeData` picks it with `getRandomNumber(...)` each time, so it is not stable across reads — two `get-screen` calls during the same discussion will usually name different players. Not a problem while the screen fetches once, but it means the nomination cannot be treated as a persisted property of the round. Persisting it on the round would make it reliable.
     - **Error Handling**: Standard error handling applies as with other `get-screen` calls.
-- **API Endpoint (Configuration)**: `GET http://localhost:8080/config/get`
-    - **Logic**: Fetch the configuration with `key: "discussion_duration"` to calculate the timer.
 
 #### 3.2.10. Voting Screen (`VOTING`)
 - **Description**: This screen allows players to vote for who they believe is the spy. The screen updates for each player's turn until all votes are cast. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `VOTING`.
@@ -769,6 +769,8 @@ Found while building and verifying the frontend against a running backend. None 
 4. **`/config/get` and the game engine read different sources.** `getAllConfigs()` queries the database (`findAll()`); the engine reads an in-memory cache refreshed only on startup, on `createNewConfig`/`updateConfig`, or via `/config/refresh`. **A row edited directly in the database changes what the API reports but not what the game uses**, indefinitely. Observed live: the client counted down from ten minutes while the server ended discussion after twenty seconds.
    *Fix:* serve `getAllConfigs()` from the same cache. Note it also uses `findAll()` where the cache uses `findActiveConfigs()`, so `/config/get` reports **inactive** rows as live.
 
+   *Partly addressed:* `discussionDuration` is now sent on the `DISCUSSION_TIME` payload, so the timer no longer depends on config at all. The underlying divergence still affects every other key the frontend reads.
+
 ### Information leaks
 
 5. **The secret word is sent to spies.** `buildScreenData` sets `wordName` unconditionally, so a spy's own `role-reveal` response contains it. The frontend never renders it, but that is cosmetic — the network tab shows it. *Fix:* null `wordName` when `isSpy` is true. This is the one place the game hands its core secret to the player who must not have it.
@@ -789,6 +791,8 @@ Found while building and verifying the frontend against a running backend. None 
 
 ### Configuration keys the frontend reads
 
-`min_player_allowed_in_group`, `max_player_allowed_in_group`, `max_group_allowed`, `min_spy_allowed`, `max_spy_allowed`, `discussion_duration` (seconds), `scoring_config` (JSON, see 3.2.15), `active_games` (JSON, see 3.2.0).
+`min_player_allowed_in_group`, `max_player_allowed_in_group`, `max_group_allowed`, `min_spy_allowed`, `max_spy_allowed`, `scoring_config` (JSON, see 3.2.15), `active_games` (JSON, see 3.2.0).
+
+`discussion_duration` is **no longer read by the frontend**. It now arrives on the `DISCUSSION_TIME` payload as `discussionDuration`, which is the value the engine actually used — see 3.2.9.
 
 Every one has a client-side fallback: config **tunes** the game, it never **gates** it. A missing key, a malformed value or a 404 from `/config/get` degrades to a sensible default rather than an error screen. If not, the backend should adjust this.

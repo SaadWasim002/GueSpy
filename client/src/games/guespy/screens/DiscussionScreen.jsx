@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, Badge, Button, LoadingBlock, ProgressRing, RingValue, Screen } from "../../../ui";
-import { useAppConfig } from "../../../platform/config/configContext";
+import { cn } from "../../../lib/cn";
 import { formatDuration, useCountdown } from "../../../hooks/useCountdown";
 import { SpyGuessDialog } from "../components/SpyGuessDialog";
 import styles from "./DiscussionScreen.module.css";
@@ -19,70 +19,85 @@ const PROMPTS = [
 /** Below this the ring turns red and starts pulsing. */
 const URGENT_MS = 10_000;
 
-/** How often to re-check state once the clock has run out. */
-const POLL_MS = 1000;
-
 /**
- * How often to check *before* the clock runs out.
+ * Backoff before asking again if the server still says DISCUSSION_TIME.
  *
- * The local countdown can disagree with the server's real deadline, and not
- * only through clock skew: `/config/get` reads `discussion_duration` from the
- * database while the engine reads it from a cache refreshed on startup or via
- * the admin API, so a value edited directly in the database leaves the two
- * disagreeing indefinitely. Observed live — the client counted down from ten
- * minutes while the server moved to voting after twenty seconds.
- *
- * A slow background check bounds that to a few seconds instead of leaving the
- * room staring at a timer for a phase that has already ended.
+ * Only reachable when this device's clock is ahead of the server's, so the
+ * deadline passes here first. The normal path makes exactly one request.
  */
-const IDLE_POLL_MS = 10_000;
+const RETRY_MS = 2000;
 
 export function DiscussionScreen({ session }) {
-  const { settings } = useAppConfig();
-
+  /*
+   * The duration comes from the get-screen payload, not from /config/get.
+   * It is the value the engine itself used to compute the deadline, so the
+   * countdown and the server can no longer disagree — which they could when
+   * the client read the database and the engine read its own cache.
+   *
+   * `discussionDuration` is in seconds.
+   */
   const startedAt = session.data?.discussionStartTime ?? null;
+  const durationSec = session.data?.discussionDuration ?? null;
   const players = session.data?.players ?? [];
-  const durationMs = (settings.discussionDuration ?? 180) * 1000;
-  const endsAt = startedAt ? startedAt + durationMs : null;
+  const startingPlayer = session.data?.startingPlayer ?? null;
+
+  const durationMs = durationSec != null ? durationSec * 1000 : null;
+  /*
+   * Null means "no deadline to count down to" — an older server that does not
+   * send the duration. The screen then goes straight to asking the server
+   * what happens next rather than inventing a timer.
+   *
+   * Deliberately not `Date.now()`: that is impure in render and would produce
+   * a new value every time, rescheduling the timeout below on every render
+   * instead of firing it once.
+   */
+  const endsAt = startedAt && durationMs != null ? startedAt + durationMs : null;
 
   const { remainingMs, isExpired } = useCountdown(endsAt);
+  const awaitingServer = endsAt === null || isExpired;
 
   const [promptIndex, setPromptIndex] = useState(() => Math.floor(Math.random() * PROMPTS.length));
   const [guessOpen, setGuessOpen] = useState(false);
 
   /*
-   * The clock is advisory; the server decides when discussion is over. Its
-   * get-screen handler flips the game to VOTING on the first call after the
-   * deadline, so once the local clock runs out this just asks until the
-   * answer changes.
+   * There is no polling during discussion. The screen sleeps until the
+   * deadline and then asks once — the server flips the game to VOTING on the
+   * first get-screen call past it, and this screen unmounts.
    *
-   * That also absorbs clock skew between this device and the server, which
-   * is otherwise unfixable — the payload carries a start time but no server
-   * "now" to calibrate against.
+   * Nothing needs checking earlier: the countdown is now driven by the same
+   * `discussionDuration` the engine used, so the two cannot drift apart.
+   *
+   * `attempt` only advances in the clock-skew case where this device reaches
+   * the deadline first and the server still says DISCUSSION_TIME; it then
+   * backs off rather than spinning.
    *
    * Depend on `refresh`, never on `session`. The session hook returns a new
-   * object every render, so depending on it re-runs this effect on every
+   * object every render, so depending on it would re-run this effect on every
    * render — and since each run fires a refresh, which sets state, which
-   * renders again, that is an unbounded request loop rather than a poll.
-   * `refresh` is a stable callback, so this starts exactly once.
+   * renders again, that is an unbounded request loop.
    */
   const refresh = session.refresh;
-  const pollMs = isExpired ? POLL_MS : IDLE_POLL_MS;
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    // Once the local clock is out, ask immediately as well as on the
-    // interval rather than waiting out the first tick.
-    if (isExpired) refresh();
+    const untilDeadline = endsAt === null ? 0 : Math.max(0, endsAt - Date.now());
+    const delay = untilDeadline + (attempt > 0 ? RETRY_MS : 0);
 
-    const id = setInterval(refresh, pollMs);
-    return () => clearInterval(id);
-  }, [isExpired, pollMs, refresh]);
+    const id = setTimeout(async () => {
+      await refresh();
+      // If the game really has moved on this component is gone and the
+      // update is dropped; if not, this schedules one backed-off retry.
+      setAttempt((n) => n + 1);
+    }, delay);
+
+    return () => clearTimeout(id);
+  }, [endsAt, attempt, refresh]);
 
   const nextPrompt = useCallback(() => {
     setPromptIndex((current) => (current + 1) % PROMPTS.length);
   }, []);
 
-  if (isExpired) {
+  if (awaitingServer) {
     return (
       <Screen center width="narrow" title="Time's up">
         <div className={styles.expired}>
@@ -101,11 +116,56 @@ export function DiscussionScreen({ session }) {
       eyebrow="Discussion"
       title="Talk it out"
       subtitle="Describe the word without saying it. Somebody here is bluffing."
+      actions={
+        /*
+         * A spy may end the round early by naming the word — the same endpoint
+         * the caught-spy screen uses. It sits in the action row so it is
+         * always reachable without scrolling, but stays a ghost button:
+         * reaching for it in front of everyone is itself a tell.
+         */
+        <Button variant="ghost" onClick={() => setGuessOpen(true)}>
+          I'm the spy — I'll call it now
+        </Button>
+      }
+      secondary={
+        <>
+          {players.length > 0 ? (
+            <div className={styles.roster}>
+              {players.map((name) => (
+                <div
+                  key={name}
+                  className={cn(styles.player, name === startingPlayer && styles.playerStarting)}
+                >
+                  <Avatar
+                    name={name}
+                    size="md"
+                    state={name === startingPlayer ? "active" : undefined}
+                  />
+                  <span className={styles.playerName}>{name}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className={styles.prompt}>
+            <span className={styles.promptLabel}>Stuck? Try this</span>
+            <span className={styles.promptText}>{PROMPTS[promptIndex]}</span>
+            <button type="button" className={styles.promptSwap} onClick={nextPrompt}>
+              Another one
+            </button>
+          </div>
+        </>
+      }
     >
+      {/*
+        Above the fold: only the two things the room acts on — how long is
+        left, and who speaks first. The roster and the prompt are useful but
+        nobody is blocked on them, so they sit below.
+      */}
       <div className={styles.stage}>
         <ProgressRing
           progress={durationMs ? remainingMs / durationMs : 0}
-          size={220}
+          size={200}
           thickness={12}
           urgent={urgent}
           color={urgent ? "var(--color-danger)" : undefined}
@@ -114,37 +174,19 @@ export function DiscussionScreen({ session }) {
           <RingValue value={formatDuration(remainingMs)} caption="remaining" />
         </ProgressRing>
 
-        {players.length > 0 ? (
-          <div className={styles.roster}>
-            {players.map((name) => (
-              <div key={name} className={styles.player}>
-                <Avatar name={name} size="md" />
-                <span className={styles.playerName}>{name}</span>
-              </div>
-            ))}
+        {/* Somebody has to speak first, and a table left to decide that for
+            itself stalls. The server nominates; the screen just says so. */}
+        {startingPlayer ? (
+          <div className={styles.starter}>
+            <Avatar name={startingPlayer} size="md" state="active" />
+            <span className={styles.starterName}>{startingPlayer} starts</span>
+            <span className={styles.starterHint}>
+              Describe the word without saying it — then it's open to everyone.
+            </span>
           </div>
         ) : null}
 
-        <div className={styles.prompt}>
-          <span className={styles.promptLabel}>Stuck? Try this</span>
-          <span className={styles.promptText}>{PROMPTS[promptIndex]}</span>
-          <button type="button" className={styles.promptSwap} onClick={nextPrompt}>
-            Another one
-          </button>
-        </div>
-
-        {/*
-          A spy may end the round early by naming the word — the same endpoint
-          the caught-spy screen uses. It is kept quiet and secondary: reaching
-          for it in front of everyone is itself a tell, which is the point.
-        */}
-        <Button variant="ghost" size="sm" onClick={() => setGuessOpen(true)}>
-          I'm the spy — I'll call it now
-        </Button>
-
-        <p className={styles.footnote}>
-          <Badge tone="neutral">{players.length} in the round</Badge>
-        </p>
+        <Badge tone="neutral">{players.length} in the round</Badge>
       </div>
 
       <SpyGuessDialog
