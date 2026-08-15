@@ -1,5 +1,6 @@
 import { defineGameModule, PLAY_MODES } from "../types";
 import { CategoryScreen } from "./screens/CategoryScreen";
+import { DiscussionScreen } from "./screens/DiscussionScreen";
 import { GameEntryScreen } from "./screens/GameEntryScreen";
 import { GameOptionScreen } from "./screens/GameOptionScreen";
 import { GroupScreen } from "./screens/GroupScreen";
@@ -54,8 +55,8 @@ export const guespyModule = defineGameModule({
     GROUP_SELECTION: GroupScreen,
     GAME_OPTION_SELECTION: GameOptionScreen,
     WORD_AND_SPY_REVEAL: RevealScreen,
+    DISCUSSION_TIME: DiscussionScreen,
 
-    // DISCUSSION_TIME                                            → feature/guespy-discussion
     // VOTING, REVOTE                                             → feature/guespy-voting
     // SPY_GUESS, ROUND_END, SCORING                              → feature/guespy-outcome
   },
