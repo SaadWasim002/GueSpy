@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Avatar, Badge, Button, Confetti, Screen, useToast } from "../../../ui";
 import { cn } from "../../../lib/cn";
+import { useSound } from "../../../platform/sound/soundContext";
 import styles from "./ResultScreen.module.css";
 
 const formatScore = (score) => (score > 0 ? `+${score}` : `${score}`);
@@ -23,10 +24,17 @@ const scoreTone = (score) => {
  */
 export function ResultScreen({ session }) {
   const toast = useToast();
+  const { play } = useSound();
   const [resetting, setResetting] = useState(false);
 
   const { winner, word, spies = [], scores = [], roundNumber } = session.data ?? {};
   const spiesWon = winner === "SPY";
+
+  // The game is over and everything is on screen, so the cue can differ by
+  // outcome — there is nothing left to give away.
+  useEffect(() => {
+    play(spiesWon ? "spyWin" : "win");
+  }, [play, spiesWon]);
 
   // Ranked highest first. Sorted from a copy — `scores` belongs to session
   // state and sorting in place would mutate it.

@@ -9,6 +9,7 @@ import {
   Screen,
   useToast,
 } from "../../../ui";
+import { useSound } from "../../../platform/sound/soundContext";
 import { SpyGuessDialog } from "../components/SpyGuessDialog";
 import { castVote, fetchVotingScreen } from "../votingService";
 import styles from "./VotingScreen.module.css";
@@ -27,6 +28,7 @@ import styles from "./VotingScreen.module.css";
  */
 export function VotingScreen({ session }) {
   const toast = useToast();
+  const { play } = useSound();
 
   const [ballot, setBallot] = useState(null);
   const [error, setError] = useState(null);
@@ -69,6 +71,8 @@ export function VotingScreen({ session }) {
 
     try {
       await castVote(selected);
+      // Safe to cue: that a vote was cast is public, only its target is not.
+      play("vote");
       setVotesCast((n) => n + 1);
 
       if (wasLast) {
