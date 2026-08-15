@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { IS_DEV } from "../config/env";
 import { Gallery } from "../dev/Gallery/Gallery";
+import { LoginScreen } from "../platform/auth/screens/LoginScreen";
+import { RegisterScreen } from "../platform/auth/screens/RegisterScreen";
 import { NotFoundScreen } from "./NotFoundScreen";
 import { RequireAnonymous, RequireAuth } from "./RouteGuards";
 import { ScaffoldScreen } from "./ScaffoldScreen";
@@ -25,26 +27,8 @@ export function AppRoutes() {
     <Routes>
       {/* Signed out only — an authenticated visit bounces to "/". */}
       <Route element={<RequireAnonymous />}>
-        <Route
-          path="/login"
-          element={
-            <ScaffoldScreen
-              title="Log in"
-              subtitle="Sign in to pick a game and start a round."
-              branch="feature/auth-revamp"
-            />
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <ScaffoldScreen
-              title="Create an account"
-              subtitle="You only need one account per device — everyone else just plays."
-              branch="feature/auth-revamp"
-            />
-          }
-        />
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/register" element={<RegisterScreen />} />
       </Route>
 
       {/* Everything below requires a session. */}
