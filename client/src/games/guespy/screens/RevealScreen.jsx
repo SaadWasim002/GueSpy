@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar, Badge, Button, EmptyState, LoadingBlock, Screen, useToast } from "../../../ui";
 import { cn } from "../../../lib/cn";
+import { useSound } from "../../../platform/sound/soundContext";
 import { fetchRoleReveal } from "../gameEngineService";
 import styles from "./RevealScreen.module.css";
 
@@ -94,6 +95,7 @@ function RoleCard({ isSpy, word, categoryName, revealed, onRevealChange }) {
  */
 export function RevealScreen({ session }) {
   const toast = useToast();
+  const { play } = useSound();
 
   const [screen, setScreen] = useState(null);
   const [error, setError] = useState(null);
@@ -113,13 +115,17 @@ export function RevealScreen({ session }) {
       const next = await fetchRoleReveal();
       setScreen(next);
       setRevealed(false);
+      // Cue the handoff here rather than in an effect: this is the moment the
+      // new screen arrives, and it is already inside a user gesture, which is
+      // what browsers require before audio may start.
+      if (next?.screenType === "PASS_DEVICE") play("handoff");
     } catch (caught) {
       setError(caught);
     } finally {
       inFlightRef.current = false;
       setBusy(false);
     }
-  }, []);
+  }, [play]);
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -215,7 +221,17 @@ export function RevealScreen({ session }) {
           word={screen.wordName}
           categoryName={screen.categoryName}
           revealed={revealed}
-          onRevealChange={setRevealed}
+          onRevealChange={(next) => {
+            setRevealed(next);
+            /*
+             * One cue for both roles, deliberately.
+             *
+             * Playing something different for a spy would announce the role
+             * to the whole room the instant the card opens — the one thing
+             * this screen exists to prevent. Everyone hears the same flip.
+             */
+            if (next) play("flip");
+          }}
         />
 
         <span className={styles.holdHint}>

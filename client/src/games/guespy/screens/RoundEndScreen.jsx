@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, Badge, Button, Screen, useToast } from "../../../ui";
+import { useSound } from "../../../platform/sound/soundContext";
 import { startNextRound } from "../gameEngineService";
 import styles from "./RoundEndScreen.module.css";
 
@@ -14,10 +15,16 @@ import styles from "./RoundEndScreen.module.css";
  */
 export function RoundEndScreen({ session }) {
   const toast = useToast();
+  const { play } = useSound();
   const [starting, setStarting] = useState(false);
 
   const { eliminatedPlayerName, roundNumber } = session.data ?? {};
   const refresh = session.refresh;
+
+  // Who was eliminated is public, so this reveals nothing the screen doesn't.
+  useEffect(() => {
+    play("eliminated");
+  }, [play]);
 
   const next = async () => {
     setStarting(true);

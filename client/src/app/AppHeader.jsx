@@ -1,7 +1,22 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, IconButton } from "../ui";
 import { useAuth } from "../platform/auth/authContext";
+import { useSound } from "../platform/sound/soundContext";
 import styles from "./AppHeader.module.css";
+
+const SoundOnIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M4 7.5h2.5L10 4.5v11L6.5 12.5H4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="M13 7.2a4 4 0 0 1 0 5.6M15.4 5a7 7 0 0 1 0 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const SoundOffIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M4 7.5h2.5L10 4.5v11L6.5 12.5H4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="M13.2 7.8l4 4.4M17.2 7.8l-4 4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
 
 const LogoutIcon = () => (
   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -27,6 +42,7 @@ const LogoutIcon = () => (
  */
 export function AppHeader() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { muted, toggleMuted } = useSound();
   const navigate = useNavigate();
 
   const signOut = () => {
@@ -46,6 +62,17 @@ export function AppHeader() {
       </Link>
 
       <div className={styles.spacer} />
+
+      {/* Available signed out too — the sign-in screen has a playable
+          warm-up, and it makes noise. */}
+      <IconButton
+        label={muted ? "Turn sound on" : "Turn sound off"}
+        size="sm"
+        onClick={toggleMuted}
+        aria-pressed={!muted}
+      >
+        {muted ? <SoundOffIcon /> : <SoundOnIcon />}
+      </IconButton>
 
       {isAuthenticated ? (
         <div className={styles.identity}>

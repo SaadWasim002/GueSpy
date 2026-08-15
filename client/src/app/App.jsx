@@ -2,6 +2,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastProvider } from "../ui";
 import { AuthProvider } from "../platform/auth/AuthProvider";
 import { ConfigProvider } from "../platform/config/ConfigProvider";
+import { SoundProvider } from "../platform/sound/SoundProvider";
 import { AppLayout } from "./AppLayout";
 import { AppRoutes } from "./AppRoutes";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -20,11 +21,13 @@ export function App() {
       <ToastProvider>
         <AuthProvider>
           <ConfigProvider>
-            <BrowserRouter>
-              <AppLayout>
-                <AppRoutes />
-              </AppLayout>
-            </BrowserRouter>
+            <SoundProvider>
+              <BrowserRouter>
+                <AppLayout>
+                  <AppRoutes />
+                </AppLayout>
+              </BrowserRouter>
+            </SoundProvider>
           </ConfigProvider>
         </AuthProvider>
       </ToastProvider>
