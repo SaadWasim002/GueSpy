@@ -1,0 +1,45 @@
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.piece {
+  position: absolute;
+  top: -5vh;
+  width: 0.55rem;
+  height: 0.9rem;
+  border-radius: 2px;
+  opacity: 0;
+  /* --x, --delay, --duration, --spin and the colour are set per piece. */
+  left: var(--x);
+  background: var(--piece-color);
+  animation: confetti-fall var(--duration) var(--ease-in-out) var(--delay) forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(108vh) rotate(var(--spin)) scale(0.85);
+  }
+}
+
+/*
+ * A burst of falling paper is decoration with no informational content, and
+ * for some people it is actively unpleasant. Removed entirely rather than
+ * shortened.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .field {
+    display: none;
+  }
+}
