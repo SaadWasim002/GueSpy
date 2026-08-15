@@ -1,6 +1,7 @@
 package com.game.gueSpy.utility;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -57,5 +58,9 @@ public class GenericUtility {
         if (condition) {
             throw new GameException(responseEnum);
         }
+    }
+
+    public static int getRandomNumber(int start, int end){
+        return ThreadLocalRandom.current().nextInt(start, end + 1);
     }
 }

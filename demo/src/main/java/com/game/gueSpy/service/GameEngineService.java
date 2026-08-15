@@ -43,6 +43,8 @@ import com.game.gueSpy.utility.GenericUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.game.gueSpy.utility.GenericUtility.getRandomNumber;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -205,17 +207,7 @@ public class GameEngineService implements GameEngine {
 
         GameStatus status = userGameDetail.getGameStatus();
         if(status.equals(GameStatus.DISCUSSION_TIME)){
-            Long discussionStartTime = userGameDetail.getGameData().getDiscussionStartTime();
-            long endTime = discussionStartTime + configService.getLong(ConfigName.discussionDuration) * 1000;
-            List<String> players = genericUtility.getPlayerNames(userGameDetail);
-            data.setDiscussionStartTime(discussionStartTime);
-            data.setPlayers(players);
-            if(System.currentTimeMillis() > endTime){
-                userGameDetail.setGameStatus(GameStatus.VOTING);
-                userGameDetailsRepository.save(userGameDetail);
-                data.setDiscussionStartTime(null);
-                data.setPlayers(null);
-            }
+            populateDiscussionTimeData(userGameDetail, data);
         } else if(status == GameStatus.ROUND_END){
             populateRoundEndData(userGameDetail, data);
         } else if(status == GameStatus.SPY_GUESS){
@@ -272,6 +264,24 @@ public class GameEngineService implements GameEngine {
                     .build());
         }
         data.setScores(scores);
+    }
+
+    private void populateDiscussionTimeData(UserGameDetail userGameDetail, GameStatusData data){
+        Long discussionStartTime = userGameDetail.getGameData().getDiscussionStartTime();
+        Long discussionDuration = configService.getLong(ConfigName.discussionDuration);
+        long endTime = discussionStartTime + discussionDuration * 1000;
+        List<String> players = genericUtility.getPlayerNames(userGameDetail);
+        String randomPlayer = players.get(getRandomNumber(0, players.size() - 1));
+        data.setDiscussionStartTime(discussionStartTime);
+        data.setPlayers(players);
+        data.setStartingPlayer(randomPlayer);
+        data.setDiscussionDuration(discussionDuration);
+        if(System.currentTimeMillis() > endTime){
+            userGameDetail.setGameStatus(GameStatus.VOTING);
+            userGameDetailsRepository.save(userGameDetail);
+            data.setDiscussionStartTime(null);
+            data.setPlayers(null);
+        }
     }
 
     private void setCurrentPlayerAndScreenType(UserGameDetail userGameDetail, GameData gameData){
@@ -521,7 +531,7 @@ public class GameEngineService implements GameEngine {
         List<String> players = groupRepository.findById(groupId).get().getPlayers().getPlayerNames();
         int totalPlayers = players.size();
         while(spy.size() < numberOfSpy){
-            spy.add(ThreadLocalRandom.current().nextInt(1, totalPlayers + 1));
+            spy.add(getRandomNumber(1, totalPlayers));
         }
 
         return new ArrayList<>(spy);

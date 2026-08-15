@@ -18,9 +18,13 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GameStatusData {
     private GameStatus gameStatus;
-    private Long discussionStartTime;
-    private List<String> players;
     private Integer roundNumber;
+
+    // Discussion Time
+    private String startingPlayer;
+    private Long discussionStartTime;
+    private Long discussionDuration;
+    private List<String> players;
 
     // ROUND_END
     private String eliminatedPlayerName;

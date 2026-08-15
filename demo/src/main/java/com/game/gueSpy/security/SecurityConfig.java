@@ -59,7 +59,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        // Allow the Vite dev origin on localhost and on the LAN (so a phone on the
+        // same WiFi can reach the app at http://<pc-ip>:5173). Patterns are used
+        // because the LAN IP varies. Adjust/remove these for production.
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://192.168.*:5173",
+                "http://10.*:5173",
+                "http://172.*:5173"
+        ));
         configuration.setAllowedMethods(Arrays.asList("*"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -111,7 +111,7 @@ public class ConfigService {
         return Integer.parseInt(cache.get(key));
     }
 
-    public long getLong(String key){
+    public Long getLong(String key){
         return Long.parseLong(cache.get(key));
     }
 
