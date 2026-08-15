@@ -1,5 +1,8 @@
 import { defineGameModule, PLAY_MODES } from "../types";
+import { CategoryScreen } from "./screens/CategoryScreen";
 import { GameEntryScreen } from "./screens/GameEntryScreen";
+import { GameOptionScreen } from "./screens/GameOptionScreen";
+import { GroupScreen } from "./screens/GroupScreen";
 import { isResumable } from "./statusLabels";
 import { useGueSpySession } from "./useGueSpySession";
 import "./theme.css";
@@ -43,7 +46,13 @@ export const guespyModule = defineGameModule({
   },
 
   screens: {
-    // CATEGORY_SELECTION, GROUP_SELECTION, GAME_OPTION_SELECTION → feature/guespy-setup
+    // A reset leaves the game at NOT_STARTED rather than CATEGORY_SELECTION,
+    // so both map to the same first screen.
+    NOT_STARTED: CategoryScreen,
+    CATEGORY_SELECTION: CategoryScreen,
+    GROUP_SELECTION: GroupScreen,
+    GAME_OPTION_SELECTION: GameOptionScreen,
+
     // WORD_AND_SPY_REVEAL                                        → feature/guespy-reveal
     // DISCUSSION_TIME                                            → feature/guespy-discussion
     // VOTING, REVOTE                                             → feature/guespy-voting

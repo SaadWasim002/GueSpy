@@ -1,0 +1,63 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.count {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.groupName {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.groupCount {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.names {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* A saved group can be below the current minimum if the config changed after
+   it was created — it stays listed, but cannot start a game. */
+.tooSmall {
+  opacity: 0.5;
+}
+
+.note {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  text-wrap: pretty;
+}

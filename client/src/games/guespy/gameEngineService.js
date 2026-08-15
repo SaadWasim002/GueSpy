@@ -30,3 +30,15 @@ export async function fetchScreen() {
 export async function resetGame() {
   await api.post("/game-engine/reset");
 }
+
+/**
+ * POST /game-engine/game-option — sets the spy count and deals the round.
+ *
+ * The server accepts any value ≥ 1 here: there is no upper bound on the DTO
+ * and no check against the player count. Passing more spies than there are
+ * players makes the engine's spy-picking loop unsatisfiable and it never
+ * returns, so the caller must clamp. See GameOptionScreen for the bound.
+ */
+export async function setGameOption(numberOfSpy) {
+  await api.post("/game-engine/game-option", { number_of_spy: numberOfSpy });
+}

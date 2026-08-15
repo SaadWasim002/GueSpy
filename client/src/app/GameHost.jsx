@@ -17,7 +17,25 @@ import styles from "./GameHost.module.css";
  */
 function GameRuntime({ module }) {
   const session = module.useSession();
-  const [entryDismissed, setEntryDismissed] = useState(false);
+
+  /*
+   * The resume prompt is a question about *arriving* at a game, so the answer
+   * is latched from the first status this mount ever sees and never
+   * reconsidered.
+   *
+   * Re-evaluating it per render is wrong in a way that only shows up once
+   * real screens exist: advancing through setup passes through states that
+   * count as resumable, so choosing a category would bounce the player
+   * straight back to "you have a game in progress" — mid-flow, having just
+   * pressed Continue.
+   */
+  const [entryPhase, setEntryPhase] = useState("undecided");
+
+  useEffect(() => {
+    if (entryPhase !== "undecided" || session.status === null) return;
+    const wanted = module.entry?.shouldShow(session) ?? false;
+    setEntryPhase(wanted ? "showing" : "done");
+  }, [entryPhase, session, module.entry]);
 
   // Re-skin the whole app for as long as this game is open.
   useEffect(() => {
@@ -58,17 +76,27 @@ function GameRuntime({ module }) {
   }
 
   // Offer to resume before dropping the player into a game already underway.
-  const entry = module.entry;
-  if (entry && !entryDismissed && entry.shouldShow(session)) {
+  if (entryPhase === "showing" && module.entry) {
+    const EntryScreen = module.entry.Screen;
     return (
-      <entry.Screen
+      <EntryScreen
         session={session}
-        onContinue={() => setEntryDismissed(true)}
+        onContinue={() => setEntryPhase("done")}
         onNewGame={async () => {
           await session.reset();
-          setEntryDismissed(true);
+          setEntryPhase("done");
         }}
       />
+    );
+  }
+
+  // Hold the first paint until the entry question has been answered, so a
+  // resumable game never flashes its live screen before the prompt.
+  if (entryPhase === "undecided") {
+    return (
+      <div className={styles.pending}>
+        <LoadingBlock label="Picking up the game…" />
+      </div>
     );
   }
 
