@@ -22,6 +22,21 @@ const URGENT_MS = 10_000;
 /** How often to re-check state once the clock has run out. */
 const POLL_MS = 1000;
 
+/**
+ * How often to check *before* the clock runs out.
+ *
+ * The local countdown can disagree with the server's real deadline, and not
+ * only through clock skew: `/config/get` reads `discussion_duration` from the
+ * database while the engine reads it from a cache refreshed on startup or via
+ * the admin API, so a value edited directly in the database leaves the two
+ * disagreeing indefinitely. Observed live — the client counted down from ten
+ * minutes while the server moved to voting after twenty seconds.
+ *
+ * A slow background check bounds that to a few seconds instead of leaving the
+ * room staring at a timer for a phase that has already ended.
+ */
+const IDLE_POLL_MS = 10_000;
+
 export function DiscussionScreen({ session }) {
   const { settings } = useAppConfig();
 
@@ -52,17 +67,16 @@ export function DiscussionScreen({ session }) {
    * `refresh` is a stable callback, so this starts exactly once.
    */
   const refresh = session.refresh;
+  const pollMs = isExpired ? POLL_MS : IDLE_POLL_MS;
 
   useEffect(() => {
-    if (!isExpired) return undefined;
+    // Once the local clock is out, ask immediately as well as on the
+    // interval rather than waiting out the first tick.
+    if (isExpired) refresh();
 
-    // Ask immediately as well as on the interval, rather than waiting out
-    // the first tick.
-    refresh();
-    const id = setInterval(refresh, POLL_MS);
-
+    const id = setInterval(refresh, pollMs);
     return () => clearInterval(id);
-  }, [isExpired, refresh]);
+  }, [isExpired, pollMs, refresh]);
 
   const nextPrompt = useCallback(() => {
     setPromptIndex((current) => (current + 1) % PROMPTS.length);

@@ -5,6 +5,7 @@ import { GameEntryScreen } from "./screens/GameEntryScreen";
 import { GameOptionScreen } from "./screens/GameOptionScreen";
 import { GroupScreen } from "./screens/GroupScreen";
 import { RevealScreen } from "./screens/RevealScreen";
+import { VotingScreen } from "./screens/VotingScreen";
 import { isResumable } from "./statusLabels";
 import { useGueSpySession } from "./useGueSpySession";
 import "./theme.css";
@@ -57,7 +58,10 @@ export const guespyModule = defineGameModule({
     WORD_AND_SPY_REVEAL: RevealScreen,
     DISCUSSION_TIME: DiscussionScreen,
 
-    // VOTING, REVOTE                                             → feature/guespy-voting
+    // A tie re-runs the identical flow, so both states share one screen.
+    VOTING: VotingScreen,
+    REVOTE: VotingScreen,
+
     // SPY_GUESS, ROUND_END, SCORING                              → feature/guespy-outcome
   },
 });
