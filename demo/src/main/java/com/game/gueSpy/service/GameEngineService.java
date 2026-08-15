@@ -281,6 +281,8 @@ public class GameEngineService implements GameEngine {
             userGameDetailsRepository.save(userGameDetail);
             data.setDiscussionStartTime(null);
             data.setPlayers(null);
+            data.setStartingPlayer(null);
+            data.setDiscussionDuration(null);
         }
     }
 
