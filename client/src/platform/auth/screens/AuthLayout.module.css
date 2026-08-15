@@ -1,0 +1,128 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-9);
+  align-items: center;
+  width: 100%;
+}
+
+/* The pitch only appears when there is genuinely room for it. Below this the
+   form is the whole screen — nobody signing in on a phone wants to scroll
+   past marketing to reach a password field. */
+@media (min-width: 64rem) {
+  .layout {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: var(--sp-10);
+  }
+}
+
+.pitch {
+  display: none;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+@media (min-width: 64rem) {
+  .pitch {
+    display: flex;
+  }
+}
+
+.headline {
+  font-size: var(--text-4xl);
+  text-wrap: balance;
+}
+
+.headlineAccent {
+  background: linear-gradient(110deg, var(--accent-bright), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.blurb {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  max-width: 40ch;
+  text-wrap: pretty;
+}
+
+.points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.title {
+  font-size: var(--text-2xl);
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+/* A <fieldset> so submitting disables every control at once. Its default
+   border/padding are stripped, and min-width:0 defeats the element's built-in
+   min-content floor, which otherwise stops the inputs from shrinking. */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Form-level failure (bad credentials, duplicate account) — distinct from the
+   per-field errors TextInput renders. */
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in oklab, var(--color-danger) 40%, transparent);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  animation: drop-in var(--dur-fast) var(--ease-out);
+}
+
+.formErrorIcon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.switch {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.switchLink {
+  color: var(--accent-bright);
+  font-weight: var(--weight-semibold);
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.switchLink:hover {
+  opacity: 0.78;
+}

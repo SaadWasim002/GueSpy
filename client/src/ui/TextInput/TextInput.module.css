@@ -27,7 +27,10 @@
     background-color var(--dur-fast) var(--ease-out);
 }
 
-.shell:hover:not(.disabled) {
+/* `:not(:focus-within)` is load-bearing, not decoration. Without it this
+   selector outranks the focus rule below on specificity, so hovering a
+   focused field would swap its accent ring back to the grey hover border. */
+.shell:hover:not(.disabled):not(:focus-within) {
   border-color: var(--color-border-strong);
 }
 
@@ -74,9 +77,22 @@
   min-width: 0;
   background: none;
   border: none;
-  outline: none;
   color: var(--color-text);
   font-family: var(--font-body);
+}
+
+/*
+ * The shell owns the focus ring, so the input must never draw its own —
+ * otherwise a second ring appears inset from the shell edges, since the input
+ * sits inside the shell's horizontal padding.
+ *
+ * Both states are listed to outrank the global `:focus-visible` reset. A bare
+ * `.input { outline: none }` only ties it on specificity and loses on source
+ * order, which is exactly what produced the doubled ring.
+ */
+.input:focus,
+.input:focus-visible {
+  outline: none;
 }
 
 .input::placeholder {
