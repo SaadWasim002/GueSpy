@@ -49,6 +49,32 @@ export function SpyGuessScreen({ session }) {
           </Button>
         </>
       }
+      secondary={
+        // The three outcomes, spelled out. Useful the first few times a group
+        // plays and ignorable after, so they sit under the decision rather
+        // than pushing it off the screen.
+        <div className={styles.stakes}>
+          <div className={styles.stake}>
+            <span className={styles.stakeTitle}>Guess right</span>
+            <span className={styles.stakeBody}>
+              The spies win the round outright, even though they were caught.
+            </span>
+          </div>
+          <div className={styles.stake}>
+            <span className={styles.stakeTitle}>Guess wrong</span>
+            <span className={styles.stakeBody}>
+              It's over — the innocents take it. No second attempt.
+            </span>
+          </div>
+          <div className={styles.stake}>
+            <span className={styles.stakeTitle}>Don't risk it</span>
+            <span className={styles.stakeBody}>
+              {caughtSpyName ?? "The spy"} is out of the game. If another spy is still hidden, the
+              round goes on without them.
+            </span>
+          </div>
+        </div>
+      }
     >
       <div className={styles.caught}>
         <Avatar name={caughtSpyName ?? ""} size="xl" ringColor="var(--color-role-hidden)" badge="🕵" />
@@ -57,28 +83,6 @@ export function SpyGuessScreen({ session }) {
           was the spy — and the room got them.
         </span>
         {categoryName ? <Badge tone="neutral">Category: {categoryName}</Badge> : null}
-      </div>
-
-      <div className={styles.stakes}>
-        <div className={styles.stake}>
-          <span className={styles.stakeTitle}>Guess right</span>
-          <span className={styles.stakeBody}>
-            The spies win the round outright, even though they were caught.
-          </span>
-        </div>
-        <div className={styles.stake}>
-          <span className={styles.stakeTitle}>Guess wrong</span>
-          <span className={styles.stakeBody}>
-            It's over — the innocents take it. No second attempt.
-          </span>
-        </div>
-        <div className={styles.stake}>
-          <span className={styles.stakeTitle}>Don't risk it</span>
-          <span className={styles.stakeBody}>
-            {caughtSpyName ?? "The spy"} is out of the game. If another spy is still hidden, the
-            round goes on without them.
-          </span>
-        </div>
       </div>
 
       <SpyGuessDialog

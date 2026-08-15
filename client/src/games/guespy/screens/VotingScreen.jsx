@@ -128,21 +128,28 @@ export function VotingScreen({ session }) {
       width="reading"
       eyebrow={isRevote ? "Revote" : "Voting"}
       title={isRevote ? "It's a tie — vote again" : (ballot.displayTextHeader ?? "Voting time")}
+      // Only the revote needs explaining; on a normal turn the banner below
+      // already says whose go it is, and the extra line costs fold height.
       subtitle={
-        isRevote
-          ? "Nobody had a clear majority. Same players, same choice, one more go."
-          : "Everyone accuses one person. The most votes gets sent home."
+        isRevote ? "Nobody had a clear majority. Same players, same choice, one more go." : undefined
       }
       actions={
-        <Button
-          size="lg"
-          onClick={submit}
-          disabled={selected == null}
-          loading={busy}
-          iconRight={ballot.isLast ? undefined : "→"}
-        >
-          {ballot.isLast ? "Cast the final vote" : "Submit vote"}
-        </Button>
+        <>
+          {/* A spy may still end it here rather than risk the tally. In the
+              action row so it never collides with the sticky bar. */}
+          <Button variant="ghost" onClick={() => setGuessOpen(true)} disabled={busy}>
+            I'm the spy
+          </Button>
+          <Button
+            size="lg"
+            onClick={submit}
+            disabled={selected == null}
+            loading={busy}
+            iconRight={ballot.isLast ? undefined : "→"}
+          >
+            {ballot.isLast ? "Cast the final vote" : "Submit vote"}
+          </Button>
+        </>
       }
     >
       <div className={styles.turn}>
@@ -178,13 +185,6 @@ export function VotingScreen({ session }) {
           {totalVoters ? `Vote ${Math.min(votesCast + 1, totalVoters)} of ${totalVoters}` : "Voting"}
         </Badge>
         {candidates.length === 0 ? <span>No one left to accuse.</span> : null}
-      </div>
-
-      {/* A spy may still end it here rather than risk the tally. */}
-      <div className={styles.secondary}>
-        <Button variant="ghost" size="sm" onClick={() => setGuessOpen(true)} disabled={busy}>
-          I'm the spy — I'll call it now
-        </Button>
       </div>
 
       <SpyGuessDialog

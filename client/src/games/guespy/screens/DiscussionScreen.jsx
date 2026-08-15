@@ -116,11 +116,56 @@ export function DiscussionScreen({ session }) {
       eyebrow="Discussion"
       title="Talk it out"
       subtitle="Describe the word without saying it. Somebody here is bluffing."
+      actions={
+        /*
+         * A spy may end the round early by naming the word — the same endpoint
+         * the caught-spy screen uses. It sits in the action row so it is
+         * always reachable without scrolling, but stays a ghost button:
+         * reaching for it in front of everyone is itself a tell.
+         */
+        <Button variant="ghost" onClick={() => setGuessOpen(true)}>
+          I'm the spy — I'll call it now
+        </Button>
+      }
+      secondary={
+        <>
+          {players.length > 0 ? (
+            <div className={styles.roster}>
+              {players.map((name) => (
+                <div
+                  key={name}
+                  className={cn(styles.player, name === startingPlayer && styles.playerStarting)}
+                >
+                  <Avatar
+                    name={name}
+                    size="md"
+                    state={name === startingPlayer ? "active" : undefined}
+                  />
+                  <span className={styles.playerName}>{name}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className={styles.prompt}>
+            <span className={styles.promptLabel}>Stuck? Try this</span>
+            <span className={styles.promptText}>{PROMPTS[promptIndex]}</span>
+            <button type="button" className={styles.promptSwap} onClick={nextPrompt}>
+              Another one
+            </button>
+          </div>
+        </>
+      }
     >
+      {/*
+        Above the fold: only the two things the room acts on — how long is
+        left, and who speaks first. The roster and the prompt are useful but
+        nobody is blocked on them, so they sit below.
+      */}
       <div className={styles.stage}>
         <ProgressRing
           progress={durationMs ? remainingMs / durationMs : 0}
-          size={220}
+          size={200}
           thickness={12}
           urgent={urgent}
           color={urgent ? "var(--color-danger)" : undefined}
@@ -133,7 +178,7 @@ export function DiscussionScreen({ session }) {
             itself stalls. The server nominates; the screen just says so. */}
         {startingPlayer ? (
           <div className={styles.starter}>
-            <Avatar name={startingPlayer} size="lg" state="active" />
+            <Avatar name={startingPlayer} size="md" state="active" />
             <span className={styles.starterName}>{startingPlayer} starts</span>
             <span className={styles.starterHint}>
               Describe the word without saying it — then it's open to everyone.
@@ -141,40 +186,7 @@ export function DiscussionScreen({ session }) {
           </div>
         ) : null}
 
-        {players.length > 0 ? (
-          <div className={styles.roster}>
-            {players.map((name) => (
-              <div
-                key={name}
-                className={cn(styles.player, name === startingPlayer && styles.playerStarting)}
-              >
-                <Avatar name={name} size="md" state={name === startingPlayer ? "active" : undefined} />
-                <span className={styles.playerName}>{name}</span>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        <div className={styles.prompt}>
-          <span className={styles.promptLabel}>Stuck? Try this</span>
-          <span className={styles.promptText}>{PROMPTS[promptIndex]}</span>
-          <button type="button" className={styles.promptSwap} onClick={nextPrompt}>
-            Another one
-          </button>
-        </div>
-
-        {/*
-          A spy may end the round early by naming the word — the same endpoint
-          the caught-spy screen uses. It is kept quiet and secondary: reaching
-          for it in front of everyone is itself a tell, which is the point.
-        */}
-        <Button variant="ghost" size="sm" onClick={() => setGuessOpen(true)}>
-          I'm the spy — I'll call it now
-        </Button>
-
-        <p className={styles.footnote}>
-          <Badge tone="neutral">{players.length} in the round</Badge>
-        </p>
+        <Badge tone="neutral">{players.length} in the round</Badge>
       </div>
 
       <SpyGuessDialog

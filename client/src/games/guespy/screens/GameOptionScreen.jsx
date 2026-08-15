@@ -74,6 +74,24 @@ export function GameOptionScreen({ session }) {
           Deal the round
         </Button>
       }
+      secondary={
+        // How each option changes the round — worth reading once, not worth
+        // pushing the picker and the button off the screen every time.
+        <div className={styles.explainer}>
+          {SPY_MODES.filter((mode) => mode.count <= maxSpies).map((mode) => (
+            <div
+              key={mode.count}
+              className={cn(styles.option, spies === mode.count && styles.optionActive)}
+            >
+              <span className={styles.optionTitle}>
+                {mode.title}
+                {spies === mode.count ? <Badge tone="accent">Selected</Badge> : null}
+              </span>
+              <span className={styles.optionBody}>{mode.body}</span>
+            </div>
+          ))}
+        </div>
+      }
     >
       <StepTrail steps={SETUP_STEPS} current="GAME_OPTION_SELECTION" />
 
@@ -105,20 +123,6 @@ export function GameOptionScreen({ session }) {
         />
       </div>
 
-      <div className={styles.explainer}>
-        {SPY_MODES.filter((mode) => mode.count <= maxSpies).map((mode) => (
-          <div
-            key={mode.count}
-            className={cn(styles.option, spies === mode.count && styles.optionActive)}
-          >
-            <span className={styles.optionTitle}>
-              {mode.title}
-              {spies === mode.count ? <Badge tone="accent">Selected</Badge> : null}
-            </span>
-            <span className={styles.optionBody}>{mode.body}</span>
-          </div>
-        ))}
-      </div>
     </Screen>
   );
 }
