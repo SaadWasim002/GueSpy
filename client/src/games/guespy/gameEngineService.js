@@ -62,3 +62,15 @@ export async function fetchRoleReveal() {
 export async function setGameOption(numberOfSpy) {
   await api.post("/game-engine/game-option", { number_of_spy: numberOfSpy });
 }
+
+/**
+ * POST /game-engine/spy-guess — a spy names the word.
+ *
+ * Accepted while the game is at SPY_GUESS (a caught spy's one chance) and
+ * also during DISCUSSION_TIME, VOTING and REVOTE, which is how a spy can
+ * call it early. Either way the round ends: a correct guess wins it for the
+ * spies, a wrong one hands it to the innocents.
+ */
+export async function submitSpyGuess(word) {
+  await api.post("/game-engine/spy-guess", { word });
+}
