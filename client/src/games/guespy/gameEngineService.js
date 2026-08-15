@@ -74,3 +74,24 @@ export async function setGameOption(numberOfSpy) {
 export async function submitSpyGuess(word) {
   await api.post("/game-engine/spy-guess", { word });
 }
+
+/**
+ * POST /game-engine/spy-decline — a caught spy passes on guessing.
+ *
+ * They are eliminated. If they were the last spy the innocents win outright;
+ * otherwise the game continues to the next round, or ends there if too few
+ * players remain. Valid only at SPY_GUESS.
+ */
+export async function declineSpyGuess() {
+  await api.post("/game-engine/spy-decline");
+}
+
+/**
+ * POST /game-engine/next-round — leave the round-end interstitial.
+ *
+ * Starts a fresh discussion timer and returns the game to DISCUSSION_TIME.
+ * Valid only at ROUND_END.
+ */
+export async function startNextRound() {
+  await api.post("/game-engine/next-round");
+}
