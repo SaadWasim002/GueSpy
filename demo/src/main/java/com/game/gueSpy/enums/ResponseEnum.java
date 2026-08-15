@@ -69,6 +69,7 @@ public enum ResponseEnum {
     MALFORMED_REQUEST(MessageConstants.malformedRequest, HttpStatus.BAD_REQUEST),
     CONCURRENT_MODIFICATION(MessageConstants.concurrentModification, HttpStatus.CONFLICT),
     UNSUPPORTED_GAME_TYPE(MessageConstants.unsupportedGameType, HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_NUMBER_OF_SPY(MessageConstants.invalidNumberOfSpy, HttpStatus.BAD_REQUEST),
     INVALID_DATA(MessageConstants.invalidData, HttpStatus.OK),
     TESTING(MessageConstants.testing, HttpStatus.OK);
     

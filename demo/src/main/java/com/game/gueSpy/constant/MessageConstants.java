@@ -37,6 +37,7 @@ public class MessageConstants {
     public static final String accessDenied = "You do not have permission to perform this action";
     public static final String concurrentModification = "The game was updated at the same time, please try again";
     public static final String unsupportedGameType = "No engine is registered for this game type";
+    public static final String invalidNumberOfSpy = "Invalid number of spies for the selected group";
     public static final String testing = "Testing";
 
     //GAME_ENGINE
