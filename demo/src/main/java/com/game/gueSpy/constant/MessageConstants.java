@@ -63,6 +63,8 @@ public class MessageConstants {
     public static final String groupRetrieved = "Group retrieved successfully";
     public static final String noGroupFound = "No group found";
     public static final String groupSelected = "Group selected successfully";
+    public static final String groupUpdated = "Group updated successfully";
+    public static final String groupDeleted = "Group deleted successfully";
 
     //USER_GAME_DETAILS
     public static final String invalidGameStatus = "Invalid game status";

@@ -40,6 +40,8 @@ public enum ResponseEnum {
     GROUP_RETRIEVED(MessageConstants.groupRetrieved, HttpStatus.OK),
     NO_GROUP_FOUND(MessageConstants.noGroupFound, HttpStatus.NOT_FOUND),
     GROUP_SELECTED(MessageConstants.groupSelected, HttpStatus.OK),
+    GROUP_UPDATED(MessageConstants.groupUpdated, HttpStatus.OK),
+    GROUP_DELETED(MessageConstants.groupDeleted, HttpStatus.OK),
 
     //Config
     CONFIG_CREATED(MessageConstants.configCreated, HttpStatus.CREATED),

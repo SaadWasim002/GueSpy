@@ -105,6 +105,60 @@ public class GroupService {
 
     }
 
+    @Transactional
+    public ResponseEntity<?> updateGroup(GroupRequest request, Long groupId, Long userId){
+        log.info("User has started update group flow for groupId {}", groupId);
+        if(groupId == null){
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
+        }
+
+        var groupOptional = groupRepository.findById(groupId);
+        if(groupOptional.isEmpty()){
+            return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND);
+        }
+
+        Group group = groupOptional.get();
+        if(!group.getUserId().equals(userId)){
+            return GenericUtility.buildResponse(ResponseEnum.ACCESS_DENIED);   // a user can only edit their own groups
+        }
+
+        // renaming to a name another of the user's groups already has is a conflict
+        var existing = groupRepository.findByGroupNameIgnoreCaseForTheUserId(request.getGroupName(), userId);
+        if(existing.isPresent() && !existing.get().getId().equals(groupId)){
+            return GenericUtility.buildResponse(ResponseEnum.GROUP_ALREADY_EXISTS);
+        }
+
+        group.setGroupName(request.getGroupName());
+        group.setPlayers(Player.builder().playerNames(request.getPlayers()).build());
+        groupRepository.save(group);
+
+        log.info("Group updated successfully");
+        return GenericUtility.buildResponse(ResponseEnum.GROUP_UPDATED);
+    }
+
+    @Transactional
+    public ResponseEntity<?> deleteGroup(Long groupId, Long userId){
+        log.info("User has started delete group flow for groupId {}", groupId);
+        if(groupId == null){
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
+        }
+
+        var groupOptional = groupRepository.findById(groupId);
+        if(groupOptional.isEmpty()){
+            return GenericUtility.buildResponse(ResponseEnum.NO_GROUP_FOUND);
+        }
+
+        Group group = groupOptional.get();
+        if(!group.getUserId().equals(userId)){
+            return GenericUtility.buildResponse(ResponseEnum.ACCESS_DENIED);   // a user can only delete their own groups
+        }
+
+        groupRepository.deleteById(groupId);
+
+        log.info("Group deleted successfully");
+        return GenericUtility.buildResponse(ResponseEnum.GROUP_DELETED);
+    }
+
     private void updateUserGameDetails(UserGameDetail userGameDetail, Long groupId){
         GameData gameData = userGameDetail.getGameData();
         gameData.setSelectedGroupId(groupId);
