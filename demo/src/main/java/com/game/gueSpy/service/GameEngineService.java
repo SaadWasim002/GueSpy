@@ -212,8 +212,11 @@ public class GameEngineService implements GameEngine {
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
-        GameStatusData data = GameStatusData.builder().build();
+        return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, buildGameStatusData(userGameDetail));
+    }
 
+    private GameStatusData buildGameStatusData(UserGameDetail userGameDetail){
+        GameStatusData data = GameStatusData.builder().build();
         GameStatus status = userGameDetail.getGameStatus();
         if(status.equals(GameStatus.DISCUSSION_TIME)){
             populateDiscussionTimeData(userGameDetail, data);
@@ -225,7 +228,81 @@ public class GameEngineService implements GameEngine {
             populateScoringData(userGameDetail, data);
         }
         data.setGameStatus(userGameDetail.getGameStatus());
-        return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, data);
+        return data;
+    }
+
+    @Transactional
+    @Override
+    public ResponseEntity<?> navigateGameState(Long userId, String action){
+        log.info("User has started the game-state navigation flow with action {}", action);
+        GenericUtility.validate(userId == null || action == null || action.isBlank(), ResponseEnum.VALUES_MISSING);
+        var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
+        GenericUtility.validate(userGameDetailsOptional.isEmpty(), ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
+
+        UserGameDetail userGameDetail = userGameDetailsOptional.get();
+        GameStatus status = userGameDetail.getGameStatus();
+
+        if(action.equalsIgnoreCase("back")){
+            if(!isBackAllowed(status)){
+                return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
+            }
+            moveBack(userGameDetail);
+        } else if(action.equalsIgnoreCase("forward")){
+            // forward is only the discussion -> voting skip
+            if(status != GameStatus.DISCUSSION_TIME){
+                return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
+            }
+            userGameDetail.setGameStatus(GameStatus.VOTING);
+        } else {
+            return GenericUtility.buildResponse(ResponseEnum.INVALID_DATA);
+        }
+
+        userGameDetailsRepository.save(userGameDetail);
+        return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, buildGameStatusData(userGameDetail));
+    }
+
+    private boolean isBackAllowed(GameStatus status){
+        return status == GameStatus.CATEGORY_SELECTION
+                || status == GameStatus.GROUP_SELECTION
+                || status == GameStatus.GAME_OPTION_SELECTION
+                || status == GameStatus.WORD_AND_SPY_REVEAL
+                || status == GameStatus.DISCUSSION_TIME;
+    }
+
+    // step one state back, clearing the data owned by the state(s) being left
+    private void moveBack(UserGameDetail userGameDetail){
+        GameData gameData = userGameDetail.getGameData();
+        switch(userGameDetail.getGameStatus()){
+            case CATEGORY_SELECTION:
+                gameData.setSelectedCategoryId(null);
+                userGameDetail.setGameStatus(GameStatus.NOT_STARTED);
+                break;
+            case GROUP_SELECTION:
+                gameData.setSelectedCategoryId(null);
+                userGameDetail.setGameStatus(GameStatus.CATEGORY_SELECTION);
+                break;
+            case GAME_OPTION_SELECTION:
+                gameData.setSelectedGroupId(null);
+                userGameDetail.setGameStatus(GameStatus.GROUP_SELECTION);
+                break;
+            case WORD_AND_SPY_REVEAL:
+                gameData.setNumberOfSpy(null)
+                        .setCurrentSpy(null)
+                        .setSelectedWordId(null)
+                        .setCurrentPlayerNumber(null)
+                        .setCurrentScreenType(null);
+                userGameDetail.setGameStatus(GameStatus.GAME_OPTION_SELECTION);
+                break;
+            case DISCUSSION_TIME:
+                gameData.setCurrentPlayerNumber(null)
+                        .setCurrentScreenType(null)
+                        .setDiscussionStartTime(null)
+                        .setRoundNumber(null);
+                userGameDetail.setGameStatus(GameStatus.WORD_AND_SPY_REVEAL);
+                break;
+            default:
+                break;
+        }
     }
 
     private void populateRoundEndData(UserGameDetail userGameDetail, GameStatusData data){

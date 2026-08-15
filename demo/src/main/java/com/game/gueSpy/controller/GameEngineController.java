@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GameOptionRequest;
+import com.game.gueSpy.dto.request.GameStateRequest;
 import com.game.gueSpy.dto.request.SpyGuessRequest;
 import com.game.gueSpy.engine.GameEngineResolver;
 import com.game.gueSpy.security.UserPrincipal;
@@ -56,13 +57,24 @@ public class GameEngineController {
     }
 
     @GetMapping(
-        path = "/get-screen",
-        name = "get the current game status",
+        path = "/game-state",
+        name = "get the current game state",
         produces = "application/json"
     )
-    public ResponseEntity<?> getScreen(@AuthenticationPrincipal UserPrincipal principal){
+    public ResponseEntity<?> getGameState(@AuthenticationPrincipal UserPrincipal principal){
         Long userId = principal.userId();
         return gameEngineResolver.resolveForUser(userId).getGameStatus(userId);
+    }
+
+    @PostMapping(
+        path = "/game-state",
+        name = "navigate the game state (back / forward)",
+        consumes = "application/json",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> navigateGameState(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody GameStateRequest request){
+        Long userId = principal.userId();
+        return gameEngineResolver.resolveForUser(userId).navigateGameState(userId, request.getAction());
     }
 
     @GetMapping(
