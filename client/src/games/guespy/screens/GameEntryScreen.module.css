@@ -1,0 +1,51 @@
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--sp-4);
+  width: 100%;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-height: 100%;
+}
+
+.choiceIcon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: var(--sp-2);
+  border-radius: var(--radius-md);
+  font-size: 1.35rem;
+  background: var(--accent-veil);
+  border: 1px solid var(--accent-line);
+}
+
+.choiceTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.choiceBody {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+/* The destructive option should not look as inviting as the safe one. */
+.danger .choiceIcon {
+  background: var(--color-danger-soft);
+  border-color: color-mix(in oklab, var(--color-danger) 35%, transparent);
+}
+
+.resume {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}

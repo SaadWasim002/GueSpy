@@ -1,0 +1,22 @@
+/*
+ * GueSpy's skin.
+ *
+ * A game re-themes the entire app — components, focus rings, the ambient page
+ * backdrop — by overriding this handful of accent tokens and nothing else.
+ * The host sets [data-game="guespy"] on <html> while the game is open.
+ *
+ * The `:root` prefix is required, not stylistic. A bare [data-game="…"] has
+ * the same specificity as the :root block in tokens.css, so which one wins
+ * would depend on the order the bundler happens to emit the files in — and
+ * the override silently loses whenever this file lands first.
+ *
+ * Pick an accent clearly away from the danger (rose) and success (mint) hues,
+ * or primary and destructive buttons stop being distinguishable.
+ */
+
+:root[data-game="guespy"] {
+  --accent: #7c5cff;
+  --accent-bright: #9b82ff;
+  --accent-deep: #5b3fd6;
+  --accent-2: #47d5ff;
+}
