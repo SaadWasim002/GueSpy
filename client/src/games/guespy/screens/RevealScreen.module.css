@@ -1,0 +1,183 @@
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-6);
+  width: 100%;
+}
+
+/* --- pass the device --- */
+
+.handoff {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-5);
+  text-align: center;
+}
+
+.handoffName {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.handoffHint {
+  font-size: var(--text-md);
+  color: var(--color-text-muted);
+  max-width: 34ch;
+  text-wrap: pretty;
+}
+
+/* --- the role card --- */
+
+/*
+ * Sized from the viewport *height*, not width. The card, its label, the hint
+ * and the action button all have to be on screen at once — a device being
+ * passed around the room should never need scrolling to find "pass it on".
+ * Width follows from the aspect ratio.
+ */
+.card {
+  position: relative;
+  height: min(52vh, 26rem);
+  width: auto;
+  max-width: 86vw;
+  aspect-ratio: 3 / 4;
+  perspective: 1200px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* `display: block` is required, not cosmetic: this is a <span> (a button may
+   not contain a <div>), and an inline box ignores width/height, which
+   collapses it and takes the absolutely-positioned faces down with it. */
+.inner {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--dur-slow) var(--ease-snap);
+}
+
+.revealed .inner {
+  transform: rotateY(180deg);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  padding: var(--sp-7);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-strong);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  text-align: center;
+  overflow: hidden;
+}
+
+.back {
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--accent-soft), transparent 60%),
+    var(--color-surface-raised);
+  box-shadow: var(--shadow-lg);
+}
+
+.backGlyph {
+  font-size: 3rem;
+  line-height: 1;
+  animation: float-y 3.4s var(--ease-in-out) infinite;
+}
+
+.backLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.backHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.front {
+  transform: rotateY(180deg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Role-coloured wash, so the answer is legible in half a second. */
+.crew {
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--color-success-soft), transparent 62%),
+    var(--color-surface-raised);
+  border-color: color-mix(in oklab, var(--color-success) 40%, transparent);
+}
+
+.hidden {
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--color-danger-soft), transparent 62%),
+    var(--color-surface-raised);
+  border-color: color-mix(in oklab, var(--color-danger) 45%, transparent);
+}
+
+.roleLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.crew .roleLabel {
+  color: var(--color-success);
+}
+
+.hidden .roleLabel {
+  color: var(--color-danger);
+}
+
+.categoryLabel {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.word {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  overflow-wrap: anywhere;
+}
+
+.spyBrief {
+  font-size: var(--text-md);
+  color: var(--color-text-soft);
+  text-wrap: pretty;
+}
+
+.holdHint {
+  min-height: 1.25rem;
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backGlyph {
+    animation: none;
+  }
+}
