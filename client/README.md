@@ -49,7 +49,7 @@ This section details the functional requirements of the application. All success
     - **Request**: `{ "username": "...", "email": "...", "password": "..." }`
     - **Success (201 CREATED)**: Display a success message, store the received JWT token from the `data.token` field, and sign the user straight in — the token is immediately usable, so asking for the same credentials again is pure friction.
 
-      ⚠️ **Do not rely on `userId` from a registration token.** `AuthService.userRegister` generates the token *before* saving the user, so the id is still null and the claim is omitted entirely — a registration token decodes to `{sub, role, iat, exp}`. This is harmless today because `JwtFilter` resolves identity by looking up `sub` in the database, and the frontend does not use `userId` at all. See "Known backend gaps".
+      ✅ The registration token now carries the `userId` claim — `AuthService.userRegister` saves the user before generating the token, so the id is present. A registration token decodes to `{sub, role, userId, iat, exp}`, identical in shape to a login token.
         ```json
         {
             "data": {
@@ -309,12 +309,12 @@ This section details the functional requirements of the application. All success
         }
         ```
     - **Success (200 OK)**: Display "Game options set successfully." The frontend must then immediately call `GET /game-engine/get-screen` to determine the next screen (expected to be `WORD_AND_SPY_REVEAL`).
-    - **Error (400 BAD_REQUEST - INVALID_NUMBER_OF_SPY)**: Display "Invalid number of spies. Please select between X and Y." (where X and Y are min/max from config).
+    - **Error (400 BAD_REQUEST - INVALID_NUMBER_OF_SPY)**: The backend rejects a spy count that is out of range. Valid range is **1 to 2**, and it must leave at least one innocent (so the effective max is `min(2, players − 1)`). The DTO also enforces `@Max(2)`. Clamp the stepper to this range.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for game option selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 - **API Endpoint (Configuration for Number of Spies)**: `GET http://localhost:8080/config/get`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Expected Response**: A list of configurations, including `key: "min_spy_allowed"` and `key: "max_spy_allowed"` (assuming these will be added).
+    - **Expected Response**: A list of configurations, including `key: "min_spy_allowed"` (1) and `key: "max_spy_allowed"` (now `2`, aligned with the game logic).
     - **Logic**:
         - On loading the game option selection screen, fetch these configurations.
         - Use the `value` fields to set the bounds for the number of spies.
@@ -470,14 +470,14 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
                     },
                     "roleDescriptionText": null,
                     "screenType": "ROLE_REVEAL",
-                    "wordName": "test2" // Frontend must hide this for spies
+                    "wordName": null // the backend sends null for a spy
                 },
                 "status": "200 OK"
             }
             ```
-            *   Frontend displays the role (`data.displayText`) and player name (`data.playerDetails.playerName`). It **must hide** the `data.wordName` for spies.
+            *   Frontend displays the role (`data.displayText`) and player name (`data.playerDetails.playerName`). For a spy, `data.wordName` is `null`.
 
-            ⚠️ `wordName` is sent on **every** response, a spy's included — `buildScreenData` sets it unconditionally. Hiding it client-side is therefore cosmetic: anyone can read the secret word from the network tab. The implementation keeps the spy branch structurally separate so the word is never rendered, but the real fix is server-side. See "Known backend gaps".
+            ✅ The secret word is now hidden server-side: `buildScreenData` sends `wordName: null` whenever the current player is a spy (both their pass-device and role-reveal screens), so the word never reaches a spy over the wire — not just in the rendered UI.
     - **Logic**:
         - The frontend will repeatedly call this API until `data.isLast` is `true`.
         - Once `data.isLast` is `true`, the frontend should then call `GET /game-engine/get-screen` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
@@ -759,12 +759,11 @@ Found while building and verifying the frontend against a running backend. None 
 
 ### Correctness
 
-1. **`number_of_spy` is unbounded, and an out-of-range value hangs the request.** `GameOptionRequest` validates only `@Min(1)`; nothing checks it against the player count. `GameEngineService.getRandomSpy` then runs `while (spies.size() < n)` adding random player numbers to a `Set`, which can never exceed the number of players — so **any request with `number_of_spy` greater than the player count never returns**. Equal to the player count makes everyone a spy.
-   *Fix:* add `@Max`, plus a check against the selected group's size. The UI clamps to 2, but a client cannot protect an endpoint anyone can call directly.
+1. ✅ **Fixed.** `number_of_spy` is now bounded: `GameOptionRequest` has `@Max(2)`, and `gameOptionEngine` rejects a count that wouldn't leave an innocent (`> players − 1`) with `400 INVALID_NUMBER_OF_SPY` — before `getRandomSpy` runs. The old unbounded value could spin `getRandomSpy` forever; that path is now unreachable from the endpoint.
 
-2. **The seeded `max_spy_allowed` is 3, but the game logic supports 1 or 2.** The two disagree; combined with (1), a 3-spy game with 3 players would hang. *Fix:* set the config row to 2.
+2. ✅ **Fixed.** `max_spy_allowed` is now `2` (Flyway `V6`), matching the game logic.
 
-3. **A registration token has no `userId` claim.** `AuthService.userRegister` calls `generateToken(user)` before `save(user)`, so the id is still null. *Fix:* move `generateToken` after `save`.
+3. ✅ **Fixed.** `AuthService.userRegister` now saves the user before generating the token, so the token carries the `userId` claim.
 
 4. **`/config/get` and the game engine read different sources.** `getAllConfigs()` queries the database (`findAll()`); the engine reads an in-memory cache refreshed only on startup, on `createNewConfig`/`updateConfig`, or via `/config/refresh`. **A row edited directly in the database changes what the API reports but not what the game uses**, indefinitely. Observed live: the client counted down from ten minutes while the server ended discussion after twenty seconds.
    *Fix:* serve `getAllConfigs()` from the same cache. Note it also uses `findAll()` where the cache uses `findActiveConfigs()`, so `/config/get` reports **inactive** rows as live.
@@ -773,7 +772,7 @@ Found while building and verifying the frontend against a running backend. None 
 
 ### Information leaks
 
-5. **The secret word is sent to spies.** `buildScreenData` sets `wordName` unconditionally, so a spy's own `role-reveal` response contains it. The frontend never renders it, but that is cosmetic — the network tab shows it. *Fix:* null `wordName` when `isSpy` is true. This is the one place the game hands its core secret to the player who must not have it.
+5. ✅ **Fixed.** `buildScreenData` now sends `wordName: null` whenever the current player is a spy (their pass-device and role-reveal screens), so the secret word never reaches a spy over the wire.
 
 ### API shape
 
