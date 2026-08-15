@@ -4,7 +4,10 @@ import { DiscussionScreen } from "./screens/DiscussionScreen";
 import { GameEntryScreen } from "./screens/GameEntryScreen";
 import { GameOptionScreen } from "./screens/GameOptionScreen";
 import { GroupScreen } from "./screens/GroupScreen";
+import { ResultScreen } from "./screens/ResultScreen";
 import { RevealScreen } from "./screens/RevealScreen";
+import { RoundEndScreen } from "./screens/RoundEndScreen";
+import { SpyGuessScreen } from "./screens/SpyGuessScreen";
 import { VotingScreen } from "./screens/VotingScreen";
 import { isResumable } from "./statusLabels";
 import { useGueSpySession } from "./useGueSpySession";
@@ -62,7 +65,9 @@ export const guespyModule = defineGameModule({
     VOTING: VotingScreen,
     REVOTE: VotingScreen,
 
-    // SPY_GUESS, ROUND_END, SCORING                              → feature/guespy-outcome
+    SPY_GUESS: SpyGuessScreen,
+    ROUND_END: RoundEndScreen,
+    SCORING: ResultScreen,
   },
 });
 
