@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchScreen, resetGame } from "./gameEngineService";
 
 /**
@@ -62,5 +62,15 @@ export function useGueSpySession() {
     refresh();
   }, [refresh]);
 
-  return { ...session, refresh, reset };
+  /*
+   * Memoised so the identity only changes when the state actually does,
+   * rather than on every render.
+   *
+   * A warning for screens built on this: never put the whole session object
+   * in an effect's dependency array when the effect calls `refresh`. A
+   * refresh sets state, which changes this object, which re-runs the effect
+   * — an unbounded request loop, not a poll. Depend on `refresh` itself; it
+   * is a stable callback.
+   */
+  return useMemo(() => ({ ...session, refresh, reset }), [session, refresh, reset]);
 }
