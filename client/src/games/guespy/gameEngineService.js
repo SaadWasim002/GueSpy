@@ -32,6 +32,26 @@ export async function resetGame() {
 }
 
 /**
+ * GET /game-engine/role-reveal — the next screen in the pass-the-device pass.
+ *
+ * This is a GET that MUTATES. Each call advances the server's cursor through
+ * PASS_DEVICE → ROLE_REVEAL → next player, and persists it. There is no way
+ * to read the current screen without consuming it, so it must be called
+ * exactly once per screen shown: a duplicate call silently skips a player's
+ * role. See RevealScreen for how that is enforced.
+ *
+ * Returns { screenType, displayText, isLast, categoryName, wordName,
+ * playerDetails: { playerName, playerNumber, isSpy } }.
+ *
+ * `wordName` is present on every response, including a spy's — hiding it is
+ * the client's job. See RevealScreen.
+ */
+export async function fetchRoleReveal() {
+  const response = await api.get("/game-engine/role-reveal");
+  return unwrap(response);
+}
+
+/**
  * POST /game-engine/game-option — sets the spy count and deals the round.
  *
  * The server accepts any value ≥ 1 here: there is no upper bound on the DTO
