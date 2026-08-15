@@ -1,11 +1,24 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { IS_DEV } from "../config/env";
 import { Gallery } from "../dev/Gallery/Gallery";
 import { LoginScreen } from "../platform/auth/screens/LoginScreen";
 import { RegisterScreen } from "../platform/auth/screens/RegisterScreen";
+import { GameHubScreen } from "../platform/games/GameHubScreen";
+import { GameHost } from "./GameHost";
 import { NotFoundScreen } from "./NotFoundScreen";
 import { RequireAnonymous, RequireAuth } from "./RouteGuards";
-import { ScaffoldScreen } from "./ScaffoldScreen";
+
+/**
+ * Remounts the host whenever the routed game changes.
+ *
+ * The host calls the selected module's own session hook. Swapping modules
+ * without a remount would swap one set of hooks for another between renders,
+ * which React cannot reconcile — the key forces a clean unmount instead.
+ */
+function KeyedGameHost() {
+  const { gameId } = useParams();
+  return <GameHost key={gameId} />;
+}
 
 /*
  * There is deliberately no cross-fade between routes.
@@ -33,27 +46,14 @@ export function AppRoutes() {
 
       {/* Everything below requires a session. */}
       <Route element={<RequireAuth />}>
-        <Route
-          index
-          element={
-            <ScaffoldScreen
-              title="Choose a game"
-              subtitle="The platform's home. Games come from the active_games config."
-              branch="feature/game-hub"
-              showConfig
-            />
-          }
-        />
-        <Route
-          path="/play/:gameId/*"
-          element={
-            <ScaffoldScreen
-              title="Game"
-              subtitle="Each game module drives its own screens from here."
-              branch="feature/game-hub"
-            />
-          }
-        />
+        <Route index element={<GameHubScreen />} />
+
+        {/*
+          Keyed on the game id so switching games remounts the host. The host
+          calls the module's own session hook, and remounting is what keeps
+          one module's hooks from being swapped for another's mid-render.
+        */}
+        <Route path="/play/:gameId/*" element={<KeyedGameHost />} />
       </Route>
 
       {/* Living component reference. Dev builds only. */}

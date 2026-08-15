@@ -1,0 +1,89 @@
+.card {
+  display: flex;
+  gap: var(--sp-5);
+  align-items: flex-start;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* A lone game stretches the full row, so the card reflows to a horizontal
+   layout rather than becoming an absurdly wide column of centred text. */
+@media (max-width: 34rem) {
+  .card {
+    flex-direction: column;
+  }
+}
+
+.emblem {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-lg);
+  font-size: 1.9rem;
+  background: linear-gradient(150deg, var(--accent-soft), transparent 70%);
+  border: 1px solid var(--accent-line);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.tagline {
+  font-size: var(--text-md);
+  color: var(--color-text-soft);
+  text-wrap: pretty;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: center;
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  color: var(--accent-bright);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.card:hover .cta {
+  transform: translateX(3px);
+}
+
+/* Offered by the server but not implemented in this build. */
+.locked {
+  opacity: 0.55;
+}
+
+.locked .emblem {
+  background: var(--color-surface-overlay);
+  border-color: var(--color-border);
+  filter: grayscale(1);
+}
