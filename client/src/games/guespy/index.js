@@ -1,0 +1,54 @@
+import { defineGameModule, PLAY_MODES } from "../types";
+import { GameEntryScreen } from "./screens/GameEntryScreen";
+import { isResumable } from "./statusLabels";
+import { useGueSpySession } from "./useGueSpySession";
+import "./theme.css";
+
+/**
+ * GueSpy — the word-based hidden-role game.
+ *
+ * Everything specific to this game lives under this folder: its endpoints,
+ * its state adapter, its screens, its theme. The platform imports only this
+ * module object, so a second game is added without touching platform code.
+ *
+ * `screens` is filled in as the flow branches land; the host renders a
+ * clearly-labelled placeholder for any status not yet mapped, which keeps a
+ * partially-built game runnable end to end.
+ */
+export const guespyModule = defineGameModule({
+  id: "GUESPY",
+
+  meta: {
+    name: "GueSpy",
+    tagline: "Everyone gets the word. Except one of you.",
+    emblem: "🕵",
+    players: "3-10 players",
+    length: "5 min a round",
+  },
+
+  modes: [PLAY_MODES.PASS_AND_PLAY],
+
+  theme: "guespy",
+
+  useSession: useGueSpySession,
+
+  /*
+   * Offered before the game screens when there is something worth resuming.
+   * Setup states are excluded — asking whether to continue an empty game is
+   * a question with no meaning.
+   */
+  entry: {
+    Screen: GameEntryScreen,
+    shouldShow: (session) => isResumable(session.status),
+  },
+
+  screens: {
+    // CATEGORY_SELECTION, GROUP_SELECTION, GAME_OPTION_SELECTION → feature/guespy-setup
+    // WORD_AND_SPY_REVEAL                                        → feature/guespy-reveal
+    // DISCUSSION_TIME                                            → feature/guespy-discussion
+    // VOTING, REVOTE                                             → feature/guespy-voting
+    // SPY_GUESS, ROUND_END, SCORING                              → feature/guespy-outcome
+  },
+});
+
+export default guespyModule;
