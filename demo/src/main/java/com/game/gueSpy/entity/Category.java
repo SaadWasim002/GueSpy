@@ -35,6 +35,9 @@ public class Category {
     @Column(columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean isEnabled;
 
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
+    private Boolean adminOnly;
+
     @Builder.Default
     private Integer totalWords = 0; 
     private String createdBy;

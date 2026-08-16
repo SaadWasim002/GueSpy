@@ -2,6 +2,7 @@ package com.game.gueSpy.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,8 @@ import com.game.gueSpy.service.CategoryService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/category")
@@ -41,11 +44,10 @@ public class CategoryController {
     @DeleteMapping(
         path = "/delete",
         name = "delete category",
-        consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> delete(@RequestParam String categoryName){
-        return categoryService.deleteCategory(categoryName);
+    public ResponseEntity<?> delete(@RequestParam Long categoryId){
+        return categoryService.deleteCategory(categoryId);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -64,8 +66,11 @@ public class CategoryController {
         name = "Get all Categories",
         produces = "application/json"
     )
-    public ResponseEntity<?> get(){
-        return categoryService.getAllCategory();
+    public ResponseEntity<?> get(@AuthenticationPrincipal UserPrincipal principal,
+                              Authentication auth){
+        Boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
+        return categoryService.getAllCategory(isAdmin);
     }
 
     @PostMapping(
