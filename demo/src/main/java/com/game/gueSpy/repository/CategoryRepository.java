@@ -1,5 +1,6 @@
 package com.game.gueSpy.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,7 @@ import com.game.gueSpy.entity.Category;
 public interface CategoryRepository extends JpaRepository<Category, Long>{
     @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) = LOWER(:categoryName)")
     Optional<Category> findByCategoryNameIgnoreCase(@Param("categoryName") String categoryName);
+
+    @Query("SELECT c FROM Category c WHERE c.isEnabled = true AND (:isAdmin = true OR c.adminOnly = false)")
+    List<Category> findAllActiveCategoryForUser(@Param("isAdmin") Boolean isAdmin);
 }

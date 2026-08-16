@@ -42,11 +42,14 @@ public class CategoryService {
             }
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            assert authentication != null;
             String username = authentication.getName();
+            Boolean adminOnly = (request.getAdminOnly() != null) ? request.getAdminOnly() : false;
             Category category = Category.builder()
                     .categoryName(request.getCategoryName())
                     .isEnabled(true)
                     .totalWords(0)
+                    .adminOnly(adminOnly)
                     .createdBy(username)
                     .build();
 
@@ -59,65 +62,66 @@ public class CategoryService {
     }
 
     @Transactional
-    public ResponseEntity<?> deleteCategory(String categoryName){
-        log.info("User has started delete category flow with this category name : {}", categoryName);
+    public ResponseEntity<?> deleteCategory(Long categoryId){
+        log.info("User has started delete category flow with this category id : {}", categoryId);
 
-        if(categoryName != null && !categoryName.isEmpty()){
-            var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(categoryName);
-
-            if(categoryOptional.isEmpty()){
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-            }
-
-            Category category = categoryOptional.get();
-            categoryRepository.deleteById(category.getId());
-
-            wordRepository.deleteWordByCategoryId(category.getId());
-
-            log.info("Category deleted Successfully");
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_DELETED);
+        if(categoryId == null){
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
+
+        if(categoryRepository.findById(categoryId).isEmpty()){
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
+        }
+
+        categoryRepository.deleteById(categoryId);
+        wordRepository.deleteWordByCategoryId(categoryId);
+
+        log.info("Category deleted Successfully");
+        return GenericUtility.buildResponse(ResponseEnum.CATEGORY_DELETED);
     }
 
     public ResponseEntity<?> updateCategory(CategoryRequest request){
-        log.info("User has started udpate category flow with this request body : {}", request);
+        log.info("User has started update category flow with this request body : {}", request);
 
-        if(request.getCategoryName() != null && !request.getCategoryName().isEmpty()){
-            var categoryOptional = categoryRepository.findByCategoryNameIgnoreCase(request.getCategoryName());
-
-            if(categoryOptional.isEmpty()){
-                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
-            }
-
-            Category category = categoryOptional.get();
-
-            if(request.getUpdateName() != null && !request.getUpdateName().isEmpty()){
-                var existingCategory = categoryRepository.findByCategoryNameIgnoreCase(request.getUpdateName());
-    
-                if(existingCategory.isPresent() && !existingCategory.get().getId().equals(category.getId())){
-                    return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
-                }
-                
-                category.setCategoryName(request.getUpdateName());
-            }
-
-            if(request.getIsEnabled() != null){
-                category.setIsEnabled(request.getIsEnabled());
-            }
-
-            categoryRepository.save(category);
-
-            log.info("Category updated Successfully");
-            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_UPDATED);
+        if(request.getCategoryId() == null){
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
-        log.info("request body : {}", request);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
+
+        var categoryOptional = categoryRepository.findById(request.getCategoryId());
+
+        if(categoryOptional.isEmpty()){
+            return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
+        }
+
+        Category category = categoryOptional.get();
+
+        if(request.getUpdateName() != null && !request.getUpdateName().isEmpty()){
+            var existingCategory = categoryRepository.findByCategoryNameIgnoreCase(request.getUpdateName());
+
+            if(existingCategory.isPresent() && !existingCategory.get().getId().equals(category.getId())){
+                return GenericUtility.buildResponse(ResponseEnum.CATEGORY_ALREADY_EXISTS);
+            }
+
+            category.setCategoryName(request.getUpdateName());
+        }
+
+        if(request.getIsEnabled() != null){
+            category.setIsEnabled(request.getIsEnabled());
+        }
+
+        if(request.getAdminOnly() != null){
+            category.setAdminOnly(request.getAdminOnly());
+        }
+
+        categoryRepository.save(category);
+
+        log.info("Category updated Successfully");
+        return GenericUtility.buildResponse(ResponseEnum.CATEGORY_UPDATED);
     }
 
-    public ResponseEntity<?> getAllCategory(){
+    public ResponseEntity<?> getAllCategory(Boolean isAdmin){
         log.info("User has started get all category flow");
-        List<Category> categories = categoryRepository.findAll();
+        List<Category> categories = categoryRepository.findAllActiveCategoryForUser(isAdmin);
         
         if(categories.isEmpty()){
             return GenericUtility.buildResponse(ResponseEnum.NO_CATEGORY_FOUND);

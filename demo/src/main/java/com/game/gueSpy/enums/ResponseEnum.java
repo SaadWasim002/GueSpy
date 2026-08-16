@@ -73,7 +73,7 @@ public enum ResponseEnum {
     CONCURRENT_MODIFICATION(MessageConstants.concurrentModification, HttpStatus.CONFLICT),
     UNSUPPORTED_GAME_TYPE(MessageConstants.unsupportedGameType, HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_NUMBER_OF_SPY(MessageConstants.invalidNumberOfSpy, HttpStatus.BAD_REQUEST),
-    INVALID_DATA(MessageConstants.invalidData, HttpStatus.OK),
+    INVALID_DATA(MessageConstants.invalidData, HttpStatus.BAD_REQUEST),
     TESTING(MessageConstants.testing, HttpStatus.OK);
     
     private String message;
