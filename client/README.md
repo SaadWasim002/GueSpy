@@ -110,7 +110,7 @@ This section details the functional requirements of the application. All success
     ```
 - **Logic**:
     - Fetch configs, find `active_games`, `JSON.parse` its value, and render the enabled games.
-    - Selecting **GueSpy** enters the game flow: call `GET /game-engine/get-screen` and route by `gameStatus` (see 3.2.3).
+    - Selecting **GueSpy** enters the game flow: call `GET /game-engine/game-state` and route by `gameStatus` (see 3.2.3).
     - The backend currently associates every session with GueSpy automatically, so no separate "select game" API call is required yet. `gameType` is included on each entry so that, as more games are added, the frontend can route each game to its own flow.
 - **Error (404 NOT_FOUND - NO_CONFIG_FOUND)**: Fall back to showing GueSpy only.
 - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
@@ -120,21 +120,21 @@ This section details the functional requirements of the application. All success
 - **UI**: A central screen with two prominent, distinct buttons:
     - "Continue Game"
     - "New Game"
-- **Logic**: This screen is displayed after the frontend determines the current game status via `GET /game-engine/get-screen`.
+- **Logic**: This screen is displayed after the frontend determines the current game status via `GET /game-engine/game-state`.
 
 #### 3.2.2. New Game Flow
 - **Description**: Resets the user's current game progress and starts a new game.
 - **Trigger**: User clicks the "New Game" button.
 - **API Endpoint**: `POST http://localhost:8080/game-engine/reset`
     - **Request Headers**:  `Authorization: Bearer <token>` 
-    - **Success (200 OK)**: Upon successful reset, the frontend must immediately call `GET /game-engine/get-screen`. In practice this returns **`NOT_STARTED`**, not `CATEGORY_SELECTION` — both mean "pick a category", and the routing table below already maps them to the same screen.
+    - **Success (200 OK)**: Upon successful reset, the frontend must immediately call `GET /game-engine/game-state`. In practice this returns **`NOT_STARTED`**, not `CATEGORY_SELECTION` — both mean "pick a category", and the routing table below already maps them to the same screen.
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.3. Current Screen Determination
 - **Description**: Determines the user's current game state and navigates to the appropriate screen. This API call is crucial and should be made:
     1.  Immediately after successful login.
     2.  Immediately after a successful "New Game" reset.
-- **API Endpoint**: `GET http://localhost:8080/game-engine/get-screen`
+- **API Endpoint**: `GET http://localhost:8080/game-engine/game-state`
     - **Request Headers**:  `Authorization: Bearer <token>`
     - **Expected Response**: `gameStatus` is **inside** the `data` object, not a sibling of it. The server returns a `GameStatusData` object *as* the payload, so every response looks like:
         ```json
@@ -194,13 +194,13 @@ This section details the functional requirements of the application. All success
 - **API Endpoint (Select Category)**: `POST http://localhost:8080/category/select`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: `{ "id": <selectedCategoryId> }`
-    - **Success (200 OK)**: Display "Category selected successfully." The frontend must then immediately call `GET /game-engine/get-screen` to determine the next screen (expected to be `GROUP_SELECTION`). The response contains no data.
+    - **Success (200 OK)**: Display "Category selected successfully." The frontend must then immediately call `GET /game-engine/game-state` to determine the next screen (expected to be `GROUP_SELECTION`). The response contains no data.
     - **Error (404 NOT_FOUND - CATEGORY_NOT_EXISTS)**: Display "Selected category does not exist or is no longer available."
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for category selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.5. Group Selection Screen
-- **Description**: Allows the user to manage and select a group of players for the game. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `GROUP_SELECTION`.
+- **Description**: Allows the user to manage and select a group of players for the game. This screen is displayed when the `gameStatus` from `GET /game-engine/game-state` is `GROUP_SELECTION`.
 - **UI**:
     - A clear title: "Select or Create a Group".
     - A section displaying a list or grid of existing groups for the user. Each group item should prominently display the `groupName`.
@@ -246,33 +246,27 @@ This section details the functional requirements of the application. All success
     - **Error (409 CONFLICT - GROUP_ALREADY_EXISTS)**: Display "A group with this name already exists."
     - **Error (400 BAD_REQUEST)**: Display "Group name and player names are required." or "Number of players out of bounds."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Update Group)**: `PUT http://localhost:8080/group/get?groupId={id}` — ⚠️ **not implemented.**
-    - `GroupController` exposes only `create`, `get` and `select`; there is no update endpoint and no delete endpoint. The UI therefore offers **neither** editing nor deleting, and says so on the screen, rather than shipping controls that could only ever fail. The spec below is retained for whenever the endpoint lands.
+- **API Endpoint (Update Group)**: `PUT http://localhost:8080/group/update?groupId={id}` — ✅ **implemented** (no admin role; a user can only edit their **own** groups).
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Request Body**: (Backend will extract `userId` from JWT)
+    - **Request Body**: a full replace of the name and player list (both required).
         ```json
-        {
-            "group": {
-                "id": <groupId>,
-                "userId": <userId_from_JWT>,
-                "groupName": "Updated Group Name",
-                "players": {
-                    "playerNames": [
-                        "Updated Player1",
-                        "Updated Player2"
-                    ]
-                }
-            }
-        }
+        { "group_name": "Updated Group Name", "players": ["Updated Player1", "Updated Player2"] }
         ```
-    - **Success (200 OK)**: Display "Group updated successfully." Refresh the list of groups.
-    - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: Display "Group not found."
-    - **Error (400 BAD_REQUEST)**: Display "Invalid group data provided."
+    - **Success (200 OK)**: "Group updated successfully." Refresh the list of groups.
+    - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: "Group not found."
+    - **Error (403 FORBIDDEN - ACCESS_DENIED)**: The group belongs to another user.
+    - **Error (409 CONFLICT - GROUP_ALREADY_EXISTS)**: Another of your groups already uses that name.
+    - **Error (400 BAD_REQUEST)**: `group_name` blank or `players` empty.
+- **API Endpoint (Delete Group)**: `DELETE http://localhost:8080/group/delete?groupId={id}` — ✅ **implemented** (owner-only, no admin role).
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Success (200 OK)**: "Group deleted successfully." Refresh the list of groups.
+    - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: "Group not found."
+    - **Error (403 FORBIDDEN - ACCESS_DENIED)**: The group belongs to another user.
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 - **API Endpoint (Select Group)**: `POST http://localhost:8080/group/select`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: `{ "id": <selectedGroupId> }`
-    - **Success (200 OK)**: Display "Group selected successfully." The frontend must then immediately call `GET /game-engine/get-screen` to determine the next screen (expected to be `GAME_OPTION_SELECTION`).
+    - **Success (200 OK)**: Display "Group selected successfully." The frontend must then immediately call `GET /game-engine/game-state` to determine the next screen (expected to be `GAME_OPTION_SELECTION`).
     - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: Display "Selected group does not exist."
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for group selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
@@ -290,7 +284,7 @@ This section details the functional requirements of the application. All success
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.7. Game Option Selection Screen
-- **Description**: Allows the user to configure game-specific options, starting with the number of spies. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `GAME_OPTION_SELECTION`.
+- **Description**: Allows the user to configure game-specific options, starting with the number of spies. This screen is displayed when the `gameStatus` from `GET /game-engine/game-state` is `GAME_OPTION_SELECTION`.
 - **UI**:
     - A clear title: "Configure Game Options".
     - A section for "Number of Spies":
@@ -308,7 +302,7 @@ This section details the functional requirements of the application. All success
             "number_of_spy": <selectedNumberOfSpies>
         }
         ```
-    - **Success (200 OK)**: Display "Game options set successfully." The frontend must then immediately call `GET /game-engine/get-screen` to determine the next screen (expected to be `WORD_AND_SPY_REVEAL`).
+    - **Success (200 OK)**: Display "Game options set successfully." The frontend must then immediately call `GET /game-engine/game-state` to determine the next screen (expected to be `WORD_AND_SPY_REVEAL`).
     - **Error (400 BAD_REQUEST - INVALID_NUMBER_OF_SPY)**: The backend rejects a spy count that is out of range. Valid range is **1 to 2**, and it must leave at least one innocent (so the effective max is `min(2, players − 1)`). The DTO also enforces `@Max(2)`. Clamp the stepper to this range.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for game option selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
@@ -387,7 +381,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
 - `/dev/ui` renders a live gallery of every UI primitive under an accent switcher.
 
 #### 3.2.8. Word and Spy Reveal Screen (`WORD_AND_SPY_REVEAL`)
-- **Description**: This screen guides players through revealing their roles (whether they are a spy or not) and their assigned word (for non-spies). It involves a "pass the device" mechanism to ensure each player sees their role privately. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `WORD_AND_SPY_REVEAL`.
+- **Description**: This screen guides players through revealing their roles (whether they are a spy or not) and their assigned word (for non-spies). It involves a "pass the device" mechanism to ensure each player sees their role privately. This screen is displayed when the `gameStatus` from `GET /game-engine/game-state` is `WORD_AND_SPY_REVEAL`.
 - **UI**:
     - **Common Elements**: A prominent "Continue" button to proceed to the next player's turn or the next game phase.
     - **Screen Type: `PASS_DEVICE`**:
@@ -480,23 +474,23 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
             ✅ The secret word is now hidden server-side: `buildScreenData` sends `wordName: null` whenever the current player is a spy (both their pass-device and role-reveal screens), so the word never reaches a spy over the wire — not just in the rendered UI.
     - **Logic**:
         - The frontend will repeatedly call this API until `data.isLast` is `true`.
-        - Once `data.isLast` is `true`, the frontend should then call `GET /game-engine/get-screen` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
+        - Once `data.isLast` is `true`, the frontend should then call `GET /game-engine/game-state` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for role reveal."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.9. Discussion Time Screen (`DISCUSSION_TIME`)
-- **Description**: This screen is for the discussion phase of the game. A timer is displayed, and players discuss to find the spy. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `DISCUSSION_TIME`.
+- **Description**: This screen is for the discussion phase of the game. A timer is displayed, and players discuss to find the spy. This screen is displayed when the `gameStatus` from `GET /game-engine/game-state` is `DISCUSSION_TIME`.
 - **UI**:
     - A clear title: "Discussion Time".
     - A prominent countdown timer.
     - **The nominated starting player, stated plainly** — e.g. "Doll starts". Somebody has to speak first, and a table left to decide that for itself stalls. The same player is highlighted in the roster.
     - A list of players still in the round.
 - **Logic**:
-    - Everything the timer needs is on the `get-screen` payload: `discussionStartTime` (epoch ms) and `discussionDuration` (**seconds**).
+    - Everything the timer needs is on the `game-state` payload: `discussionStartTime` (epoch ms) and `discussionDuration` (**seconds**).
     - End time = `discussionStartTime + discussionDuration * 1000`.
     - ⚠️ **Do not read `discussion_duration` from `/config/get` for this.** The payload value is the one the engine itself used to compute the deadline, so the countdown and the server cannot disagree. Reading config instead let them drift indefinitely — `/config/get` serves the database while the engine serves its own cache (see "Known backend gaps"), which had the client counting down from ten minutes while the server ended discussion after twenty seconds.
-    - **Do not poll during discussion.** Wait out the deadline, then call `get-screen` **once**: the server flips the game to `VOTING` on the first call past it. A repeat call is only warranted if the device's clock is ahead of the server's and it still reports `DISCUSSION_TIME`; back off rather than spinning.
-- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+    - **Do not poll during discussion.** Wait out the deadline, then call `game-state` **once**: the server flips the game to `VOTING` on the first call past it. A repeat call is only warranted if the device's clock is ahead of the server's and it still reports `DISCUSSION_TIME`; back off rather than spinning.
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK) with `DISCUSSION_TIME` status**:
         ```json
@@ -512,11 +506,11 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
             "status": "200 OK"
         }
         ```
-    - ⚠️ **`startingPlayer` is re-randomised on every call.** `populateDiscussionTimeData` picks it with `getRandomNumber(...)` each time, so it is not stable across reads — two `get-screen` calls during the same discussion will usually name different players. Not a problem while the screen fetches once, but it means the nomination cannot be treated as a persisted property of the round. Persisting it on the round would make it reliable.
-    - **Error Handling**: Standard error handling applies as with other `get-screen` calls.
+    - ⚠️ **`startingPlayer` is re-randomised on every call.** `populateDiscussionTimeData` picks it with `getRandomNumber(...)` each time, so it is not stable across reads — two `game-state` calls during the same discussion will usually name different players. Not a problem while the screen fetches once, but it means the nomination cannot be treated as a persisted property of the round. Persisting it on the round would make it reliable.
+    - **Error Handling**: Standard error handling applies as with other `game-state` calls.
 
 #### 3.2.10. Voting Screen (`VOTING`)
-- **Description**: This screen allows players to vote for who they believe is the spy. The screen updates for each player's turn until all votes are cast. This screen is displayed when the `gameStatus` from `GET /game-engine/get-screen` is `VOTING`.
+- **Description**: This screen allows players to vote for who they believe is the spy. The screen updates for each player's turn until all votes are cast. This screen is displayed when the `gameStatus` from `GET /game-engine/game-state` is `VOTING`.
 - **UI**:
     - A clear header, e.g., "Voting Time" (from `data.displayTextHeader`).
     - An instruction for the current player, e.g., "Sayam, choose one player who you think is the spy" (constructed from `data.currentPlayerName` and `data.displayText`).
@@ -529,7 +523,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
     - When the user selects a player and clicks "Submit Vote", the frontend calls `POST /game-engine/vote` with the selected `player_id`.
     - After a successful vote, the frontend immediately calls `GET /game-engine/voting` again to get the data for the next player's turn.
     - This cycle continues. The `data.isLast` flag in the `GET /game-engine/voting` response indicates if the current vote is the final one.
-    - If `isLast` was `true` for the current turn, after that player votes the round is resolved. The frontend must call `GET /game-engine/get-screen` to find the next state, which will be one of `REVOTE`, `SPY_GUESS`, `ROUND_END`, or `SCORING` — see **3.2.11 Round Outcome & Multi-Round Flow**.
+    - If `isLast` was `true` for the current turn, after that player votes the round is resolved. The frontend must call `GET /game-engine/game-state` to find the next state, which will be one of `REVOTE`, `SPY_GUESS`, `ROUND_END`, or `SCORING` — see **3.2.11 Round Outcome & Multi-Round Flow**.
 - **API Endpoint (Get Voting Screen Data)**: `GET http://localhost:8080/game-engine/voting`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**:
@@ -561,7 +555,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
             "status": "200 OK"
         }
         ```
-        *   After this response, the frontend proceeds with the logic described above (either call `/game-engine/voting` again or `/game-engine/get-screen`).
+        *   After this response, the frontend proceeds with the logic described above (either call `/game-engine/voting` again or `/game-engine/game-state`).
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for voting."
     - **Error (400 BAD_REQUEST - INVALID_VOTE)**: Display "You cannot vote for this player." or "It's not your turn to vote."
     - **Error (404 NOT_FOUND - PLAYER_NOT_FOUND)**: Display "The player you voted for does not exist."
@@ -571,7 +565,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
 
 #### 3.2.11 Round Outcome & Multi-Round Flow
 
-Once every **active** player has cast a vote (see 3.2.10), the backend tallies the votes and moves the game to one of several states. The frontend detects the new state by calling `GET /game-engine/get-screen` after the final vote of the round.
+Once every **active** player has cast a vote (see 3.2.10), the backend tallies the votes and moves the game to one of several states. The frontend detects the new state by calling `GET /game-engine/game-state` after the final vote of the round.
 
 - The most-voted player is the "accused".
 - **Tie** (two or more players share the highest vote count) → `gameStatus` = `REVOTE`. The frontend re-runs the voting flow for the same active players (call `GET /game-engine/voting` again and continue as in 3.2.10). Voting and voting-submission endpoints accept both `VOTING` and `REVOTE`.
@@ -590,7 +584,7 @@ Rules the frontend should be aware of:
     - A text input for the word guess and a "Guess" button.
     - A "Decline" button.
     - **The secret word must NOT be shown on this screen.**
-- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
     - **Success (200 OK) with `SPY_GUESS`**:
         ```json
         {
@@ -602,11 +596,11 @@ Rules the frontend should be aware of:
 - **API Endpoint (Guess the word)**: `POST http://localhost:8080/game-engine/spy-guess`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: `{ "word": "Inception" }`
-    - **Success (200 OK)**: The game moves to `SCORING`. A **correct** guess means the spies win; a **wrong** guess means the innocents win. After the response, call `GET /game-engine/get-screen` (expected `SCORING`).
+    - **Success (200 OK)**: The game moves to `SCORING`. A **correct** guess means the spies win; a **wrong** guess means the innocents win. After the response, call `GET /game-engine/game-state` (expected `SCORING`).
     - **Error (400 BAD_REQUEST)**: Word is blank/invalid, or the game is not in a state that allows guessing.
 - **API Endpoint (Decline to guess)**: `POST http://localhost:8080/game-engine/spy-decline`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Success (200 OK)**: The caught spy is eliminated. If they were the **last** spy, the innocents win → `SCORING`. Otherwise the round continues → `ROUND_END` (or `SCORING` if too few players remain). After the response, call `GET /game-engine/get-screen`.
+    - **Success (200 OK)**: The caught spy is eliminated. If they were the **last** spy, the innocents win → `SCORING`. Otherwise the round continues → `ROUND_END` (or `SCORING` if too few players remain). After the response, call `GET /game-engine/game-state`.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Only valid at `SPY_GUESS`.
 - **Voluntary guess**: `POST /game-engine/spy-guess` is also accepted during `DISCUSSION_TIME`, `VOTING`, and `REVOTE`, allowing a spy to proactively guess the word at any point in a round (same win/lose outcome).
 
@@ -615,7 +609,7 @@ Rules the frontend should be aware of:
 - **UI**:
     - Display "<`data.eliminatedPlayerName`> was voted out" and (optionally) the round number.
     - A prominent "Continue" button.
-- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
     - **Success (200 OK) with `ROUND_END`**:
         ```json
         {
@@ -626,7 +620,7 @@ Rules the frontend should be aware of:
         ```
 - **API Endpoint (Start next round)**: `POST http://localhost:8080/game-engine/next-round`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Success (200 OK)**: Starts the next round — the game returns to `DISCUSSION_TIME` (a fresh discussion timer starts), then transitions to `VOTING` exactly as in 3.2.9–3.2.10. After the response, call `GET /game-engine/get-screen`.
+    - **Success (200 OK)**: Starts the next round — the game returns to `DISCUSSION_TIME` (a fresh discussion timer starts), then transitions to `VOTING` exactly as in 3.2.9–3.2.10. After the response, call `GET /game-engine/game-state`.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Only valid at `ROUND_END`.
 
 #### 3.2.14 Scoring / Result Screen (`SCORING`)
@@ -636,7 +630,7 @@ Rules the frontend should be aware of:
     - Reveal the `data.spies` (names) and the secret `data.word`.
     - Render `data.scores` as a leaderboard (e.g., sorted by `score` descending).
     - A "New Game" button.
-- **API Endpoint (`get-screen`)**: `GET http://localhost:8080/game-engine/get-screen`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
     - **Success (200 OK) with `SCORING`**:
         ```json
         {
@@ -656,7 +650,7 @@ Rules the frontend should be aware of:
             "status": "200 OK"
         }
         ```
-- **New Game**: `POST http://localhost:8080/game-engine/reset`, then `GET /game-engine/get-screen` (expected `CATEGORY_SELECTION`).
+- **New Game**: `POST http://localhost:8080/game-engine/reset`, then `GET /game-engine/game-state` (expected `CATEGORY_SELECTION`).
 - **Scoring rules (context for the UI)**: for every round the spies survive, each spy gains points and each innocent loses points; the winning side receives a bonus at the end. All point values are configured server-side (see 3.2.15), so the frontend should render whatever `scores` are returned rather than assuming fixed numbers.
 
 #### 3.2.15 Scoring Configuration (server-side)
@@ -671,6 +665,24 @@ Rules the frontend should be aware of:
     }
     ```
 - These are applied by the backend; the frontend does not need to read them, but they explain the numbers shown on the Scoring screen.
+
+#### 3.2.16 Game State Navigation (Back / Forward)
+- **Description**: A single endpoint to move the user between game states outside the normal forward flow — a **"Back"** button on the setup screens, and a **"Skip"** on the discussion screen. It updates the server-side state and returns the resulting screen.
+- **API Endpoint**: `POST http://localhost:8080/game-engine/game-state`
+    - **Request Headers**: `Authorization: Bearer <token>`
+    - **Request Body**: `{ "action": "back" }` or `{ "action": "forward" }` (case-insensitive).
+    - **Success (200 OK)**: Returns the resulting game state — the **same shape as `GET /game-engine/game-state`** (`gameStatus` inside `data`, plus any state-specific fields). The change is persisted.
+    - **`"back"`** — step one state back. Valid only when the current `gameStatus` is one of `CATEGORY_SELECTION`, `GROUP_SELECTION`, `GAME_OPTION_SELECTION`, `WORD_AND_SPY_REVEAL`, `DISCUSSION_TIME`. Transitions (each clears the selections owned by the state being left, so the user re-does them):
+        | From | To | Cleared |
+        |---|---|---|
+        | `CATEGORY_SELECTION` | `NOT_STARTED` | selected category |
+        | `GROUP_SELECTION` | `CATEGORY_SELECTION` | selected category |
+        | `GAME_OPTION_SELECTION` | `GROUP_SELECTION` | selected group |
+        | `WORD_AND_SPY_REVEAL` | `GAME_OPTION_SELECTION` | number of spies, assigned word/spies, reveal progress |
+        | `DISCUSSION_TIME` | `WORD_AND_SPY_REVEAL` | reveal progress + discussion timer (word/spies kept; reveal restarts) |
+    - **`"forward"`** — only valid at `DISCUSSION_TIME`: skips the remaining discussion time and moves straight to `VOTING`.
+    - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: The action isn't allowed from the current state (e.g. `back` from `VOTING`, or `forward` outside `DISCUSSION_TIME`).
+    - **Error (400 BAD_REQUEST)**: `action` missing or not `back`/`forward`.
 
 ## 4. Non-Functional Requirements
 
@@ -729,7 +741,7 @@ Rules the frontend should be aware of:
 
 ### Game Engine
 - `POST http://localhost:8080/game-engine/reset`: Resets the current game for the user.
-- `GET http://localhost:8080/game-engine/get-screen`: Retrieves the current game screen/status for the user.
+- `GET http://localhost:8080/game-engine/game-state`: Retrieves the current game screen/status for the user.
 - `GET http://localhost:8080/game-engine/role-reveal`: Advances the role reveal process for each player (call once per screen until `data.isLast` is true).
 - `POST http://localhost:8080/game-engine/game-option`: Sets game options like the number of spies (`number_of_spy`, 1 or 2).
 - `GET http://localhost:8080/game-engine/voting`: Retrieves the current voter's voting screen (valid at `VOTING`/`REVOTE`).
@@ -739,14 +751,22 @@ Rules the frontend should be aware of:
 - `POST http://localhost:8080/game-engine/spy-decline`: A caught spy declines to guess.
 
 ### Group Management
-- `GET http://localhost:8080/group/get`: Retrieves all available groups or a specific group.
+- `GET http://localhost:8080/group/get`: Retrieves all groups or a specific group.
 - `POST http://localhost:8080/group/create`: Creates a new group.
-- `PUT http://localhost:8080/group/get?groupId={id}`: Updates an existing group.
+- `PUT http://localhost:8080/group/update?groupId={id}`: Updates one of the user's own groups (owner-only, no admin role).
+- `DELETE http://localhost:8080/group/delete?groupId={id}`: Deletes one of the user's own groups (owner-only, no admin role).
 - `POST http://localhost:8080/group/select`: Selects a group for the current game.
 
 ### Category Management
 - `GET http://localhost:8080/category/get`: Retrieves all available categories.
 - `POST http://localhost:8080/category/select`: Selects a category for the current game.
+- (admin) `POST /category/create`, `PUT /category/update`, `DELETE /category/delete`.
+
+### Word Management (admin)
+- `POST http://localhost:8080/word/add`: Adds one or more words to a category — body `{ "category_id": n, "words": ["...", "..."] }`; returns `{ added, skipped }`.
+- `PUT http://localhost:8080/word/update`: Renames a word — body `{ "word_id": n, "word_name": "..." }`.
+- `DELETE http://localhost:8080/word/delete?wordId={id}`: Deletes a word.
+- `GET http://localhost:8080/word/get?categoryId={id}`: Lists a category's words.
 
 ### Configuration
 - `GET http://localhost:8080/config/get`: Retrieves application configurations (e.g., player limits, spy limits, `scoring_config`, and `active_games` for the game-selection screen).
@@ -782,7 +802,7 @@ Found while building and verifying the frontend against a running backend. None 
 
 ### Still missing
 
-8. **Group editing and deletion.** `GroupController` exposes only `create`, `get` and `select` — there is no `PUT /group/get?groupId={id}` and no delete at all. The UI deliberately offers neither rather than shipping buttons that always fail; the seam is marked in `groupService.js`.
+8. ✅ **Fixed.** Group editing and deletion now exist: `PUT /group/update?groupId={id}` and `DELETE /group/delete?groupId={id}` — owner-scoped, no admin role. See 3.2.5.
 
 9. **`max_group_allowed`** is read by the frontend but not seeded; it falls back to a default.
 
