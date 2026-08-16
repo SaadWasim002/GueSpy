@@ -29,7 +29,7 @@ const RETRY_MS = 2000;
 
 export function DiscussionScreen({ session }) {
   /*
-   * The duration comes from the get-screen payload, not from /config/get.
+   * The duration comes from the game-state payload, not from /config/get.
    * It is the value the engine itself used to compute the deadline, so the
    * countdown and the server can no longer disagree — which they could when
    * the client read the database and the engine read its own cache.
@@ -62,7 +62,7 @@ export function DiscussionScreen({ session }) {
   /*
    * There is no polling during discussion. The screen sleeps until the
    * deadline and then asks once — the server flips the game to VOTING on the
-   * first get-screen call past it, and this screen unmounts.
+   * first game-state call past it, and this screen unmounts.
    *
    * Nothing needs checking earlier: the countdown is now driven by the same
    * `discussionDuration` the engine used, so the two cannot drift apart.

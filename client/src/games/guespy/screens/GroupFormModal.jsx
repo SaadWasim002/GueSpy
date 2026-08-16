@@ -1,18 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, IconButton, Modal, TextInput, useToast } from "../../../ui";
-import { createGroup } from "../groupService";
+import { createGroup, updateGroup } from "../groupService";
 import styles from "./GroupFormModal.module.css";
 
-const emptyRow = () => ({ key: Math.random().toString(36).slice(2), name: "" });
+let rowId = 0;
+const makeRow = (name = "") => ({ key: `row-${(rowId += 1)}`, name });
 
 /**
- * Create a group of players.
+ * Create or edit a group of players.
+ *
+ * One form for both: an update is a full replace of the name and the whole
+ * line-up, which is exactly what creating collects, so a second component
+ * would be the same fields with a different verb — and two copies to keep in
+ * step as the validation rules change.
  *
  * Player bounds come from server config rather than being hard-coded, because
  * the server rejects an out-of-range group and the two must agree.
+ *
+ * @param group  the group being edited, or null to create a new one
  */
-export function GroupFormModal({ open, onClose, onCreated, minPlayers, maxPlayers, existingNames }) {
+export function GroupFormModal({
+  open,
+  onClose,
+  onSaved,
+  group = null,
+  minPlayers,
+  maxPlayers,
+  existingNames,
+}) {
   const toast = useToast();
+  const isEdit = Boolean(group);
 
   const [groupName, setGroupName] = useState("");
   const [rows, setRows] = useState([]);
@@ -20,15 +37,24 @@ export function GroupFormModal({ open, onClose, onCreated, minPlayers, maxPlayer
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Start with the minimum number of rows so the required shape is obvious
-  // rather than something to discover by hitting Create.
+  /*
+   * Load the form each time it opens: the group under edit, or an empty one
+   * pre-seeded with the minimum number of rows so the required shape is
+   * obvious rather than something to discover by pressing Save.
+   */
   useEffect(() => {
     if (!open) return;
-    setGroupName("");
-    setRows(Array.from({ length: minPlayers }, emptyRow));
+
+    const existingPlayers = group?.players?.playerNames ?? [];
+    setGroupName(group?.groupName ?? "");
+    setRows(
+      existingPlayers.length > 0
+        ? existingPlayers.map((name) => makeRow(name))
+        : Array.from({ length: minPlayers }, () => makeRow()),
+    );
     setErrors({});
     setFormError(null);
-  }, [open, minPlayers]);
+  }, [open, group, minPlayers]);
 
   const filled = useMemo(() => rows.map((r) => r.name.trim()).filter(Boolean), [rows]);
 
@@ -38,7 +64,7 @@ export function GroupFormModal({ open, onClose, onCreated, minPlayers, maxPlayer
     setFormError(null);
   };
 
-  const addRow = () => setRows((current) => [...current, emptyRow()]);
+  const addRow = () => setRows((current) => [...current, makeRow()]);
 
   const removeRow = (key) => setRows((current) => current.filter((row) => row.key !== key));
 
@@ -46,9 +72,15 @@ export function GroupFormModal({ open, onClose, onCreated, minPlayers, maxPlayer
     const found = {};
     const name = groupName.trim();
 
+    // A group keeping its own name is not a clash with itself, so the one
+    // being edited is excluded from the comparison.
+    const clashes = existingNames.filter(
+      (existing) => !isEdit || existing.toLowerCase() !== group.groupName?.toLowerCase(),
+    );
+
     if (!name) {
       found.groupName = "Give the group a name.";
-    } else if (existingNames.some((existing) => existing.toLowerCase() === name.toLowerCase())) {
+    } else if (clashes.some((existing) => existing.toLowerCase() === name.toLowerCase())) {
       // The server compares names case-insensitively and 409s; catching it
       // here saves a round trip and keeps the message specific.
       found.groupName = "You already have a group with this name.";
@@ -82,17 +114,34 @@ export function GroupFormModal({ open, onClose, onCreated, minPlayers, maxPlayer
 
     setSubmitting(true);
     try {
-      await createGroup({ groupName: groupName.trim(), players: filled });
-      toast.success("Group created.");
-      await onCreated();
+      const payload = { groupName: groupName.trim(), players: filled };
+
+      if (isEdit) {
+        await updateGroup(group.id, payload);
+        toast.success("Group updated.");
+      } else {
+        await createGroup(payload);
+        toast.success("Group created.");
+      }
+
+      await onSaved();
       onClose();
     } catch (error) {
       if (error?.status === 409) {
-        setErrors((current) => ({ ...current, groupName: "You already have a group with this name." }));
+        setErrors((current) => ({
+          ...current,
+          groupName: "You already have a group with this name.",
+        }));
+      } else if (error?.status === 404) {
+        // Only reachable if the group was removed elsewhere between opening
+        // the form and saving it.
+        setFormError("That group no longer exists.");
+      } else if (error?.status === 403) {
+        setFormError("That group belongs to someone else.");
       } else if (error?.status === 400) {
         setFormError(error.message || "Check the group name and player names.");
       } else {
-        setFormError("Couldn't create the group. Try again.");
+        setFormError(`Couldn't ${isEdit ? "update" : "create"} the group. Try again.`);
       }
     } finally {
       setSubmitting(false);
@@ -103,15 +152,19 @@ export function GroupFormModal({ open, onClose, onCreated, minPlayers, maxPlayer
     <Modal
       open={open}
       onClose={onClose}
-      title="New group"
-      description="Save the people you play with so you don't retype them every round."
+      title={isEdit ? "Edit group" : "New group"}
+      description={
+        isEdit
+          ? "Change the name or the line-up. Saving replaces both."
+          : "Save the people you play with so you don't retype them every round."
+      }
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
           <Button onClick={submit} loading={submitting}>
-            Create group
+            {isEdit ? "Save changes" : "Create group"}
           </Button>
         </>
       }

@@ -32,7 +32,7 @@ export const CONFIG_SCHEMA = {
   /*
    * `discussion_duration` is deliberately absent.
    *
-   * The discussion length now arrives on the get-screen payload as
+   * The discussion length now arrives on the game-state payload as
    * `discussionDuration`, which is the value the engine itself used to
    * compute the deadline. Reading it from config instead let the two drift:
    * /config/get serves the database while the engine serves its own cache,
