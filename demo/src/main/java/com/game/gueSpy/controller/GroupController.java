@@ -2,8 +2,10 @@ package com.game.gueSpy.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -49,5 +51,24 @@ public class GroupController {
     )
     public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody SelectionRequest request){
         return groupService.selectGroup(principal.userId(), request.getId());
+    }
+
+    @PutMapping(
+        path = "/update",
+        name = "update a group",
+        consumes = "application/json",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> update(@AuthenticationPrincipal UserPrincipal principal, @RequestParam Long groupId, @Valid @RequestBody GroupRequest request){
+        return groupService.updateGroup(request, groupId, principal.userId());
+    }
+
+    @DeleteMapping(
+        path = "/delete",
+        name = "delete a group",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> delete(@AuthenticationPrincipal UserPrincipal principal, @RequestParam Long groupId){
+        return groupService.deleteGroup(groupId, principal.userId());
     }
 }

@@ -29,6 +29,8 @@ public interface GameEngine {
 
     ResponseEntity<?> getGameStatus(Long userId);
 
+    ResponseEntity<?> navigateGameState(Long userId, String action);
+
     ResponseEntity<?> getVotingScreen(Long userId);
 
     ResponseEntity<?> vote(Long userId, Integer playerId);

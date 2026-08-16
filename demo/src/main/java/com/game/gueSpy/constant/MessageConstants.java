@@ -28,6 +28,7 @@ public class MessageConstants {
     public static final String wordIdNotExists = "Word does not exists with the word id";
     public static final String noWordFound = "No Word found for this category id";
     public static final String wordRetrieved = "Words retrieved successfully";
+    public static final String wordUpdated = "Word updated successfully";
 
     public static final String valueMissing = "Some of the field is missing";
     public static final String unauthorized = "Unauthorized access";
@@ -63,6 +64,8 @@ public class MessageConstants {
     public static final String groupRetrieved = "Group retrieved successfully";
     public static final String noGroupFound = "No group found";
     public static final String groupSelected = "Group selected successfully";
+    public static final String groupUpdated = "Group updated successfully";
+    public static final String groupDeleted = "Group deleted successfully";
 
     //USER_GAME_DETAILS
     public static final String invalidGameStatus = "Invalid game status";

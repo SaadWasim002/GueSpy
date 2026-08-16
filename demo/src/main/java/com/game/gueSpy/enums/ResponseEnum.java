@@ -31,6 +31,7 @@ public enum ResponseEnum {
     WORD_DELETED(MessageConstants.wordDeleted, HttpStatus.OK),
     WORD_ID_NOT_EXISTS(MessageConstants.wordIdNotExists, HttpStatus.NOT_FOUND),
     WORD_RETRIEVED(MessageConstants.wordRetrieved, HttpStatus.OK),
+    WORD_UPDATED(MessageConstants.wordUpdated, HttpStatus.OK),
     NO_WORD_FOUND(MessageConstants.noWordFound, HttpStatus.NOT_FOUND),
     WORD_ALREADY_EXISTS(MessageConstants.wordAlreadyExist, HttpStatus.CONFLICT),
 
@@ -40,6 +41,8 @@ public enum ResponseEnum {
     GROUP_RETRIEVED(MessageConstants.groupRetrieved, HttpStatus.OK),
     NO_GROUP_FOUND(MessageConstants.noGroupFound, HttpStatus.NOT_FOUND),
     GROUP_SELECTED(MessageConstants.groupSelected, HttpStatus.OK),
+    GROUP_UPDATED(MessageConstants.groupUpdated, HttpStatus.OK),
+    GROUP_DELETED(MessageConstants.groupDeleted, HttpStatus.OK),
 
     //Config
     CONFIG_CREATED(MessageConstants.configCreated, HttpStatus.CREATED),
