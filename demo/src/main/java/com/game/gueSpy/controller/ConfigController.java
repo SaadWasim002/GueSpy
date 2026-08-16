@@ -18,7 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/config")
+@RequestMapping("/api/v1/configs")
 @RequiredArgsConstructor
 public class ConfigController {
 
@@ -26,7 +26,6 @@ public class ConfigController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
-        path = "/create",
         name = "Create Config",
         consumes = "application/json",
         produces = "application/json"
@@ -44,7 +43,6 @@ public class ConfigController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(
-        path = "/update",
         name = "Update Config",
         consumes = "application/json",
         produces = "application/json"
@@ -53,7 +51,7 @@ public class ConfigController {
         return configService.updateConfig(request);
     }
 
-    @GetMapping(path = "/get", name = "Get All Configs")
+    @GetMapping(name = "Get All Configs")
     public ResponseEntity<?> getAllConfigs() {
         return configService.getAllConfigs();
     }

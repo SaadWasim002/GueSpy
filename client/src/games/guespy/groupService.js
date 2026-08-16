@@ -2,7 +2,7 @@ import { api, unwrap } from "../../lib/api";
 import { isStatus } from "../../lib/apiError";
 
 /**
- * GET /group/get → this user's saved player groups.
+ * GET /api/v1/groups → this user's saved player groups.
  *
  * Shape, verified against a running backend:
  *   { groups: [{ id, userId, groupName, players: { playerNames: [...] } }] }
@@ -13,7 +13,7 @@ import { isStatus } from "../../lib/apiError";
  */
 export async function fetchGroups() {
   try {
-    const response = await api.get("/group/get");
+    const response = await api.get("/api/v1/groups");
     return unwrap(response)?.groups ?? [];
   } catch (error) {
     if (isStatus(error, 404)) return [];
@@ -22,21 +22,21 @@ export async function fetchGroups() {
 }
 
 /**
- * POST /group/create
+ * POST /api/v1/groups
  *
  * Note the snake_case key: the backend binds `group_name`, not `groupName`.
  */
 export async function createGroup({ groupName, players }) {
-  await api.post("/group/create", { group_name: groupName, players });
+  await api.post("/api/v1/groups", { group_name: groupName, players });
 }
 
-/** POST /group/select — advances the game to GAME_OPTION_SELECTION. */
+/** POST /api/v1/groups/{id}/select — advances the game to GAME_OPTION_SELECTION. */
 export async function selectGroup(groupId) {
-  await api.post("/group/select", { id: groupId });
+  await api.post(`/api/v1/groups/${groupId}/select`);
 }
 
 /**
- * PUT /group/update?groupId={id}
+ * PUT /api/v1/groups/{id}
  *
  * A **full replace** — the name and the whole player list are both required,
  * so the caller must send the complete line-up, not a delta.
@@ -46,14 +46,14 @@ export async function selectGroup(groupId) {
  * ever contains the caller's own groups.
  */
 export async function updateGroup(groupId, { groupName, players }) {
-  await api.put("/group/update", { group_name: groupName, players }, { params: { groupId } });
+  await api.put(`/api/v1/groups/${groupId}`, { group_name: groupName, players });
 }
 
 /**
- * DELETE /group/delete?groupId={id}
+ * DELETE /api/v1/groups/{id}
  *
  * Owner-scoped, no body. Irreversible, so the UI confirms first.
  */
 export async function deleteGroup(groupId) {
-  await api.delete("/group/delete", { params: { groupId } });
+  await api.delete(`/api/v1/groups/${groupId}`);
 }
