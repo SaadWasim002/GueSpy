@@ -1,14 +1,15 @@
 package com.game.gueSpy.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.game.gueSpy.dto.request.WordRequest;
+import com.game.gueSpy.dto.response.WordsAddedResponse;
 import com.game.gueSpy.dto.response.WordsResponse;
 import com.game.gueSpy.entity.Category;
 import com.game.gueSpy.entity.Word;
@@ -32,34 +33,68 @@ public class WordService {
     public ResponseEntity<?> addNewWord(WordRequest request){
         log.info("User has started add word flow with this request body : {}", request);
 
-        if(request.getCategoryId() != null && request.getWordName() != null && !request.getWordName().isEmpty()){
-            var categoryOptional = categoryRepository.findById(request.getCategoryId());
-            if(categoryOptional.isPresent()){
-                Category category = categoryOptional.get();
-                if(wordRepository.findByWordNameIgnoreCase(request.getWordName(), category.getId()).isPresent()){
-                    return GenericUtility.buildResponse(ResponseEnum.WORD_ALREADY_EXISTS);
-                }
-
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                String username = authentication.getName();
-                Word word = Word.builder()
-                        .wordName(request.getWordName())
-                        .categoryId(request.getCategoryId())
-                        .createdBy(username)
-                        .build();
-                wordRepository.save(word);
-                Integer currentTotal = category.getTotalWords();
-                category.setTotalWords(currentTotal != null ? currentTotal + 1 : 1);
-                categoryRepository.save(category);
-                log.info("Category created Successfully");
-                return GenericUtility.buildResponse(ResponseEnum.WORD_ADDED);
-            }
-
+        var categoryOptional = categoryRepository.findById(request.getCategoryId());
+        if(categoryOptional.isEmpty()){
             log.info("Category not found with the id {}", request.getCategoryId());
             return GenericUtility.buildResponse(ResponseEnum.CATEGORY_NOT_EXISTS);
         }
-        log.info("request body : {}", request);
-        return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
+
+        Category category = categoryOptional.get();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        List<String> added = new ArrayList<>();
+        List<String> skipped = new ArrayList<>();
+        for(String rawName : request.getWords()){
+            if(rawName == null || rawName.isBlank()){
+                continue;   // ignore blank entries
+            }
+            String wordName = rawName.trim();
+            boolean duplicate = wordRepository.findByWordNameIgnoreCase(wordName, category.getId()).isPresent()
+                    || added.stream().anyMatch(existing -> existing.equalsIgnoreCase(wordName));
+            if(duplicate){
+                skipped.add(wordName);
+                continue;
+            }
+            wordRepository.save(Word.builder()
+                    .wordName(wordName)
+                    .categoryId(category.getId())
+                    .createdBy(username)
+                    .build());
+            added.add(wordName);
+        }
+
+        Integer currentTotal = category.getTotalWords();
+        category.setTotalWords((currentTotal != null ? currentTotal : 0) + added.size());
+        categoryRepository.save(category);
+
+        log.info("Added {} words, skipped {} duplicates for category {}", added.size(), skipped.size(), category.getId());
+        WordsAddedResponse data = WordsAddedResponse.builder().added(added).skipped(skipped).build();
+        return GenericUtility.buildResponse(ResponseEnum.WORD_ADDED, data);
+    }
+
+    @Transactional
+    public ResponseEntity<?> updateWord(Long wordId, String wordName){
+        log.info("User has started update word flow for wordId {}", wordId);
+        if(wordId == null || wordName == null || wordName.isBlank()){
+            return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
+        }
+
+        var wordOptional = wordRepository.findById(wordId);
+        if(wordOptional.isEmpty()){
+            return GenericUtility.buildResponse(ResponseEnum.WORD_ID_NOT_EXISTS);
+        }
+
+        Word word = wordOptional.get();
+        String trimmed = wordName.trim();
+        var existing = wordRepository.findByWordNameIgnoreCase(trimmed, word.getCategoryId());
+        if(existing.isPresent() && !existing.get().getId().equals(wordId)){
+            return GenericUtility.buildResponse(ResponseEnum.WORD_ALREADY_EXISTS);
+        }
+
+        word.setWordName(trimmed);
+        wordRepository.save(word);
+        log.info("Word {} updated successfully", wordId);
+        return GenericUtility.buildResponse(ResponseEnum.WORD_UPDATED);
     }
 
     @Transactional

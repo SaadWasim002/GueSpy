@@ -1,8 +1,10 @@
 package com.game.gueSpy.dto.request;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +20,9 @@ public class WordRequest {
     @JsonProperty("category_id")
     private Long categoryId;
 
-    @NotBlank
-    @JsonProperty("word_name")
-    private String wordName;
+    // one or more words to add in a single call; blank entries are ignored and
+    // duplicates (already in the category, or repeated in the list) are skipped
+    @NotEmpty
+    @JsonProperty("words")
+    private List<String> words;
 }

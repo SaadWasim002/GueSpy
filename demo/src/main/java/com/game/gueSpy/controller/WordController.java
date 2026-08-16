@@ -5,12 +5,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.WordRequest;
+import com.game.gueSpy.dto.request.WordUpdateRequest;
 import com.game.gueSpy.service.WordService;
 
 import jakarta.validation.Valid;
@@ -52,5 +54,16 @@ public class WordController {
     )
     public ResponseEntity<?> get(@RequestParam Long categoryId){
         return wordService.getAllWords(categoryId);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping(
+        path = "/update",
+        name = "Update a word",
+        consumes = "application/json",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> update(@Valid @RequestBody WordUpdateRequest request){
+        return wordService.updateWord(request.getWordId(), request.getWordName());
     }
 }
