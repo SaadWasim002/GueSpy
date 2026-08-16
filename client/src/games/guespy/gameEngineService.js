@@ -9,20 +9,20 @@ import { api, unwrap } from "../../lib/api";
  */
 
 /**
- * GET /game-engine/get-screen → `{ gameStatus, ...stateSpecificFields }`.
+ * GET /game-engine/game-state → `{ gameStatus, ...stateSpecificFields }`.
  *
- * Note the shape. The PRD's examples show `gameStatus` as a sibling of
- * `data`, at the response root — it is not. The server returns a
- * `GameStatusData` object *as* the data payload, so the status is nested
- * inside it, verified against a running backend:
+ * Renamed from `/get-screen`, which no longer exists. Every screen transition
+ * in the game runs through this one call, so the old path 404s the entire
+ * flow rather than degrading.
+ *
+ * Note the shape: the server returns a `GameStatusData` object *as* the data
+ * payload, so `gameStatus` is nested inside `data` rather than being a
+ * sibling of it. Unwrapped here once, correctly.
  *
  *   {"data":{"gameStatus":"NOT_STARTED"},"message":"…","status":"200 OK"}
- *
- * Reading it from the root yields undefined and breaks every screen
- * transition, so it is unwrapped here once and correctly.
  */
 export async function fetchScreen() {
-  const response = await api.get("/game-engine/get-screen");
+  const response = await api.get("/game-engine/game-state");
   return unwrap(response) ?? {};
 }
 
