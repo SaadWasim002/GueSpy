@@ -168,6 +168,10 @@ This section details the functional requirements of the application. All success
     - A "Continue" or "Next" button to confirm the selection (optional, or selection can trigger immediate progression).
 - **API Endpoint (Get Categories)**: `GET http://localhost:8080/category/get`
     - **Request Headers**: `Authorization: Bearer <token>`
+    - **Role-based filtering**: The backend automatically checks the caller's role from the JWT.
+        - **Regular users** receive only categories where `adminOnly = false`.
+        - **Admins** receive all categories (including admin-only ones).
+        - The frontend does not need to pass any extra parameter — filtering is fully server-side.
     - **Success (200 OK)**: Display the list of categories from the `data.categories` array in the response.
         ```json
         {
@@ -176,11 +180,15 @@ This section details the functional requirements of the application. All success
                     {
                         "id": 1,
                         "categoryName": "Movies",
+                        "isEnabled": true,
+                        "adminOnly": false,
                         "totalWords": 50
                     },
                     {
                         "id": 2,
                         "categoryName": "Sports",
+                        "isEnabled": true,
+                        "adminOnly": false,
                         "totalWords": 35
                     }
                 ]
@@ -198,6 +206,44 @@ This section details the functional requirements of the application. All success
     - **Error (404 NOT_FOUND - CATEGORY_NOT_EXISTS)**: Display "Selected category does not exist or is no longer available."
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for category selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
+- **API Endpoint (Create Category — Admin only)**: `POST http://localhost:8080/category/create`
+    - **Request Headers**: `Authorization: Bearer <token>` (must be `ROLE_ADMIN`)
+    - **Request Body**:
+        ```json
+        {
+            "category_name": "Test",
+            "admin_only": true
+        }
+        ```
+        `admin_only` is optional and defaults to `false`. When `true`, the category is hidden from regular users in `GET /category/get`.
+    - **Success (201 CREATED)**: Category created.
+    - **Error (409 CONFLICT)**: Category name already exists.
+    - **Error (400 BAD_REQUEST)**: `category_name` is missing.
+    - **Error (403 FORBIDDEN)**: Caller is not an admin.
+- **API Endpoint (Update Category — Admin only)**: `PUT http://localhost:8080/category/update`
+    - **Request Headers**: `Authorization: Bearer <token>` (must be `ROLE_ADMIN`)
+    - **Lookup is ID-based** — `category_id` is required. All other fields are optional.
+    - **Request Body**:
+        ```json
+        {
+            "category_id": 16,
+            "updated_name": "test 45",
+            "admin_only": false,
+            "is_enabled": true
+        }
+        ```
+    - **Success (200 OK)**: Category updated.
+    - **Error (404 NOT_FOUND)**: No category found for the given `category_id`.
+    - **Error (409 CONFLICT)**: `updated_name` is already used by another category.
+    - **Error (400 BAD_REQUEST)**: `category_id` is missing.
+    - **Error (403 FORBIDDEN)**: Caller is not an admin.
+- **API Endpoint (Delete Category — Admin only)**: `DELETE http://localhost:8080/category/delete?categoryId={id}`
+    - **Request Headers**: `Authorization: Bearer <token>` (must be `ROLE_ADMIN`)
+    - `categoryId` is passed as a **query parameter** (not request body). Also deletes all words belonging to that category.
+    - **Success (200 OK)**: Category and its words deleted.
+    - **Error (404 NOT_FOUND)**: No category found for the given ID.
+    - **Error (400 BAD_REQUEST)**: `categoryId` param is missing.
+    - **Error (403 FORBIDDEN)**: Caller is not an admin.
 
 #### 3.2.5. Group Selection Screen
 - **Description**: Allows the user to manage and select a group of players for the game. This screen is displayed when the `gameStatus` from `GET /game-engine/game-state` is `GROUP_SELECTION`.
@@ -758,9 +804,11 @@ Rules the frontend should be aware of:
 - `POST http://localhost:8080/group/select`: Selects a group for the current game.
 
 ### Category Management
-- `GET http://localhost:8080/category/get`: Retrieves all available categories.
-- `POST http://localhost:8080/category/select`: Selects a category for the current game.
-- (admin) `POST /category/create`, `PUT /category/update`, `DELETE /category/delete`.
+- `GET http://localhost:8080/category/get`: Retrieves categories — role-filtered automatically (admin-only categories hidden from regular users).
+- `POST http://localhost:8080/category/select`: Selects a category for the current game. Body: `{ "id": <categoryId> }`.
+- ✅ (admin) `POST /category/create` — body: `{ "category_name": "...", "admin_only": true|false }`. `admin_only` defaults to `false` if omitted.
+- ✅ (admin) `PUT /category/update` — lookup is now **ID-based**: `{ "category_id": <id>, "updated_name": "...", "admin_only": true|false, "is_enabled": true|false }`. All fields except `category_id` are optional.
+- ✅ (admin) `DELETE /category/delete?categoryId={id}` — category ID is passed as a **query param**, not a request body.
 
 ### Word Management (admin)
 - `POST http://localhost:8080/word/add`: Adds one or more words to a category — body `{ "category_id": n, "words": ["...", "..."] }`; returns `{ added, skipped }`.
@@ -814,4 +862,4 @@ Found while building and verifying the frontend against a running backend. None 
 
 `discussion_duration` is **no longer read by the frontend**. It now arrives on the `DISCUSSION_TIME` payload as `discussionDuration`, which is the value the engine actually used — see 3.2.9.
 
-Every one has a client-side fallback: config **tunes** the game, it never **gates** it. A missing key, a malformed value or a 404 from `/config/get` degrades to a sensible default rather than an error screen. If not, the backend should adjust this.
+11. ✅ **Fixed.** `INVALID_DATA` (returned when `action` is not `back`/`forward` on `POST /game-engine/game-state`) was incorrectly mapped to `200 OK`. It now correctly returns `400 BAD_REQUEST`.
