@@ -169,9 +169,11 @@ This section details the functional requirements of the application. All success
 - **API Endpoint (Get Categories)**: `GET http://localhost:8080/api/v1/categories`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Role-based filtering**: The backend automatically checks the caller's role from the JWT.
-        - **Regular users** receive only categories where `adminOnly = false`.
-        - **Admins** receive all categories (including admin-only ones).
+        - **Regular users** receive only categories that are `isEnabled = true` and `adminOnly = false`.
+        - **Admins** receive everything — admin-only categories *and* disabled ones.
         - The frontend does not need to pass any extra parameter — filtering is fully server-side.
+    - ⚠️ **The play area drops disabled categories itself.** Since admins receive them, `categoryService.fetchCategories` filters `isEnabled === false` before any play-area screen sees the list. Being an admin is not permission to play a category that has been taken out of play. The filter lives in the service, not in `CategoryScreen`, so it holds for every caller on that side of the seam; `games/guespy/admin/adminService.js` is the deliberate other view and does *not* filter — otherwise disabling a category would hide it from the only screen that could re-enable it.
+    - Note this is different from an **empty** category. A category with `totalWords = 0` is still listed and still exists; it is shown dimmed and cannot be selected, because the engine throws when it runs out of unused words. Disabled means "not on offer at all".
     - **Success (200 OK)**: Display the list of categories from the `data.categories` array in the response.
         ```json
         {
@@ -946,10 +948,8 @@ Found while building and verifying the frontend against a running backend. None 
 13. **`roundNumber` is missing from the `DISCUSSION_TIME` payload.** `populateDiscussionTimeData` sends `discussionStartTime`, `discussionDuration`, `players` and `startingPlayer` — but not the round number, which `ROUND_END`, `SPY_GUESS` and `SCORING` all include. The frontend therefore cannot tell round one from round three while the discussion is on screen, which is exactly the check gap 12 needs. The guard is already written in `backPolicy.js`, keyed on `data.roundNumber`, and is inert until the field arrives.
     *Fix:* one line — `data.setRoundNumber(gameData.getRoundNumber())` in `populateDiscussionTimeData`. Also useful on its own: the discussion screen could then show "Round 3".
 
-14. **An admin cannot see a disabled category, so cannot re-enable one.** `CategoryRepository.findAllActiveCategoryForUser` filters `c.isEnabled = true` for *everyone* — the `isAdmin` flag only widens the `adminOnly` half of the condition. Disabling a category from the admin page therefore removes it from the admin's own list, permanently, and there is no other way back. **This blocks the enable/disable toggle**, which currently warns when the category vanishes rather than pretending it worked.
-    *Fix:* one line — `WHERE (:isAdmin = true OR (c.isEnabled = true AND c.adminOnly = false))`.
+14. ✅ **Fixed.** `findAllActiveCategoryForUser` is now `WHERE (:isAdmin = true OR (c.isEnabled = true AND c.adminOnly = false))`, so an admin receives disabled categories and can re-enable them. Note the consequence on the client: because admins now receive them, **`categoryService.fetchCategories` drops disabled categories itself** — being an admin is not permission to play something taken out of play. See 3.2.1.
 
-15. **`PUT /api/v1/words/{id}` rejects a body that omits `word_id`.** `WordUpdateRequest.wordId` is `@NotNull`, but `WordController.update` takes the id from `@PathVariable` and never reads the field — so `{"word_name": "..."}` fails validation with a 400 before the service runs. **This blocks word renaming.**
-    *Fix:* drop `wordId` from the DTO, or its `@NotNull`; the path already carries it.
+15. ✅ **Fixed.** `WordUpdateRequest` carries only `word_name`; the id comes from the path, so `PUT /api/v1/words/{id}` accepts `{"word_name": "..."}` and word renaming works.
 
-16. **`WordService.deleteWord` sets `totalWords` to `1` when it was `null`**, where `0` is meant: `currentTotal != null ? currentTotal - 1 : 1`. Minor, but it is one of the ways the counter drifts from the real word count.
+16. ✅ **Fixed.** `WordService.deleteWord` now falls back to `0` rather than `1`, and saves the category, so the counter is written back after a delete.

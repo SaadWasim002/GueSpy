@@ -14,14 +14,15 @@ import { isStatus } from "../../../lib/apiError";
  * GET /api/v1/categories → every category this admin can see.
  *
  * Same endpoint the game uses; the server decides what comes back from the
- * caller's role, so an admin gets the admin-only ones too. An empty
- * catalogue arrives as a 404 rather than an empty list, which is a normal
- * state for a fresh install and is translated here.
+ * caller's role, so an admin gets everything — admin-only categories *and*
+ * disabled ones. An empty catalogue arrives as a 404 rather than an empty
+ * list, which is a normal state for a fresh install and is translated here.
  *
- * ⚠️ Disabled categories do not come back — `findAllActiveCategoryForUser`
- * filters `isEnabled = true` for admins as well. Until that query is
- * widened, disabling a category from here hides it from this list too, and
- * it cannot be re-enabled through the UI. See "Known backend gaps".
+ * This is the whole point of the split from `categoryService.js`. That one
+ * is the play-area view and drops disabled categories, because being an
+ * admin is not permission to play something taken out of play. This one
+ * shows them, because otherwise disabling a category would hide it from the
+ * only screen that could bring it back.
  */
 export async function fetchAllCategories() {
   try {
