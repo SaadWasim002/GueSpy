@@ -736,7 +736,7 @@ Rules the frontend should be aware of:
     - **The two destructive steps confirm first**; the two selection steps do not. Backing out of `WORD_AND_SPY_REVEAL` re-deals the word and the spies, and backing out of `DISCUSSION_TIME` restarts the whole pass round the table — a mis-tap on a device being handed between people costs the round. Undoing a category or group pick costs nothing, and gating it behind a dialog would only add a tap.
     - **The response is adopted directly**, not followed by a `GET`. The body is already the resulting state, so re-reading it would only add a round trip and a flicker.
     - ⚠️ **Back from `DISCUSSION_TIME` is only sound in round one** — see "Known backend gaps".
-
+
 ### 3.3 Admin Area (`/admin`)
 
 - **Description**: A role-gated area for managing the word bank and the server settings — the things that decide what a game *is*, which until now could only be changed with curl.
@@ -942,11 +942,9 @@ Found while building and verifying the frontend against a running backend. None 
 
 11. ✅ **Fixed.** `INVALID_DATA` (returned when `action` is not `back`/`forward` on `POST /game-engine/game-state`) was incorrectly mapped to `200 OK`. It now correctly returns `400 BAD_REQUEST`.
 
-12. **`moveBack` from `DISCUSSION_TIME` assumes round one.** It clears `roundNumber` (the reveal then sets it back to `1`) but leaves `votingData.votes` and the eliminated players untouched. Going back during round three therefore restarts the round counter *and* walks eliminated players through a reveal they are no longer part of. Not a crash — the voting list still excludes them — but the round number is wrong from then on.
-    *Fix:* either clear the round's voting/elimination state alongside it, or reject `back` from `DISCUSSION_TIME` when `roundNumber > 1`.
+12. ✅ **Fixed.** `moveBack` from `DISCUSSION_TIME` now clears `votingData` (votes + eliminated players), `caughtSpy` and `lastEliminatedPlayer` alongside `roundNumber`. Going back to `WORD_AND_SPY_REVEAL` redoes the reveal for every player, so it is a full do-over of the round sequence — backing out during round three and redoing the reveal now genuinely restarts at round one with nobody still marked eliminated, instead of carrying stale votes/eliminations under a reset round counter.
 
-13. **`roundNumber` is missing from the `DISCUSSION_TIME` payload.** `populateDiscussionTimeData` sends `discussionStartTime`, `discussionDuration`, `players` and `startingPlayer` — but not the round number, which `ROUND_END`, `SPY_GUESS` and `SCORING` all include. The frontend therefore cannot tell round one from round three while the discussion is on screen, which is exactly the check gap 12 needs. The guard is already written in `backPolicy.js`, keyed on `data.roundNumber`, and is inert until the field arrives.
-    *Fix:* one line — `data.setRoundNumber(gameData.getRoundNumber())` in `populateDiscussionTimeData`. Also useful on its own: the discussion screen could then show "Round 3".
+13. ✅ **Fixed.** `populateDiscussionTimeData` now sends `roundNumber` on the `DISCUSSION_TIME` payload, matching `ROUND_END`, `SPY_GUESS` and `SCORING`. The `backPolicy.js` guard keyed on `data.roundNumber` (gap 12) is live, and the discussion screen can show "Round 3".
 
 14. ✅ **Fixed.** `findAllActiveCategoryForUser` is now `WHERE (:isAdmin = true OR (c.isEnabled = true AND c.adminOnly = false))`, so an admin receives disabled categories and can re-enable them. Note the consequence on the client: because admins now receive them, **`categoryService.fetchCategories` drops disabled categories itself** — being an admin is not permission to play something taken out of play. See 3.2.1.
 
