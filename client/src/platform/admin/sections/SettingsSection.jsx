@@ -88,9 +88,10 @@ function validate(key, raw) {
  * Every value is checked against `CONFIG_SCHEMA` before it is sent. That
  * table already existed for *reading* config; using the same parsers to
  * guard writing is what stops a typo in `scoring_config` from being saved
- * and then discovered by every player at once. Keys the schema does not know
- * are still listed and editable — the server may hold settings this
- * frontend has no business validating — they just are not second-guessed.
+ * and then discovered by every player at once. A key the frontend does not
+ * read can still be checked — see `KNOWN_KEY_SHAPES` — because "the client
+ * ignores it" and "nothing uses it" are very different things. Keys it has
+ * no opinion about at all stay listed and editable, just not second-guessed.
  *
  * `active_games` is pulled out into its own editor rather than left as a
  * JSON box; it is the contents of the home screen and deserves more than
@@ -256,7 +257,19 @@ export function SettingsSection() {
                   {/* Inactive rows are served by /configs but not by the
                       engine's cache, so they read as live here and are not. */}
                   {row.active === false ? <Badge tone="warning">Inactive</Badge> : null}
-                  {!schema ? <Badge tone="neutral">Not read by this app</Badge> : null}
+                  {/*
+                    Every key the server holds is read by *something* — that
+                    is why it is there. This says only that the client has no
+                    opinion on its shape, so the value goes up as typed.
+                  */}
+                  {!schema ? (
+                    <Badge
+                      tone="neutral"
+                      title="Used by the server. This screen doesn't know its shape, so it's saved exactly as typed."
+                    >
+                      Server-side
+                    </Badge>
+                  ) : null}
 
                   {/* For JSON pasted in minified, or left ragged after an
                       edit. Disabled when it would not parse anyway. */}

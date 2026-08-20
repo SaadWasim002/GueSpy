@@ -84,13 +84,31 @@ export function resolveSettings(rows = []) {
 }
 
 /**
- * The schema entry for a raw config key, or null if this frontend does not
- * know the key.
+ * Keys this frontend does not *read*, but whose shape it knows.
+ *
+ * The distinction matters. `discussion_duration` is deliberately absent from
+ * CONFIG_SCHEMA above — the game takes the duration off the DISCUSSION_TIME
+ * payload now, and reading it from config as well is exactly what let the
+ * client and the engine drift apart. But the engine still very much reads
+ * it, and an admin typing "ten" into it would break every round.
+ *
+ * Listing it here lets the admin editor check the value without folding it
+ * back into `settings`, which is the part that must not come back.
+ */
+const KNOWN_KEY_SHAPES = {
+  discussion_duration: { key: "discussion_duration", kind: "number", parse: toNumber },
+};
+
+/**
+ * The shape this frontend expects for a config key, or null if it has no
+ * opinion about that key.
  *
  * The admin editor lists whatever the server holds, including keys that are
- * none of this frontend's business, so "unknown" is a normal answer — it
+ * none of this frontend's business, so "no opinion" is a normal answer — it
  * means "show it, let it be edited, but do not pretend to validate it".
  */
 export function findConfigSchema(key) {
-  return Object.values(CONFIG_SCHEMA).find((entry) => entry.key === key) ?? null;
+  return (
+    Object.values(CONFIG_SCHEMA).find((entry) => entry.key === key) ?? KNOWN_KEY_SHAPES[key] ?? null
+  );
 }
