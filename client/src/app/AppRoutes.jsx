@@ -3,10 +3,11 @@ import { IS_DEV } from "../config/env";
 import { Gallery } from "../dev/Gallery/Gallery";
 import { LoginScreen } from "../platform/auth/screens/LoginScreen";
 import { RegisterScreen } from "../platform/auth/screens/RegisterScreen";
+import { AdminScreen } from "../platform/admin/AdminScreen";
 import { GameHubScreen } from "../platform/games/GameHubScreen";
 import { GameHost } from "./GameHost";
 import { NotFoundScreen } from "./NotFoundScreen";
-import { RequireAnonymous, RequireAuth } from "./RouteGuards";
+import { RequireAdmin, RequireAnonymous, RequireAuth } from "./RouteGuards";
 
 /**
  * Remounts the host whenever the routed game changes.
@@ -54,6 +55,12 @@ export function AppRoutes() {
           one module's hooks from being swapped for another's mid-render.
         */}
         <Route path="/play/:gameId/*" element={<KeyedGameHost />} />
+
+        {/* Nested rather than a sibling: admin implies a session, and this
+            way a signed-out visit lands on /login instead of the hub. */}
+        <Route element={<RequireAdmin />}>
+          <Route path="/admin" element={<AdminScreen />} />
+        </Route>
       </Route>
 
       {/* Living component reference. Dev builds only. */}

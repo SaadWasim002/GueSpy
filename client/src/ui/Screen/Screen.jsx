@@ -19,6 +19,7 @@ import styles from "./Screen.module.css";
  *
  * @param width      narrow | reading | wide
  * @param center     vertically centre and centre-align the fold
+ * @param flow       opt out of the one-viewport fold; the page just scrolls
  * @param back       a control for stepping backwards, above the heading
  * @param secondary  content rendered below the fold
  */
@@ -32,12 +33,19 @@ export function Screen({
   secondary,
   width = "wide",
   center = false,
+  flow = false,
   className,
   ...rest
 }) {
   return (
     <main
-      className={cn(styles.screen, styles[width], center && styles.centered, className)}
+      className={cn(
+        styles.screen,
+        styles[width],
+        center && styles.centered,
+        flow && styles.flow,
+        className,
+      )}
       {...rest}
     >
       <div className={styles.fold}>

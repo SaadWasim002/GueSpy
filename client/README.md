@@ -734,6 +734,48 @@ Rules the frontend should be aware of:
     - **The two destructive steps confirm first**; the two selection steps do not. Backing out of `WORD_AND_SPY_REVEAL` re-deals the word and the spies, and backing out of `DISCUSSION_TIME` restarts the whole pass round the table — a mis-tap on a device being handed between people costs the round. Undoing a category or group pick costs nothing, and gating it behind a dialog would only add a tap.
     - **The response is adopted directly**, not followed by a `GET`. The body is already the resulting state, so re-reading it would only add a round trip and a flicker.
     - ⚠️ **Back from `DISCUSSION_TIME` is only sound in round one** — see "Known backend gaps".
+
+### 3.3 Admin Area (`/admin`)
+
+- **Description**: A role-gated area for managing the word bank and the server settings — the things that decide what a game *is*, which until now could only be changed with curl.
+- **Access**: `user.role === "ADMIN"`, read from the JWT (`lib/jwt.js`). The claim is the **bare enum name** — `"ADMIN"` / `"USER"` — because `JwtUtil` writes `user.getRole()` and it is `JwtFilter` that prefixes `ROLE_` when building authorities. Matching on `"ROLE_ADMIN"` in the frontend would silently never fire.
+- ⚠️ **The guard is cosmetic.** It decides what to render and nothing more; every endpoint below is enforced server-side with `@PreAuthorize("hasRole('ADMIN')")` off the same token. Someone who edits the stored claim gets the page and then a wall of 403s.
+
+#### 3.3.1 Structure
+
+The platform owns the shell; each game owns its own content sections. A game declares them on its module (`games/types.js`):
+
+```js
+admin: { sections: [{ id, label, Component }] }
+```
+
+`platform/admin/adminSections.js` collects them from `listGameModules()` and renders them beside the platform's own. Adding a second game's admin screens therefore touches no platform code — the same promise `screens` and `entry` already make. Configuration stays platform-side: it belongs to the install, not to any one game.
+
+#### 3.3.2 Word bank (GueSpy)
+
+Categories and their words, master–detail in one section. Words are only reachable through a category (`/api/v1/categories/{id}/words`), so splitting them into two tabs would misrepresent the API.
+
+| Action | Endpoint | Notes |
+|---|---|---|
+| List categories | `GET /api/v1/categories` | Role-filtered server-side. 404 when empty → `[]` |
+| Create | `POST /api/v1/categories` | `{ category_name, admin_only }`. 409 on a duplicate name |
+| Rename / flag | `PUT /api/v1/categories/{id}` | `{ updated_name?, admin_only?, is_enabled? }` — each applied only when present |
+| Delete | `DELETE /api/v1/categories/{id}` | **Cascades to every word in it.** No undo |
+| List words | `GET /api/v1/categories/{id}/words` | `{ words, totalWords, categoryName }`. 404 when empty → `[]` |
+| Add words | `POST /api/v1/words` | `{ category_id, words: [...] }` → `{ added, skipped }` |
+| Rename word | `PUT /api/v1/words/{id}` | `{ word_name }`. 409 if already in the category |
+| Delete word | `DELETE /api/v1/words/{id}` | |
+
+- **The list selects; the panel edits.** A category row does one thing when clicked. Its name, its two flags and its delete button all live in the detail panel, because a row that both selects *and* carries edit and delete controls makes every click a small decision about which of three things you meant.
+- **Name and flags are one draft with one Save.** Saving on each toggle would fire a request per flip — two to change both flags, with no way to change your mind, and one of them (disabling) currently makes the category vanish. The Save and Discard pair appears only once something has changed; a button that is always there and usually does nothing trains people to ignore it. Only changed fields are sent, since the server applies each one only when present.
+- **Words are a grid, not a stack**, with a filter box past twelve of them. A word is a short string; a full-width row each turned a fifty-word category into a metre of scrolling with one word per line. Renaming expands the cell to the full row — an input and two buttons do not fit in a track sized for "Dune".
+- **Bulk add is partial-success by design.** Blank entries are ignored and words already in the category are skipped rather than rejected, so a batch containing duplicates still lands. The UI reports both halves ("Added 7. Skipped 3 already in this category.") instead of failing the whole paste.
+- **Deleting a category asks for its name to be typed**, unlike every other confirmation in the app, which is a two-button dialog. It erases the category *and all its words* irreversibly, and the rows look alike enough to click the wrong one.
+- ⚠️ **`totalWords` is a stored counter, not a count.** It is incremented on add and decremented on delete, so it can drift from the list it claims to describe. The detail pane shows `words.length`; the category list shows `totalWords`, since that is all the list endpoint carries.
+
+#### 3.3.3 Settings
+
+Not yet built — see the second admin branch. `GET/POST/PUT /api/v1/configs` and `GET /api/v1/configs/refresh` are the surface.
 
 ## 4. Non-Functional Requirements
 
@@ -879,3 +921,11 @@ Found while building and verifying the frontend against a running backend. None 
 
 13. **`roundNumber` is missing from the `DISCUSSION_TIME` payload.** `populateDiscussionTimeData` sends `discussionStartTime`, `discussionDuration`, `players` and `startingPlayer` — but not the round number, which `ROUND_END`, `SPY_GUESS` and `SCORING` all include. The frontend therefore cannot tell round one from round three while the discussion is on screen, which is exactly the check gap 12 needs. The guard is already written in `backPolicy.js`, keyed on `data.roundNumber`, and is inert until the field arrives.
     *Fix:* one line — `data.setRoundNumber(gameData.getRoundNumber())` in `populateDiscussionTimeData`. Also useful on its own: the discussion screen could then show "Round 3".
+
+14. **An admin cannot see a disabled category, so cannot re-enable one.** `CategoryRepository.findAllActiveCategoryForUser` filters `c.isEnabled = true` for *everyone* — the `isAdmin` flag only widens the `adminOnly` half of the condition. Disabling a category from the admin page therefore removes it from the admin's own list, permanently, and there is no other way back. **This blocks the enable/disable toggle**, which currently warns when the category vanishes rather than pretending it worked.
+    *Fix:* one line — `WHERE (:isAdmin = true OR (c.isEnabled = true AND c.adminOnly = false))`.
+
+15. **`PUT /api/v1/words/{id}` rejects a body that omits `word_id`.** `WordUpdateRequest.wordId` is `@NotNull`, but `WordController.update` takes the id from `@PathVariable` and never reads the field — so `{"word_name": "..."}` fails validation with a 400 before the service runs. **This blocks word renaming.**
+    *Fix:* drop `wordId` from the DTO, or its `@NotNull`; the path already carries it.
+
+16. **`WordService.deleteWord` sets `totalWords` to `1` when it was `null`**, where `0` is meant: `currentTotal != null ? currentTotal - 1 : 1`. Minor, but it is one of the ways the counter drifts from the real word count.

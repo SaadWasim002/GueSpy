@@ -1,0 +1,92 @@
+/*
+ * Master–detail. The category list gets a fixed, comfortable column and the
+ * panel takes the rest, since the panel is where the work happens — the list
+ * is navigation.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+/* Below this the two panes stack; an 18rem column and a word grid side by
+   side on a phone leaves neither usable. */
+@media (max-width: 56rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.listHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.count {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+
+.listHead > :last-child {
+  margin-left: auto;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/*
+ * The card is the whole row and does one thing: select. Edit and delete used
+ * to sit on top of it, which made every click a decision about which of
+ * three things you meant — they live in the panel now.
+ */
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  text-align: left;
+}
+
+.categoryName {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.wordCount {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.confirmCount {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
