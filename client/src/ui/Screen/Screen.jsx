@@ -19,6 +19,7 @@ import styles from "./Screen.module.css";
  *
  * @param width      narrow | reading | wide
  * @param center     vertically centre and centre-align the fold
+ * @param back       a control for stepping backwards, above the heading
  * @param secondary  content rendered below the fold
  */
 export function Screen({
@@ -27,6 +28,7 @@ export function Screen({
   subtitle,
   children,
   actions,
+  back,
   secondary,
   width = "wide",
   center = false,
@@ -39,6 +41,14 @@ export function Screen({
       {...rest}
     >
       <div className={styles.fold}>
+        {/*
+          Above the heading, not in the action row: the row is sticky and
+          holds the one thing the screen is waiting on, and a way out does
+          not belong next to the way forward. `Screen` only renders what it
+          is handed — which step back means is the game module's business.
+        */}
+        {back ? <div className={styles.back}>{back}</div> : null}
+
         {eyebrow || title || subtitle ? (
           <header className={cn(styles.header, center && styles.headerCentered)}>
             {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
