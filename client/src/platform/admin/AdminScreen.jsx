@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { EmptyState, Screen, SegmentedControl } from "../../ui";
+import { Suspense, useMemo, useState } from "react";
+import { EmptyState, LoadingBlock, Screen, SegmentedControl } from "../../ui";
 import { collectAdminSections } from "./adminSections";
+import { SettingsSection } from "./sections/SettingsSection";
 import styles from "./AdminScreen.module.css";
 
 /**
@@ -16,8 +17,13 @@ import styles from "./AdminScreen.module.css";
  * visit to the page.
  */
 
-/** Platform-owned sections. Configuration lands here in the next branch. */
-const PLATFORM_SECTIONS = [];
+/**
+ * Platform-owned sections — the install rather than any one game.
+ *
+ * Last in the tab order: content is what an admin opens this page to change,
+ * settings are the rarer, heavier visit.
+ */
+const PLATFORM_SECTIONS = [{ id: "settings", label: "Settings", Component: SettingsSection }];
 
 export function AdminScreen() {
   const sections = useMemo(() => collectAdminSections(PLATFORM_SECTIONS), []);
@@ -57,8 +63,12 @@ export function AdminScreen() {
             <h2 className={styles.only}>{active.label}</h2>
           )}
 
+          {/* Sections may be code-split — see the game module's `admin`
+              field — so rendering one always goes through a boundary. */}
           <div className={styles.section}>
-            <active.Component />
+            <Suspense fallback={<LoadingBlock label={`Loading ${active.label.toLowerCase()}…`} />}>
+              <active.Component />
+            </Suspense>
           </div>
         </>
       )}

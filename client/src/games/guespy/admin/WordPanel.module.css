@@ -117,6 +117,25 @@
   grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
   gap: var(--sp-2);
   list-style: none;
+
+  /*
+   * Capped and scrolled in place.
+   *
+   * Even as a grid, a few hundred words push everything below them — the
+   * delete button, the rest of the page — off the bottom of the screen, and
+   * the panel stops being something you can take in at a glance. Bounded
+   * here, the category's controls stay put however many words it holds.
+   *
+   * Viewport-relative so a tall screen shows more rather than being held to
+   * an arbitrary number, and `stable` so appearing and disappearing
+   * scrollbars do not shift the grid under the pointer.
+   */
+  max-height: min(30rem, 52vh);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  /* Reaching the end of the list should not start scrolling the page. */
+  overscroll-behavior: contain;
+  padding-right: var(--sp-1);
 }
 
 .word {

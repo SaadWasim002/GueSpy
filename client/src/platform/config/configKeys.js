@@ -2,6 +2,12 @@
  * The server-side settings this frontend reads, with a parser and a fallback
  * for each.
  *
+ * `kind` says what shape a value is meant to be. The player-facing code does
+ * not need it — `parse` already covers reading — but the admin editor does:
+ * it is what lets a value be checked *before* it is saved, so a typo in a
+ * JSON setting is refused rather than written and discovered later by every
+ * player at once.
+ *
  * Every entry needs a fallback because `/config/get` is allowed to 404 with
  * NO_CONFIG_FOUND, individual keys can be missing (the PRD lists
  * `max_group_allowed` as not yet seeded), and a value that fails to parse
@@ -24,11 +30,11 @@ const toJson = (raw) => {
 };
 
 export const CONFIG_SCHEMA = {
-  minPlayersInGroup: { key: "min_player_allowed_in_group", parse: toNumber, fallback: 3 },
-  maxPlayersInGroup: { key: "max_player_allowed_in_group", parse: toNumber, fallback: 12 },
-  maxGroups: { key: "max_group_allowed", parse: toNumber, fallback: 10 },
-  minSpies: { key: "min_spy_allowed", parse: toNumber, fallback: 1 },
-  maxSpies: { key: "max_spy_allowed", parse: toNumber, fallback: 2 },
+  minPlayersInGroup: { key: "min_player_allowed_in_group", kind: "number", parse: toNumber, fallback: 3 },
+  maxPlayersInGroup: { key: "max_player_allowed_in_group", kind: "number", parse: toNumber, fallback: 12 },
+  maxGroups: { key: "max_group_allowed", kind: "number", parse: toNumber, fallback: 10 },
+  minSpies: { key: "min_spy_allowed", kind: "number", parse: toNumber, fallback: 1 },
+  maxSpies: { key: "max_spy_allowed", kind: "number", parse: toNumber, fallback: 2 },
   /*
    * `discussion_duration` is deliberately absent.
    *
@@ -40,13 +46,14 @@ export const CONFIG_SCHEMA = {
    * from ten minutes while the server ended discussion after twenty seconds.
    */
   /** Applied server-side; the frontend reads it only to explain the numbers. */
-  scoringConfig: { key: "scoring_config", parse: toJson, fallback: null },
+  scoringConfig: { key: "scoring_config", kind: "json", parse: toJson, fallback: null },
   /**
    * Drives the game-selection screen. The fallback keeps the platform usable
    * if the row is missing: GueSpy is the only shipped game today.
    */
   activeGames: {
     key: "active_games",
+    kind: "json",
     parse: toJson,
     fallback: [
       {
@@ -73,5 +80,35 @@ export function resolveSettings(rows = []) {
       const parsed = parse(byKey.get(key));
       return [name, parsed === undefined ? fallback : parsed];
     }),
+  );
+}
+
+/**
+ * Keys this frontend does not *read*, but whose shape it knows.
+ *
+ * The distinction matters. `discussion_duration` is deliberately absent from
+ * CONFIG_SCHEMA above — the game takes the duration off the DISCUSSION_TIME
+ * payload now, and reading it from config as well is exactly what let the
+ * client and the engine drift apart. But the engine still very much reads
+ * it, and an admin typing "ten" into it would break every round.
+ *
+ * Listing it here lets the admin editor check the value without folding it
+ * back into `settings`, which is the part that must not come back.
+ */
+const KNOWN_KEY_SHAPES = {
+  discussion_duration: { key: "discussion_duration", kind: "number", parse: toNumber },
+};
+
+/**
+ * The shape this frontend expects for a config key, or null if it has no
+ * opinion about that key.
+ *
+ * The admin editor lists whatever the server holds, including keys that are
+ * none of this frontend's business, so "no opinion" is a normal answer — it
+ * means "show it, let it be edited, but do not pretend to validate it".
+ */
+export function findConfigSchema(key) {
+  return (
+    Object.values(CONFIG_SCHEMA).find((entry) => entry.key === key) ?? KNOWN_KEY_SHAPES[key] ?? null
   );
 }
