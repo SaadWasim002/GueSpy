@@ -539,7 +539,7 @@ public class GameEngineService implements GameEngine {
         return PlayerDetails.builder()
                 .playerName(playerNames.get(currentPlayerNumber - 1))
                 .playerNumber(currentPlayerNumber)
-                .isSpy((gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE) ? null : gameData.getCurrentSpy().contains(currentPlayerNumber))
+                .isSpy(gameData.getCurrentScreenType() != ScreenType.PASS_DEVICE && gameData.getCurrentSpy().contains(currentPlayerNumber))
                 .build();
     }
 
@@ -556,7 +556,7 @@ public class GameEngineService implements GameEngine {
         if (groupOptional.isEmpty())
             throw new IllegalStateException("Group not found for selectedGroupId: " + userGameDetail.getGameData().getSelectedGroupId());
 
-        Boolean isLast = false;
+        boolean isLast = false;
         Integer totalPlayer = groupOptional.get().getPlayers().getPlayerNames().size();
         if (totalPlayer.equals(gameData.getCurrentPlayerNumber()) && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL) {
             isLast = true;
