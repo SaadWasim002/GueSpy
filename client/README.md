@@ -729,6 +729,11 @@ Rules the frontend should be aware of:
     - **`"forward"`** — only valid at `DISCUSSION_TIME`: skips the remaining discussion time and moves straight to `VOTING`.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: The action isn't allowed from the current state (e.g. `back` from `VOTING`, or `forward` outside `DISCUSSION_TIME`).
     - **Error (400 BAD_REQUEST)**: `action` missing or not `back`/`forward`.
+- **Frontend behaviour** (`src/games/guespy/backPolicy.js` holds the rules; `BackControl` renders them):
+    - **Back is not offered at `CATEGORY_SELECTION`.** The transition is legal, but it lands on `NOT_STARTED`, and this UI maps both statuses to the same category screen — the button would appear to do nothing. Leaving the game is what the header's "All games" link is for.
+    - **The two destructive steps confirm first**; the two selection steps do not. Backing out of `WORD_AND_SPY_REVEAL` re-deals the word and the spies, and backing out of `DISCUSSION_TIME` restarts the whole pass round the table — a mis-tap on a device being handed between people costs the round. Undoing a category or group pick costs nothing, and gating it behind a dialog would only add a tap.
+    - **The response is adopted directly**, not followed by a `GET`. The body is already the resulting state, so re-reading it would only add a round trip and a flicker.
+    - ⚠️ **Back from `DISCUSSION_TIME` is only sound in round one** — see "Known backend gaps".
 
 ## 4. Non-Functional Requirements
 
@@ -863,3 +868,9 @@ Found while building and verifying the frontend against a running backend. None 
 `discussion_duration` is **no longer read by the frontend**. It now arrives on the `DISCUSSION_TIME` payload as `discussionDuration`, which is the value the engine actually used — see 3.2.9.
 
 11. ✅ **Fixed.** `INVALID_DATA` (returned when `action` is not `back`/`forward` on `POST /game-engine/game-state`) was incorrectly mapped to `200 OK`. It now correctly returns `400 BAD_REQUEST`.
+
+12. **`moveBack` from `DISCUSSION_TIME` assumes round one.** It clears `roundNumber` (the reveal then sets it back to `1`) but leaves `votingData.votes` and the eliminated players untouched. Going back during round three therefore restarts the round counter *and* walks eliminated players through a reveal they are no longer part of. Not a crash — the voting list still excludes them — but the round number is wrong from then on.
+    *Fix:* either clear the round's voting/elimination state alongside it, or reject `back` from `DISCUSSION_TIME` when `roundNumber > 1`.
+
+13. **`roundNumber` is missing from the `DISCUSSION_TIME` payload.** `populateDiscussionTimeData` sends `discussionStartTime`, `discussionDuration`, `players` and `startingPlayer` — but not the round number, which `ROUND_END`, `SPY_GUESS` and `SCORING` all include. The frontend therefore cannot tell round one from round three while the discussion is on screen, which is exactly the check gap 12 needs. The guard is already written in `backPolicy.js`, keyed on `data.roundNumber`, and is inert until the field arrives.
+    *Fix:* one line — `data.setRoundNumber(gameData.getRoundNumber())` in `populateDiscussionTimeData`. Also useful on its own: the discussion screen could then show "Round 3".

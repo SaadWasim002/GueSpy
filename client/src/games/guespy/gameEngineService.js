@@ -111,12 +111,11 @@ export async function startNextRound() {
  * returns — so the caller can write it straight into the session rather than
  * following up with a GET and flickering between the two.
  *
- * The guard below is not paranoia. An unrecognised action answers
- * `ResponseEnum.INVALID_DATA`, which is declared `HttpStatus.OK`, so a
- * *failure* arrives as a 200 with no `data` and would otherwise sail through
- * as an empty state that blanks the game. Unreachable from here — this
- * client only ever sends the two valid actions — but the cost of checking is
- * one line and the cost of not checking is a wiped screen.
+ * The guard below exists because the caller writes this payload straight
+ * into the session: a 2xx carrying no `data` unwraps to null and would be
+ * adopted as an empty state, blanking the game rather than failing. Several
+ * endpoints here answer with no body at all (select, vote, reset), so that
+ * is a shape this API really produces — just not, today, on this path.
  */
 export async function navigateGameState(action) {
   const response = await api.post("/game-engine/game-state", { action });
