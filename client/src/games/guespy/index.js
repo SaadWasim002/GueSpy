@@ -1,4 +1,5 @@
 import { defineGameModule, PLAY_MODES } from "../types";
+import { WordBankSection } from "./admin/WordBankSection";
 import { CategoryScreen } from "./screens/CategoryScreen";
 import { DiscussionScreen } from "./screens/DiscussionScreen";
 import { GameEntryScreen } from "./screens/GameEntryScreen";
@@ -49,6 +50,16 @@ export const guespyModule = defineGameModule({
   entry: {
     Screen: GameEntryScreen,
     shouldShow: (session) => isResumable(session.status),
+  },
+
+  /*
+   * Contributed to the platform's admin area. The categories and the words
+   * drawn from them are this game's content, so the screens for managing
+   * them live here rather than in `platform/`, and the admin shell collects
+   * them the same way the hub collects `meta`.
+   */
+  admin: {
+    sections: [{ id: "guespy-word-bank", label: "Word bank", Component: WordBankSection }],
   },
 
   screens: {
