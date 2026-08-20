@@ -113,7 +113,8 @@ public class WordService {
             
             Category category = categoryRepository.findById(word.getCategoryId()).get();
             Integer currentTotal = category.getTotalWords();
-            category.setTotalWords(currentTotal != null ? currentTotal - 1 : 1);
+            category.setTotalWords(currentTotal != null ? currentTotal - 1 : 0);
+            categoryRepository.save(category);
 
             log.info("Word deleted Successfully");
             return GenericUtility.buildResponse(ResponseEnum.WORD_DELETED);

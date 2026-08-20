@@ -60,29 +60,18 @@ export function WordBankSection() {
   /**
    * Save the panel's draft — any of name, `is_enabled`, `admin_only`.
    *
-   * The re-read afterwards is what makes the change visible, and it is also
-   * where a backend gap shows up: `findAllActiveCategoryForUser` filters
-   * `isEnabled = true` for admins too, so disabling a category currently
-   * removes it from this very list. Rather than let it vanish silently, say
-   * what happened. Once that query is widened the branch stops firing.
+   * Re-read rather than patched in place: a rename can collide, and the
+   * server is the only thing that knows what the row looks like afterwards.
+   * A disabled category stays in this list (see `fetchAllCategories`), so
+   * the selection survives being switched off and can be switched back.
    */
   const saveCategory = async (changes) => {
     if (!selected) return;
-    const wasCalled = selected.categoryName;
 
     try {
       await updateCategory(selected.id, changes);
-      const next = await fetchAllCategories();
-      setCategories(next);
+      setCategories(await fetchAllCategories());
       toast.success("Category saved.");
-
-      if (!next.some((category) => category.id === selected.id)) {
-        setSelectedId(null);
-        toast.warning(
-          `"${wasCalled}" is disabled and the server no longer lists it, so it can't be re-enabled from here yet.`,
-          { dedupeKey: "disabled-category-vanished" },
-        );
-      }
     } catch (error) {
       toast.error(
         error?.status === 409

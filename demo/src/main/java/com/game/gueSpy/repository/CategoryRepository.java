@@ -15,6 +15,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long>{
     @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) = LOWER(:categoryName)")
     Optional<Category> findByCategoryNameIgnoreCase(@Param("categoryName") String categoryName);
 
-    @Query("SELECT c FROM Category c WHERE c.isEnabled = true AND (:isAdmin = true OR c.adminOnly = false)")
+    @Query("SELECT c FROM Category c WHERE (:isAdmin = true OR (c.isEnabled = true AND c.adminOnly = false))")
     List<Category> findAllActiveCategoryForUser(@Param("isAdmin") Boolean isAdmin);
 }
