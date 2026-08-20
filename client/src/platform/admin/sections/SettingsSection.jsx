@@ -11,6 +11,54 @@ import styles from "./SettingsSection.module.css";
 /** Edited by `ActiveGamesEditor`, not as a raw value. See that file for why. */
 const ACTIVE_GAMES_KEY = "active_games";
 
+/** Re-serialise JSON with no whitespace, or null if it doesn't parse. */
+function canonicalJson(raw) {
+  try {
+    return JSON.stringify(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+/** Indent JSON for reading. Returns the input untouched if it doesn't parse. */
+function prettyJson(raw) {
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2);
+  } catch {
+    return raw;
+  }
+}
+
+/**
+ * The editable text for a config row.
+ *
+ * JSON values are stored minified, which is right for the database and
+ * unreadable in a text box — `scoring_config` arrives as one 120-character
+ * line. They are indented for editing and minified again on the way back, so
+ * what is stored never changes shape just because someone opened it.
+ */
+function toDraft(row) {
+  const raw = row.value ?? "";
+  return findConfigSchema(row.key)?.kind === "json" ? prettyJson(raw) : raw;
+}
+
+/**
+ * Whether a draft differs from what the server holds.
+ *
+ * JSON is compared by meaning, not by text: indenting a value on load must
+ * not make every JSON row look edited the moment the page opens. Anything
+ * that fails to parse falls back to a plain string comparison, which is the
+ * safe answer for a value already broken on the server.
+ */
+function isDirty(row, draft) {
+  if (findConfigSchema(row.key)?.kind === "json") {
+    const a = canonicalJson(draft);
+    const b = canonicalJson(row.value ?? "");
+    if (a !== null && b !== null) return a !== b;
+  }
+  return draft !== (row.value ?? "");
+}
+
 /**
  * Check a value against what this frontend knows the key is meant to hold.
  *
@@ -63,7 +111,7 @@ export function SettingsSection() {
     try {
       const next = await fetchConfigs();
       setRows(next);
-      setDrafts(Object.fromEntries(next.map((row) => [row.key, row.value ?? ""])));
+      setDrafts(Object.fromEntries(next.map((row) => [row.key, toDraft(row)])));
     } catch (error) {
       setLoadError(error);
     }
@@ -93,7 +141,7 @@ export function SettingsSection() {
 
   const editable = (rows ?? []).filter((row) => row.key !== ACTIVE_GAMES_KEY);
 
-  const changed = editable.filter((row) => (drafts[row.key] ?? "") !== (row.value ?? ""));
+  const changed = editable.filter((row) => isDirty(row, drafts[row.key] ?? ""));
   const errors = changed
     .map((row) => [row.key, validate(row.key, drafts[row.key] ?? "")])
     .filter(([, error]) => error);
@@ -107,8 +155,14 @@ export function SettingsSection() {
     // handful of rows.
     const failed = [];
     for (const row of changed) {
+      const draft = drafts[row.key];
+      // Send JSON minified: the indentation is for reading it here, and
+      // storing it would change the shape of every value this screen touches.
+      const value =
+        findConfigSchema(row.key)?.kind === "json" ? (canonicalJson(draft) ?? draft) : draft;
+
       try {
-        await updateConfig(row.key, drafts[row.key]);
+        await updateConfig(row.key, value);
       } catch {
         failed.push(row.key);
       }
@@ -188,24 +242,44 @@ export function SettingsSection() {
           {editable.map((row) => {
             const schema = findConfigSchema(row.key);
             const draft = drafts[row.key] ?? "";
-            const isDirty = draft !== (row.value ?? "");
-            const error = isDirty ? validate(row.key, draft) : null;
+            const dirty = isDirty(row, draft);
+            const error = dirty ? validate(row.key, draft) : null;
             const multiline = schema?.kind === "json";
 
             return (
-              <div key={row.key} className={cn(styles.row, isDirty && styles.rowDirty)}>
+              <div
+                key={row.key}
+                className={cn(styles.row, dirty && styles.rowDirty, multiline && styles.rowWide)}
+              >
                 <div className={styles.rowHead}>
                   <code className={styles.key}>{row.key}</code>
                   {/* Inactive rows are served by /configs but not by the
                       engine's cache, so they read as live here and are not. */}
                   {row.active === false ? <Badge tone="warning">Inactive</Badge> : null}
                   {!schema ? <Badge tone="neutral">Not read by this app</Badge> : null}
+
+                  {/* For JSON pasted in minified, or left ragged after an
+                      edit. Disabled when it would not parse anyway. */}
+                  {multiline ? (
+                    <button
+                      type="button"
+                      className={styles.format}
+                      disabled={canonicalJson(draft) === null}
+                      onClick={() =>
+                        setDrafts((current) => ({ ...current, [row.key]: prettyJson(draft) }))
+                      }
+                    >
+                      Format
+                    </button>
+                  ) : null}
                 </div>
 
                 {multiline ? (
                   <textarea
                     className={cn(styles.textarea, error && styles.invalid)}
-                    rows={4}
+                    // Grows with the value rather than scrolling a 4-line
+                    // window, which is what made a formatted config unreadable.
+                    rows={Math.min(16, Math.max(4, draft.split("\n").length))}
                     value={draft}
                     disabled={saving}
                     aria-label={row.key}
@@ -247,9 +321,7 @@ export function SettingsSection() {
               variant="ghost"
               size="sm"
               disabled={saving}
-              onClick={() =>
-                setDrafts(Object.fromEntries(rows.map((row) => [row.key, row.value ?? ""])))
-              }
+              onClick={() => setDrafts(Object.fromEntries(rows.map((row) => [row.key, toDraft(row)])))}
             >
               Discard
             </Button>

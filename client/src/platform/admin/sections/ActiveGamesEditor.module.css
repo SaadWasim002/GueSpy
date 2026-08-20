@@ -14,9 +14,15 @@
   gap: var(--sp-4);
 }
 
-.head > :last-child {
+/* A lone heading must stay left. `margin-left: auto` on an only child pushes
+   the whole block to the right edge, which is what it used to do here. */
+.head > :last-child:not(:first-child) {
   margin-left: auto;
   flex: none;
+}
+
+.head > :first-child {
+  min-width: 0;
 }
 
 .title {
