@@ -1,0 +1,92 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  text-wrap: pretty;
+}
+
+/*
+ * The real checkbox. Kept in the layout rather than `display: none` so it can
+ * still receive focus, but sized to nothing and laid over the track — a
+ * hidden input is unfocusable, which would cost keyboard access.
+ */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.track {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-sunken);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transform: translateY(-50%);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.input:checked + .track {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.input:checked + .track .thumb {
+  background: var(--color-text-on-accent);
+  transform: translate(1.22rem, -50%);
+}
+
+.input:focus-visible + .track {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+.disabled {
+  opacity: 0.5;
+}
+
+.disabled .track,
+.disabled .label {
+  cursor: not-allowed;
+}

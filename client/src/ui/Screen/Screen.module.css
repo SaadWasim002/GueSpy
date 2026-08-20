@@ -42,6 +42,25 @@
 }
 
 /*
+ * Ordinary scrolling page: no fold, no vertical centring.
+ *
+ * The fold exists because a game screen is something a room acts on together
+ * — the content and its buttons have to be reachable without scrolling on
+ * whatever device is being passed around. A management page is the opposite
+ * case: it is a list you read through, scrolling is the expected motion, and
+ * sizing it to one viewport would strand short lists floating in the middle
+ * of the screen and add nothing to long ones.
+ */
+.flow .fold {
+  min-height: 0;
+}
+
+.flow .body {
+  flex: none;
+  justify-content: flex-start;
+}
+
+/*
  * The back slot. Tightened against the heading below it — the fold's own
  * gap is sized to separate blocks of content, and a back link belongs to
  * the heading rather than being a block of its own.
