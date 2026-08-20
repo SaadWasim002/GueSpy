@@ -89,3 +89,37 @@ export async function declineSpyGuess() {
 export async function startNextRound() {
   await api.post("/api/v1/game/rounds/next");
 }
+
+/**
+ * POST /api/v1/game/state — step back through setup, or skip forward
+ * past the discussion timer.
+ *
+ * `action` is "back" or "forward" (the server compares case-insensitively).
+ * Back is accepted at CATEGORY_SELECTION, GROUP_SELECTION,
+ * GAME_OPTION_SELECTION, WORD_AND_SPY_REVEAL and DISCUSSION_TIME, and each
+ * one clears the data owned by the state being left; forward is only ever
+ * DISCUSSION_TIME → VOTING. Anything else is a 400.
+ *
+ * The response body is the resulting state, in the same shape `fetchScreen`
+ * returns — so the caller can write it straight into the session rather than
+ * following up with a GET and flickering between the two.
+ *
+ * The guard below exists because the caller writes this payload straight
+ * into the session: a 2xx carrying no `data` unwraps to null and would be
+ * adopted as an empty state, blanking the game rather than failing. Several
+ * endpoints here answer with no body at all (select, vote, reset), so that
+ * is a shape this API really produces — just not, today, on this path.
+ */
+export async function navigateGameState(action) {
+  const response = await api.post("/api/v1/game/state", { action });
+  const state = unwrap(response);
+
+  if (!state?.gameStatus) {
+    throw new ApiError({
+      status: response?.status ?? 200,
+      message: envelope(response)?.message || "The server didn't return a game state.",
+    });
+  }
+
+  return state;
+}
