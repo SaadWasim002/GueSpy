@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import { Avatar, Badge, Button, LoadingBlock, ProgressRing, RingValue, Screen } from "../../../ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  LoadingBlock,
+  ProgressRing,
+  RingValue,
+  Screen,
+  useToast,
+} from "../../../ui";
 import { cn } from "../../../lib/cn";
 import { formatDuration, useCountdown } from "../../../hooks/useCountdown";
+import { BackControl } from "../components/BackControl";
 import { SpyGuessDialog } from "../components/SpyGuessDialog";
+import { navigateGameState } from "../gameEngineService";
 import styles from "./DiscussionScreen.module.css";
 
 const PROMPTS = [
@@ -28,6 +39,8 @@ const URGENT_MS = 10_000;
 const RETRY_MS = 2000;
 
 export function DiscussionScreen({ session }) {
+  const toast = useToast();
+
   /*
    * The duration comes from the game-state payload, not from /config/get.
    * It is the value the engine itself used to compute the deadline, so the
@@ -58,6 +71,7 @@ export function DiscussionScreen({ session }) {
 
   const [promptIndex, setPromptIndex] = useState(() => Math.floor(Math.random() * PROMPTS.length));
   const [guessOpen, setGuessOpen] = useState(false);
+  const [skipping, setSkipping] = useState(false);
 
   /*
    * There is no polling during discussion. The screen sleeps until the
@@ -97,6 +111,26 @@ export function DiscussionScreen({ session }) {
     setPromptIndex((current) => (current + 1) % PROMPTS.length);
   }, []);
 
+  /*
+   * End the discussion early.
+   *
+   * No confirmation: nothing is destroyed, and a room that has stopped
+   * talking has already made the decision — a dialog asking whether they
+   * meant it would just be one more thing to tap.
+   *
+   * The pending deadline timeout is not cancelled here. Adopting the new
+   * state unmounts this screen, and the effect's cleanup clears it.
+   */
+  const skipToVoting = async () => {
+    setSkipping(true);
+    try {
+      session.applyState(await navigateGameState("forward"));
+    } catch {
+      toast.error("Couldn't start the vote. Try again.");
+      setSkipping(false);
+    }
+  };
+
   if (awaitingServer) {
     return (
       <Screen center width="narrow" title="Time's up">
@@ -116,16 +150,24 @@ export function DiscussionScreen({ session }) {
       eyebrow="Discussion"
       title="Talk it out"
       subtitle="Describe the word without saying it. Somebody here is bluffing."
+      back={<BackControl session={session} busy={skipping} />}
       actions={
-        /*
-         * A spy may end the round early by naming the word — the same endpoint
-         * the caught-spy screen uses. It sits in the action row so it is
-         * always reachable without scrolling, but stays a ghost button:
-         * reaching for it in front of everyone is itself a tell.
-         */
-        <Button variant="ghost" onClick={() => setGuessOpen(true)}>
-          I'm the spy — I'll call it now
-        </Button>
+        <>
+          {/*
+            A spy may end the round early by naming the word — the same
+            endpoint the caught-spy screen uses. It sits in the action row so
+            it is always reachable without scrolling, but stays a ghost
+            button: reaching for it in front of everyone is itself a tell.
+          */}
+          <Button variant="ghost" onClick={() => setGuessOpen(true)} disabled={skipping}>
+            I'm the spy — I'll call it now
+          </Button>
+
+          {/* Ghost too, and second: the timer is the default way this ends. */}
+          <Button variant="ghost" onClick={skipToVoting} loading={skipping} iconRight="→">
+            Everyone's done — vote now
+          </Button>
+        </>
       }
       secondary={
         <>

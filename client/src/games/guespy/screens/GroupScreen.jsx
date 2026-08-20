@@ -14,6 +14,7 @@ import {
 } from "../../../ui";
 import { cn } from "../../../lib/cn";
 import { useAppConfig } from "../../../platform/config/configContext";
+import { BackControl } from "../components/BackControl";
 import { deleteGroup, fetchGroups, selectGroup } from "../groupService";
 import { SETUP_STEPS } from "../setupSteps";
 import { GroupFormModal } from "./GroupFormModal";
@@ -107,6 +108,7 @@ export function GroupScreen({ session }) {
       eyebrow="Set up"
       title="Who's playing?"
       subtitle="Pick a saved group, or add the people in the room now. Order matters — the device gets passed down the list."
+      back={<BackControl session={session} busy={submitting} />}
       actions={
         <Button
           size="lg"

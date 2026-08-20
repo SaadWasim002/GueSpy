@@ -1,4 +1,5 @@
-import { api, unwrap } from "../../lib/api";
+import { api, envelope, unwrap } from "../../lib/api";
+import { ApiError } from "../../lib/apiError";
 
 /**
  * GueSpy's game-engine endpoints.
