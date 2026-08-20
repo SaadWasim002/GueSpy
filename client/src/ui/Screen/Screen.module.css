@@ -41,6 +41,16 @@
   justify-content: center;
 }
 
+/*
+ * The back slot. Tightened against the heading below it — the fold's own
+ * gap is sized to separate blocks of content, and a back link belongs to
+ * the heading rather than being a block of its own.
+ */
+.back {
+  display: flex;
+  margin-bottom: calc(var(--sp-2) - var(--sp-6));
+}
+
 .header {
   display: flex;
   flex-direction: column;

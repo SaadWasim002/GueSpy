@@ -1,0 +1,19 @@
+/* Pulled to the text edge so the label lines up with the heading below it,
+   rather than sitting inset by the button's own padding. */
+.button {
+  align-self: flex-start;
+  margin-left: calc(var(--sp-3) * -1);
+  color: var(--color-text-faint);
+}
+
+.button:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+/* A full-width action row on a phone would stretch this across the screen —
+   it is a back link, not a call to action. */
+@media (max-width: 40rem) {
+  .button {
+    width: auto;
+  }
+}
