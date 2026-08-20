@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar, Badge, Button, EmptyState, LoadingBlock, Screen, useToast } from "../../../ui";
 import { cn } from "../../../lib/cn";
 import { useSound } from "../../../platform/sound/soundContext";
+import { BackControl } from "../components/BackControl";
 import { fetchRoleReveal } from "../gameEngineService";
 import styles from "./RevealScreen.module.css";
 
@@ -179,6 +180,13 @@ export function RevealScreen({ session }) {
       <Screen
         center
         width="narrow"
+        /*
+         * Only on the handoff, not on the card behind it. This is the moment
+         * the device is between people and the room can still say "wait,
+         * start over"; the card is one player alone with a secret, and the
+         * only thing they should be doing there is looking and passing on.
+         */
+        back={<BackControl session={session} busy={busy} />}
         actions={
           <Button size="lg" onClick={advance} loading={busy} fullWidth pulse>
             I'm {player.playerName} — show me

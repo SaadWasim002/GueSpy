@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Badge, Button, Screen, StepTrail, Stepper, useToast } from "../../../ui";
 import { cn } from "../../../lib/cn";
 import { useAppConfig } from "../../../platform/config/configContext";
+import { BackControl } from "../components/BackControl";
 import { setGameOption } from "../gameEngineService";
 import { SETUP_STEPS } from "../setupSteps";
 import styles from "./GameOptionScreen.module.css";
@@ -69,6 +70,7 @@ export function GameOptionScreen({ session }) {
       eyebrow="Set up"
       title="How many spies?"
       subtitle="Everyone else gets the secret word. The spies have to work out what it is without giving themselves away."
+      back={<BackControl session={session} busy={submitting} />}
       actions={
         <Button size="lg" onClick={start} loading={submitting} iconRight="→" pulse>
           Deal the round

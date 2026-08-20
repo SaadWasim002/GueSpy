@@ -55,14 +55,23 @@ const BACK_RULES = {
       action: "Pass it round again",
     },
     /*
-     * Round 1 only.
+     * Meant to be round one only — but currently inert, and deliberately so.
      *
-     * `moveBack` was written for the first round: it resets `roundNumber` to
-     * nothing (the reveal then sets it back to 1) but leaves the votes and
-     * the eliminated players alone. Going back in round 3 would therefore
-     * restart the counter *and* walk eliminated players through a reveal
-     * they are no longer in. Rather than show a button that corrupts the
-     * round, it is only offered while there is nothing yet to corrupt.
+     * `moveBack` was written for the first round: it clears `roundNumber`
+     * (the reveal then sets it back to 1) while leaving the votes and the
+     * eliminated players alone. Going back in round three therefore restarts
+     * the counter *and* walks eliminated players through a reveal they are
+     * no longer part of. Not a crash — the voting screen still excludes
+     * them — but the round number is wrong afterwards.
+     *
+     * The check that would prevent it is right here and cannot run:
+     * `populateDiscussionTimeData` sends the start time, duration, players
+     * and starting player, and no round number, so there is nothing to test.
+     * It is written keyed on the field it needs rather than left out, so
+     * adding `data.setRoundNumber(...)` to that method — one line, exactly
+     * what ROUND_END, SPY_GUESS and SCORING already do — switches it on with
+     * no change here. Until then this reads as "allow", which is the
+     * behaviour without the guard at all.
      */
     available: (data) => (data?.roundNumber ?? 1) <= 1,
   },
