@@ -69,26 +69,26 @@ public class GameEngineService implements GameEngine {
     }
 
     @Override
-    public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId){
+    public ResponseEntity<?> gameOptionEngine(GameOptionRequest request, Long userId) {
         log.info("User has started the game option engine with this request body : {}", request);
-        if(request.getNumberOfSpy() == null){
+        if (request.getNumberOfSpy() == null) {
             return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
-        if(userGameDetailsOptional.isEmpty()){
+        if (userGameDetailsOptional.isEmpty()) {
             return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
 
-        if(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.GAME_OPTION_SELECTION)){
+        if (!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.GAME_OPTION_SELECTION)) {
             return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
         }
 
         GameData gameData = userGameDetail.getGameData();
 
-        if(categoryRepository.findById(gameData.getSelectedCategoryId()).isEmpty()){
+        if (categoryRepository.findById(gameData.getSelectedCategoryId()).isEmpty()) {
 
             gameData.setSelectedCategoryId(null)
                     .setSelectedGroupId(null);
@@ -104,13 +104,13 @@ public class GameEngineService implements GameEngine {
         // player numbers can never grow past the player count).
         int totalPlayers = genericUtility.getPlayerNames(userGameDetail).size();
         int maxSpies = Math.min(2, totalPlayers - 1);
-        if(request.getNumberOfSpy() > maxSpies){
+        if (request.getNumberOfSpy() > maxSpies) {
             return GenericUtility.buildResponse(ResponseEnum.INVALID_NUMBER_OF_SPY);
         }
 
         Long wordId = getRandomWordId(gameData.getSelectedCategoryId(), userGameDetail.getUsedWords());
         List<Integer> listOfSpy = getRandomSpy(gameData.getSelectedGroupId(), request.getNumberOfSpy());
-        
+
         gameData.setCurrentSpy(listOfSpy)
                 .setSelectedWordId(wordId)
                 .setNumberOfSpy(request.getNumberOfSpy());
@@ -128,13 +128,13 @@ public class GameEngineService implements GameEngine {
     }
 
     @Override
-    public ResponseEntity<?> resetGame(Long userId){
+    public ResponseEntity<?> resetGame(Long userId) {
         log.info("User has started the reset game data flow");
-        if(userId == null){
+        if (userId == null) {
             return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
-        if(userGameDetailsOptional.isEmpty()){
+        if (userGameDetailsOptional.isEmpty()) {
             return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
@@ -167,25 +167,25 @@ public class GameEngineService implements GameEngine {
 
     @Transactional
     @Override
-    public ResponseEntity<?> roleReveal(Long userId){
+    public ResponseEntity<?> roleReveal(Long userId) {
         log.info("User has started the role revealflow");
-        if(userId == null){
+        if (userId == null) {
             return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
-        if(userGameDetailsOptional.isEmpty()){
+        if (userGameDetailsOptional.isEmpty()) {
             return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
 
-        if(!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.WORD_AND_SPY_REVEAL)){
+        if (!GenericUtility.isValidGameStatus(userGameDetail.getGameStatus(), GameStatus.WORD_AND_SPY_REVEAL)) {
             return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
         }
         GameData gameData = userGameDetail.getGameData();
         setCurrentPlayerAndScreenType(userGameDetail, gameData);
-        
+
         try {
             PlayerDetails playerDetails = buildPlayerDetails(userGameDetail, gameData);
             ScreenData screenData = buildScreenData(userGameDetail, gameData, playerDetails);
@@ -200,14 +200,14 @@ public class GameEngineService implements GameEngine {
     }
 
     @Override
-    public ResponseEntity<?> getGameStatus(Long userId){
+    public ResponseEntity<?> getGameStatus(Long userId) {
         log.info("User has started the get game status");
-        if(userId == null){
+        if (userId == null) {
             return GenericUtility.buildResponse(ResponseEnum.VALUES_MISSING);
         }
 
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
-        if(userGameDetailsOptional.isEmpty()){
+        if (userGameDetailsOptional.isEmpty()) {
             return GenericUtility.buildResponse(ResponseEnum.USER_GAME_DETAILS_NOT_EXISTS);
         }
 
@@ -215,16 +215,16 @@ public class GameEngineService implements GameEngine {
         return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, buildGameStatusData(userGameDetail));
     }
 
-    private GameStatusData buildGameStatusData(UserGameDetail userGameDetail){
+    private GameStatusData buildGameStatusData(UserGameDetail userGameDetail) {
         GameStatusData data = GameStatusData.builder().build();
         GameStatus status = userGameDetail.getGameStatus();
-        if(status.equals(GameStatus.DISCUSSION_TIME)){
+        if (status.equals(GameStatus.DISCUSSION_TIME)) {
             populateDiscussionTimeData(userGameDetail, data);
-        } else if(status == GameStatus.ROUND_END){
+        } else if (status == GameStatus.ROUND_END) {
             populateRoundEndData(userGameDetail, data);
-        } else if(status == GameStatus.SPY_GUESS){
+        } else if (status == GameStatus.SPY_GUESS) {
             populateSpyGuessData(userGameDetail, data);
-        } else if(status == GameStatus.SCORING){
+        } else if (status == GameStatus.SCORING) {
             populateScoringData(userGameDetail, data);
         }
         data.setGameStatus(userGameDetail.getGameStatus());
@@ -233,7 +233,7 @@ public class GameEngineService implements GameEngine {
 
     @Transactional
     @Override
-    public ResponseEntity<?> navigateGameState(Long userId, String action){
+    public ResponseEntity<?> navigateGameState(Long userId, String action) {
         log.info("User has started the game-state navigation flow with action {}", action);
         GenericUtility.validate(userId == null || action == null || action.isBlank(), ResponseEnum.VALUES_MISSING);
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -242,14 +242,14 @@ public class GameEngineService implements GameEngine {
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
         GameStatus status = userGameDetail.getGameStatus();
 
-        if(action.equalsIgnoreCase("back")){
-            if(!isBackAllowed(status)){
+        if (action.equalsIgnoreCase("back")) {
+            if (!isBackAllowed(status)) {
                 return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
             }
             moveBack(userGameDetail);
-        } else if(action.equalsIgnoreCase("forward")){
+        } else if (action.equalsIgnoreCase("forward")) {
             // forward is only the discussion -> voting skip
-            if(status != GameStatus.DISCUSSION_TIME){
+            if (status != GameStatus.DISCUSSION_TIME) {
                 return GenericUtility.buildResponse(ResponseEnum.INVALID_GAME_STATUS);
             }
             userGameDetail.setGameStatus(GameStatus.VOTING);
@@ -261,7 +261,7 @@ public class GameEngineService implements GameEngine {
         return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS, buildGameStatusData(userGameDetail));
     }
 
-    private boolean isBackAllowed(GameStatus status){
+    private boolean isBackAllowed(GameStatus status) {
         return status == GameStatus.CATEGORY_SELECTION
                 || status == GameStatus.GROUP_SELECTION
                 || status == GameStatus.GAME_OPTION_SELECTION
@@ -270,9 +270,9 @@ public class GameEngineService implements GameEngine {
     }
 
     // step one state back, clearing the data owned by the state(s) being left
-    private void moveBack(UserGameDetail userGameDetail){
+    private void moveBack(UserGameDetail userGameDetail) {
         GameData gameData = userGameDetail.getGameData();
-        switch(userGameDetail.getGameStatus()){
+        switch (userGameDetail.getGameStatus()) {
             case CATEGORY_SELECTION:
                 gameData.setSelectedCategoryId(null);
                 userGameDetail.setGameStatus(GameStatus.NOT_STARTED);
@@ -305,27 +305,27 @@ public class GameEngineService implements GameEngine {
         }
     }
 
-    private void populateRoundEndData(UserGameDetail userGameDetail, GameStatusData data){
+    private void populateRoundEndData(UserGameDetail userGameDetail, GameStatusData data) {
         GameData gameData = userGameDetail.getGameData();
         data.setRoundNumber(gameData.getRoundNumber());
         Integer eliminated = gameData.getLastEliminatedPlayer();
-        if(eliminated != null){
+        if (eliminated != null) {
             data.setEliminatedPlayerName(genericUtility.getPlayerNames(userGameDetail).get(eliminated - 1));
         }
     }
 
-    private void populateSpyGuessData(UserGameDetail userGameDetail, GameStatusData data){
+    private void populateSpyGuessData(UserGameDetail userGameDetail, GameStatusData data) {
         GameData gameData = userGameDetail.getGameData();
         data.setRoundNumber(gameData.getRoundNumber());
         Integer caughtSpy = gameData.getCaughtSpy();
-        if(caughtSpy != null){
+        if (caughtSpy != null) {
             data.setCaughtSpyName(genericUtility.getPlayerNames(userGameDetail).get(caughtSpy - 1));
         }
         categoryRepository.findById(gameData.getSelectedCategoryId())
                 .ifPresent(category -> data.setCategoryName(category.getCategoryName()));
     }
 
-    private void populateScoringData(UserGameDetail userGameDetail, GameStatusData data){
+    private void populateScoringData(UserGameDetail userGameDetail, GameStatusData data) {
         GameData gameData = userGameDetail.getGameData();
         List<String> players = genericUtility.getPlayerNames(userGameDetail);
         data.setRoundNumber(gameData.getRoundNumber());
@@ -334,14 +334,14 @@ public class GameEngineService implements GameEngine {
                 .ifPresent(word -> data.setWord(word.getWordName()));
 
         List<String> spyNames = new ArrayList<>();
-        for(Integer spy : gameData.getCurrentSpy()){
+        for (Integer spy : gameData.getCurrentSpy()) {
             spyNames.add(players.get(spy - 1));
         }
         data.setSpies(spyNames);
 
         Map<Integer, Integer> currentScore = gameData.getCurrentScore();
         List<PlayerScore> scores = new ArrayList<>();
-        for(int playerNumber = 1; playerNumber <= players.size(); playerNumber++){
+        for (int playerNumber = 1; playerNumber <= players.size(); playerNumber++) {
             int value = (currentScore != null) ? currentScore.getOrDefault(playerNumber, 0) : 0;
             scores.add(PlayerScore.builder()
                     .playerNumber(playerNumber)
@@ -352,7 +352,7 @@ public class GameEngineService implements GameEngine {
         data.setScores(scores);
     }
 
-    private void populateDiscussionTimeData(UserGameDetail userGameDetail, GameStatusData data){
+    private void populateDiscussionTimeData(UserGameDetail userGameDetail, GameStatusData data) {
         Long discussionStartTime = userGameDetail.getGameData().getDiscussionStartTime();
         Long discussionDuration = configService.getLong(ConfigName.discussionDuration);
         long endTime = discussionStartTime + discussionDuration * 1000;
@@ -362,7 +362,7 @@ public class GameEngineService implements GameEngine {
         data.setPlayers(players);
         data.setStartingPlayer(randomPlayer);
         data.setDiscussionDuration(discussionDuration);
-        if(System.currentTimeMillis() > endTime){
+        if (System.currentTimeMillis() > endTime) {
             userGameDetail.setGameStatus(GameStatus.VOTING);
             userGameDetailsRepository.save(userGameDetail);
             data.setDiscussionStartTime(null);
@@ -372,18 +372,16 @@ public class GameEngineService implements GameEngine {
         }
     }
 
-    private void setCurrentPlayerAndScreenType(UserGameDetail userGameDetail, GameData gameData){
-         if(gameData.getCurrentPlayerNumber() == null){
+    private void setCurrentPlayerAndScreenType(UserGameDetail userGameDetail, GameData gameData) {
+        if (gameData.getCurrentPlayerNumber() == null) {
             // Initialize currentPlayerNumber to 1 if it's null, indicating the start of the player turns.
             // The first screen shown will be "PASS_DEVICE" to the first player.
             // This ensures that the game flow starts correctly.
             gameData.setCurrentPlayerNumber(1);
             gameData.setCurrentScreenType(ScreenType.PASS_DEVICE);
-        }
-        else if(gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE){
+        } else if (gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE) {
             gameData.setCurrentScreenType(ScreenType.ROLE_REVEAL);
-        }
-        else{
+        } else {
             Integer currentPlayerNumber = gameData.getCurrentPlayerNumber();
             gameData.setCurrentPlayerNumber(currentPlayerNumber + 1);
             gameData.setCurrentScreenType(ScreenType.PASS_DEVICE);
@@ -392,7 +390,7 @@ public class GameEngineService implements GameEngine {
     }
 
     @Override
-    public ResponseEntity<?> getVotingScreen(Long userId){
+    public ResponseEntity<?> getVotingScreen(Long userId) {
         log.info("User has started the voting screen flow");
         GenericUtility.validate(userId == null, ResponseEnum.VALUES_MISSING);
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -401,12 +399,12 @@ public class GameEngineService implements GameEngine {
         UserGameDetail userGameDetail = userGameDetailsOptional.get();
         GenericUtility.validate(!isVotingPhase(userGameDetail.getGameStatus()), ResponseEnum.INVALID_GAME_STATUS);
 
-        return GenericUtility.buildResponse(ResponseEnum.VOTING_SCREEN_SUCCESS , buildVotingScreenData(userGameDetail));
+        return GenericUtility.buildResponse(ResponseEnum.VOTING_SCREEN_SUCCESS, buildVotingScreenData(userGameDetail));
     }
 
     @Transactional
     @Override
-    public ResponseEntity<?> vote(Long userId, Integer playerId){
+    public ResponseEntity<?> vote(Long userId, Integer playerId) {
         log.info("User has started the voting screen flow");
         GenericUtility.validate(userId == null || playerId == null, ResponseEnum.VALUES_MISSING);
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -422,7 +420,7 @@ public class GameEngineService implements GameEngine {
 
     @Transactional
     @Override
-    public ResponseEntity<?> nextRound(Long userId){
+    public ResponseEntity<?> nextRound(Long userId) {
         log.info("User has started the next round flow");
         GenericUtility.validate(userId == null, ResponseEnum.VALUES_MISSING);
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -448,7 +446,7 @@ public class GameEngineService implements GameEngine {
 
     @Transactional
     @Override
-    public ResponseEntity<?> spyGuess(Long userId, String word){
+    public ResponseEntity<?> spyGuess(Long userId, String word) {
         log.info("User has started the spy guess flow");
         GenericUtility.validate(userId == null, ResponseEnum.VALUES_MISSING);
         GenericUtility.validate(word == null || word.isBlank(), ResponseEnum.VALUES_MISSING);
@@ -479,7 +477,7 @@ public class GameEngineService implements GameEngine {
 
     @Transactional
     @Override
-    public ResponseEntity<?> spyDecline(Long userId){
+    public ResponseEntity<?> spyDecline(Long userId) {
         log.info("User has started the spy decline flow");
         GenericUtility.validate(userId == null, ResponseEnum.VALUES_MISSING);
         var userGameDetailsOptional = userGameDetailsRepository.findByUserId(userId);
@@ -494,7 +492,7 @@ public class GameEngineService implements GameEngine {
 
         // the caught spy declined -> they are eliminated
         List<Integer> eliminated = new ArrayList<>(getEliminatedPlayers(gameData));
-        if(caughtSpy != null && !eliminated.contains(caughtSpy)){
+        if (caughtSpy != null && !eliminated.contains(caughtSpy)) {
             eliminated.add(caughtSpy);
         }
         gameData.getVotingData().setPlayersVotedOut(eliminated);
@@ -502,7 +500,7 @@ public class GameEngineService implements GameEngine {
         gameData.setCaughtSpy(null);
 
         long activeSpies = gameData.getCurrentSpy().stream().filter(spy -> !eliminated.contains(spy)).count();
-        if(activeSpies == 0){
+        if (activeSpies == 0) {
             // every spy has now been voted out -> innocents win
             gameData.setWinner(Winner.INNOCENT);
             scoringService.applyWinBonus(userGameDetail, Winner.INNOCENT);
@@ -510,7 +508,7 @@ public class GameEngineService implements GameEngine {
         } else {
             int activePlayers = totalPlayers - eliminated.size();
             ScoringConfig scoringConfig = configService.getJson(ConfigName.scoringConfig, ScoringConfig.class);
-            if(activePlayers <= scoringConfig.getMinPlayersToContinue()){
+            if (activePlayers <= scoringConfig.getMinPlayersToContinue()) {
                 // players ran out while a spy is still hidden -> spies win
                 gameData.setWinner(Winner.SPY);
                 scoringService.applyWinBonus(userGameDetail, Winner.SPY);
@@ -524,9 +522,9 @@ public class GameEngineService implements GameEngine {
         return GenericUtility.buildResponse(ResponseEnum.GAME_STATUS_SUCCESS);
     }
 
-    private PlayerDetails buildPlayerDetails(UserGameDetail userGameDetail, GameData gameData){
+    private PlayerDetails buildPlayerDetails(UserGameDetail userGameDetail, GameData gameData) {
         var groupOptional = groupRepository.findById(userGameDetail.getGameData().getSelectedGroupId());
-        if(groupOptional.isEmpty()){
+        if (groupOptional.isEmpty()) {
             throw new IllegalStateException("Group not found for selectedGroupId: " + userGameDetail.getGameData().getSelectedGroupId());
         }
         Group group = groupOptional.get();
@@ -535,29 +533,32 @@ public class GameEngineService implements GameEngine {
 
         // Validate currentPlayerNumber to prevent IndexOutOfBoundsException
         if (currentPlayerNumber == null || currentPlayerNumber <= 0 || currentPlayerNumber > playerNames.size()) {
-             throw new IllegalStateException("Invalid currentPlayerNumber: " + currentPlayerNumber + " for group with " + playerNames.size() + " players.");
+            throw new IllegalStateException("Invalid currentPlayerNumber: " + currentPlayerNumber + " for group with " + playerNames.size() + " players.");
         }
 
         return PlayerDetails.builder()
                 .playerName(playerNames.get(currentPlayerNumber - 1))
                 .playerNumber(currentPlayerNumber)
-                .isSpy((gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE) ? null : gameData.getCurrentSpy().contains(currentPlayerNumber))
+                .isSpy(gameData.getCurrentScreenType() != ScreenType.PASS_DEVICE && gameData.getCurrentSpy().contains(currentPlayerNumber))
                 .build();
     }
 
-    private ScreenData buildScreenData(UserGameDetail userGameDetail, GameData gameData, PlayerDetails playerDetails){
+    private ScreenData buildScreenData(UserGameDetail userGameDetail, GameData gameData, PlayerDetails playerDetails) {
         // Retrieve necessary entities, throwing exceptions if not found
         var categoryOptional = categoryRepository.findById(gameData.getSelectedCategoryId());
         var wordOptional = wordRepository.findById(gameData.getSelectedWordId());
-        var groupOptional = groupRepository.findById(userGameDetail.getGameData().getSelectedGroupId()); 
-        
-        if(categoryOptional.isEmpty()) throw new IllegalStateException("Category not found for selectedCategoryId: " + gameData.getSelectedCategoryId());
-        if(wordOptional.isEmpty()) throw new IllegalStateException("Word not found for selectedWordId: " + gameData.getSelectedWordId());
-        if(groupOptional.isEmpty()) throw new IllegalStateException("Group not found for selectedGroupId: " + userGameDetail.getGameData().getSelectedGroupId());
+        var groupOptional = groupRepository.findById(userGameDetail.getGameData().getSelectedGroupId());
 
-        Boolean isLast = false;
+        if (categoryOptional.isEmpty())
+            throw new IllegalStateException("Category not found for selectedCategoryId: " + gameData.getSelectedCategoryId());
+        if (wordOptional.isEmpty())
+            throw new IllegalStateException("Word not found for selectedWordId: " + gameData.getSelectedWordId());
+        if (groupOptional.isEmpty())
+            throw new IllegalStateException("Group not found for selectedGroupId: " + userGameDetail.getGameData().getSelectedGroupId());
+
+        boolean isLast = false;
         Integer totalPlayer = groupOptional.get().getPlayers().getPlayerNames().size();
-        if(totalPlayer.equals(gameData.getCurrentPlayerNumber()) && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL){
+        if (totalPlayer.equals(gameData.getCurrentPlayerNumber()) && gameData.getCurrentScreenType() == ScreenType.ROLE_REVEAL) {
             isLast = true;
             userGameDetail.setGameStatus(GameStatus.DISCUSSION_TIME);
             gameData.setDiscussionStartTime(System.currentTimeMillis());
@@ -565,15 +566,13 @@ public class GameEngineService implements GameEngine {
             gameData.setRoundNumber(1);
         }
         String displayText;
-        if(gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE){
+        if (gameData.getCurrentScreenType() == ScreenType.PASS_DEVICE) {
             displayText = UITexts.getPassDeviceText(playerDetails.getPlayerName());
-        }
-        else{
+        } else {
             displayText = (playerDetails.getIsSpy()) ? UITexts.SPY_TEXT : UITexts.NON_SPY_TEXT;
         }
 
-        boolean currentPlayerIsSpy = gameData.getCurrentSpy() != null
-                && gameData.getCurrentSpy().contains(gameData.getCurrentPlayerNumber());
+        boolean currentPlayerIsSpy = playerDetails.getIsSpy();
 
         return ScreenData.builder()
                 .categoryName(categoryOptional.get().getCategoryName())
@@ -586,15 +585,15 @@ public class GameEngineService implements GameEngine {
                 .build();
     }
 
-    private Long getRandomWordId(Long categoryId, List<UsedWords> usedWords){
-        List<Long> usedWordsForCategory = usedWords.stream()    
+    private Long getRandomWordId(Long categoryId, List<UsedWords> usedWords) {
+        List<Long> usedWordsForCategory = usedWords.stream()
                 .filter(used -> used.getCategoryId().equals(categoryId))
                 .map(UsedWords::getWordId)
                 .findFirst()
                 .orElse(Collections.emptyList());
         List<Long> wordList = wordRepository.findWordIdByCategoryId(categoryId);
 
-        if(usedWordsForCategory.size() == wordList.size()){
+        if (usedWordsForCategory.size() == wordList.size()) {
             usedWordsForCategory = Collections.emptyList();
             resetUsedWordForTheCategory(categoryId, usedWords);
         }
@@ -616,21 +615,21 @@ public class GameEngineService implements GameEngine {
         return randomWord;
     }
 
-    private List<Integer> getRandomSpy(Long groupId, Integer numberOfSpy){
+    private List<Integer> getRandomSpy(Long groupId, Integer numberOfSpy) {
 
         Set<Integer> spy = new HashSet<>();
         List<String> players = groupRepository.findById(groupId).get().getPlayers().getPlayerNames();
         int totalPlayers = players.size();
-        while(spy.size() < numberOfSpy){
+        while (spy.size() < numberOfSpy) {
             spy.add(getRandomNumber(1, totalPlayers));
         }
 
         return new ArrayList<>(spy);
     }
 
-    private void addUsedWord(List<UsedWords> usedWords, Long categoryId, Long wordId){
-        for(UsedWords word : usedWords){
-            if(word.getCategoryId().equals(categoryId)){
+    private void addUsedWord(List<UsedWords> usedWords, Long categoryId, Long wordId) {
+        for (UsedWords word : usedWords) {
+            if (word.getCategoryId().equals(categoryId)) {
                 word.getWordId().add(wordId);
                 return;
             }
@@ -640,19 +639,19 @@ public class GameEngineService implements GameEngine {
                 .categoryId(categoryId)
                 .wordId(new ArrayList<>(List.of(wordId)))
                 .build();
-        
+
         usedWords.add(newWord);
     }
 
-    private void resetUsedWordForTheCategory(Long categoryId, List<UsedWords> usedWords){
-        for(UsedWords word : usedWords){
-            if(word.getCategoryId().equals(categoryId)){
+    private void resetUsedWordForTheCategory(Long categoryId, List<UsedWords> usedWords) {
+        for (UsedWords word : usedWords) {
+            if (word.getCategoryId().equals(categoryId)) {
                 word.setWordId(new ArrayList<>(Collections.emptyList()));
             }
         }
     }
 
-    private VotingScreenResponse buildVotingScreenData(UserGameDetail userGameDetail){
+    private VotingScreenResponse buildVotingScreenData(UserGameDetail userGameDetail) {
         GameData gameData = userGameDetail.getGameData();
         List<String> players = genericUtility.getPlayerNames(userGameDetail);
         List<Integer> eliminated = getEliminatedPlayers(gameData);
@@ -660,8 +659,8 @@ public class GameEngineService implements GameEngine {
         String currentPlayerName = players.get(currentPlayerNumber - 1);
 
         List<VotingPlayer> votingList = new ArrayList<>();
-        for(int playerNumber = 1; playerNumber <= players.size(); playerNumber++){
-            if(playerNumber == currentPlayerNumber || eliminated.contains(playerNumber)){
+        for (int playerNumber = 1; playerNumber <= players.size(); playerNumber++) {
+            if (playerNumber == currentPlayerNumber || eliminated.contains(playerNumber)) {
                 continue;   // skip the current voter and anyone already voted out
             }
             votingList.add(VotingPlayer.builder()
@@ -673,15 +672,15 @@ public class GameEngineService implements GameEngine {
         boolean isLast = nextActivePlayer(currentPlayerNumber, players.size(), eliminated) == null;
 
         return VotingScreenResponse.builder()
-                    .currentPlayerName(currentPlayerName)
-                    .votingList(votingList)
-                    .isLast(isLast)
-                    .displayText(UITexts.VOTING_TEXT)
-                    .displayTextHeader(UITexts.VOTING_HEADER)
-                    .build();
+                .currentPlayerName(currentPlayerName)
+                .votingList(votingList)
+                .isLast(isLast)
+                .displayText(UITexts.VOTING_TEXT)
+                .displayTextHeader(UITexts.VOTING_HEADER)
+                .build();
     }
 
-    private void updateUserGameDetailWithNewVote(UserGameDetail userGameDetail, Integer playerId){
+    private void updateUserGameDetailWithNewVote(UserGameDetail userGameDetail, Integer playerId) {
         GameData gameData = userGameDetail.getGameData();
         int totalPlayers = genericUtility.getPlayerNames(userGameDetail).size();
         Integer currentPlayerNumber = gameData.getCurrentPlayerNumber();
@@ -693,18 +692,18 @@ public class GameEngineService implements GameEngine {
         GenericUtility.validate(playerId.equals(currentPlayerNumber), ResponseEnum.INVALID_DATA);
 
         VotingData votingData = gameData.getVotingData();
-        if(votingData == null){
+        if (votingData == null) {
             votingData = VotingData.builder().votes(new HashMap<>()).playersVotedOut(new ArrayList<>()).build();
             gameData.setVotingData(votingData);
         }
-        if(votingData.getVotes() == null){
+        if (votingData.getVotes() == null) {
             votingData.setVotes(new HashMap<>());
         }
         Map<Integer, Integer> votes = votingData.getVotes();
         votes.put(playerId, votes.getOrDefault(playerId, 0) + 1);
 
         Integer nextVoter = nextActivePlayer(currentPlayerNumber, totalPlayers, eliminated);
-        if(nextVoter != null){
+        if (nextVoter != null) {
             gameData.setCurrentPlayerNumber(nextVoter);   // more active players still to vote this round
         } else {
             resolveRound(userGameDetail);                 // everyone active has voted -> decide the outcome
@@ -718,13 +717,13 @@ public class GameEngineService implements GameEngine {
      * -> eliminate them and either continue (ROUND_END) or, if too few players
      * remain, the spies win (SCORING).
      */
-    private void resolveRound(UserGameDetail userGameDetail){
+    private void resolveRound(UserGameDetail userGameDetail) {
         GameData gameData = userGameDetail.getGameData();
         int totalPlayers = genericUtility.getPlayerNames(userGameDetail).size();
         List<Integer> eliminated = getEliminatedPlayers(gameData);
         List<Integer> highestVoted = getHighestVotedPlayers(gameData.getVotingData().getVotes());
 
-        if(highestVoted.size() != 1){
+        if (highestVoted.size() != 1) {
             // tie -> revote among the same active players
             gameData.getVotingData().setVotes(new HashMap<>());
             gameData.setCurrentPlayerNumber(firstActivePlayer(totalPlayers, eliminated));
@@ -733,7 +732,7 @@ public class GameEngineService implements GameEngine {
         }
 
         int accused = highestVoted.get(0);
-        if(gameData.getCurrentSpy().contains(accused)){
+        if (gameData.getCurrentSpy().contains(accused)) {
             // a spy was voted out -> they get to decide whether to guess the word
             gameData.setCaughtSpy(accused);
             userGameDetail.setGameStatus(GameStatus.SPY_GUESS);
@@ -751,7 +750,7 @@ public class GameEngineService implements GameEngine {
 
         int activePlayers = totalPlayers - updatedEliminated.size();
         ScoringConfig scoringConfig = configService.getJson(ConfigName.scoringConfig, ScoringConfig.class);
-        if(activePlayers <= scoringConfig.getMinPlayersToContinue()){
+        if (activePlayers <= scoringConfig.getMinPlayersToContinue()) {
             // players ran out while a spy is still hidden -> spies win
             gameData.setWinner(Winner.SPY);
             scoringService.applyWinBonus(userGameDetail, Winner.SPY);
@@ -761,46 +760,46 @@ public class GameEngineService implements GameEngine {
         }
     }
 
-    private List<Integer> getEliminatedPlayers(GameData gameData){
-        if(gameData.getVotingData() == null || gameData.getVotingData().getPlayersVotedOut() == null){
+    private List<Integer> getEliminatedPlayers(GameData gameData) {
+        if (gameData.getVotingData() == null || gameData.getVotingData().getPlayersVotedOut() == null) {
             return Collections.emptyList();
         }
         return gameData.getVotingData().getPlayersVotedOut();
     }
 
-    private int firstActivePlayer(int totalPlayers, List<Integer> eliminated){
-        for(int playerNumber = 1; playerNumber <= totalPlayers; playerNumber++){
-            if(!eliminated.contains(playerNumber)){
+    private int firstActivePlayer(int totalPlayers, List<Integer> eliminated) {
+        for (int playerNumber = 1; playerNumber <= totalPlayers; playerNumber++) {
+            if (!eliminated.contains(playerNumber)) {
                 return playerNumber;
             }
         }
         throw new IllegalStateException("No active players remain");
     }
 
-    private Integer nextActivePlayer(int current, int totalPlayers, List<Integer> eliminated){
-        for(int playerNumber = current + 1; playerNumber <= totalPlayers; playerNumber++){
-            if(!eliminated.contains(playerNumber)){
+    private Integer nextActivePlayer(int current, int totalPlayers, List<Integer> eliminated) {
+        for (int playerNumber = current + 1; playerNumber <= totalPlayers; playerNumber++) {
+            if (!eliminated.contains(playerNumber)) {
                 return playerNumber;
             }
         }
         return null;
     }
 
-    private List<Integer> getHighestVotedPlayers(Map<Integer, Integer> votes){
+    private List<Integer> getHighestVotedPlayers(Map<Integer, Integer> votes) {
         List<Integer> highestVoted = new ArrayList<>();
-        if(votes == null || votes.isEmpty()){
+        if (votes == null || votes.isEmpty()) {
             return highestVoted;
         }
         int maxVote = Collections.max(votes.values());
-        for(Map.Entry<Integer, Integer> entry : votes.entrySet()){
-            if(entry.getValue() == maxVote){
+        for (Map.Entry<Integer, Integer> entry : votes.entrySet()) {
+            if (entry.getValue() == maxVote) {
                 highestVoted.add(entry.getKey());
             }
         }
         return highestVoted;
     }
 
-    private boolean isVotingPhase(GameStatus gameStatus){
+    private boolean isVotingPhase(GameStatus gameStatus) {
         return gameStatus == GameStatus.VOTING || gameStatus == GameStatus.REVOTE;
     }
 }
