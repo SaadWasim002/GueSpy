@@ -3,7 +3,6 @@ package com.game.gueSpy.dto.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,10 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WordUpdateRequest {
-    @NotNull
-    @JsonProperty("word_id")
-    private Long wordId;
-
+    // the word's id comes from the path (PUT /words/{id}), not the body
     @NotBlank
     @JsonProperty("word_name")
     private String wordName;
