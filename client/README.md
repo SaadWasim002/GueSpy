@@ -45,7 +45,7 @@ This section details the functional requirements of the application. All success
 - **Actions**:
     - "Register" button: Submits the form.
     - "Already have an account? Login": Navigates to the login screen.
-- **API Endpoint**: `POST http://localhost:8080/auth/register`
+- **API Endpoint**: `POST http://localhost:8080/api/v1/auth/register`
     - **Request**: `{ "username": "...", "email": "...", "password": "..." }`
     - **Success (201 CREATED)**: Display a success message, store the received JWT token from the `data.token` field, and sign the user straight in — the token is immediately usable, so asking for the same credentials again is pure friction.
 
@@ -71,7 +71,7 @@ This section details the functional requirements of the application. All success
 - **Actions**:
     - "Login" button: Submits the form.
     - "Don't have an account? Register": Navigates to the registration screen.
-- **API Endpoint**: `POST http://localhost:8080/auth/login`
+- **API Endpoint**: `POST http://localhost:8080/api/v1/auth/login`
     - **Request**: `{ "email": "...", "password": "..." }`
     - **Success (200 OK)**: Display "Login Successful", store the received JWT token from the `data.token` field, and extract the `userId` from it. Redirect to the Initial Game Screen.
         ```json
@@ -102,7 +102,7 @@ This section details the functional requirements of the application. All success
 - **UI**:
     - A list/grid of game cards, each showing the game's `name` (and `description`).
     - Only games with `"enabled": true` are shown; each card is selectable.
-- **Data source**: `GET http://localhost:8080/config/get` → the config with `key: "active_games"`, whose `value` is a JSON array (string):
+- **Data source**: `GET http://localhost:8080/api/v1/configs` → the config with `key: "active_games"`, whose `value` is a JSON array (string):
     ```json
     [
         { "gameType": "GUESPY", "name": "GueSpy", "description": "Word-based spy party game", "enabled": true }
@@ -110,7 +110,7 @@ This section details the functional requirements of the application. All success
     ```
 - **Logic**:
     - Fetch configs, find `active_games`, `JSON.parse` its value, and render the enabled games.
-    - Selecting **GueSpy** enters the game flow: call `GET /game-engine/game-state` and route by `gameStatus` (see 3.2.3).
+    - Selecting **GueSpy** enters the game flow: call `GET /api/v1/game/state` and route by `gameStatus` (see 3.2.3).
     - The backend currently associates every session with GueSpy automatically, so no separate "select game" API call is required yet. `gameType` is included on each entry so that, as more games are added, the frontend can route each game to its own flow.
 - **Error (404 NOT_FOUND - NO_CONFIG_FOUND)**: Fall back to showing GueSpy only.
 - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
@@ -125,16 +125,16 @@ This section details the functional requirements of the application. All success
 #### 3.2.2. New Game Flow
 - **Description**: Resets the user's current game progress and starts a new game.
 - **Trigger**: User clicks the "New Game" button.
-- **API Endpoint**: `POST http://localhost:8080/game-engine/reset`
+- **API Endpoint**: `POST http://localhost:8080/api/v1/game/reset`
     - **Request Headers**:  `Authorization: Bearer <token>` 
-    - **Success (200 OK)**: Upon successful reset, the frontend must immediately call `GET /game-engine/game-state`. In practice this returns **`NOT_STARTED`**, not `CATEGORY_SELECTION` — both mean "pick a category", and the routing table below already maps them to the same screen.
+    - **Success (200 OK)**: Upon successful reset, the frontend must immediately call `GET /api/v1/game/state`. In practice this returns **`NOT_STARTED`**, not `CATEGORY_SELECTION` — both mean "pick a category", and the routing table below already maps them to the same screen.
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.3. Current Screen Determination
 - **Description**: Determines the user's current game state and navigates to the appropriate screen. This API call is crucial and should be made:
     1.  Immediately after successful login.
     2.  Immediately after a successful "New Game" reset.
-- **API Endpoint**: `GET http://localhost:8080/game-engine/game-state`
+- **API Endpoint**: `GET http://localhost:8080/api/v1/game/state`
     - **Request Headers**:  `Authorization: Bearer <token>`
     - **Expected Response**: `gameStatus` is **inside** the `data` object, not a sibling of it. The server returns a `GameStatusData` object *as* the payload, so every response looks like:
         ```json
@@ -166,7 +166,7 @@ This section details the functional requirements of the application. All success
         - Display an image on each category card.
         - Allow multi-selection of categories (if game logic supports it).
     - A "Continue" or "Next" button to confirm the selection (optional, or selection can trigger immediate progression).
-- **API Endpoint (Get Categories)**: `GET http://localhost:8080/category/get`
+- **API Endpoint (Get Categories)**: `GET http://localhost:8080/api/v1/categories`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Role-based filtering**: The backend automatically checks the caller's role from the JWT.
         - **Regular users** receive only categories where `adminOnly = false`.
@@ -199,14 +199,14 @@ This section details the functional requirements of the application. All success
         ```
     - **Error (404 NOT_FOUND - NO_CATEGORY_FOUND)**: Display "No categories available. Please check back later."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Select Category)**: `POST http://localhost:8080/category/select`
+- **API Endpoint (Select Category)**: `POST http://localhost:8080/api/v1/categories/{id}/select`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Request Body**: `{ "id": <selectedCategoryId> }`
-    - **Success (200 OK)**: Display "Category selected successfully." The frontend must then immediately call `GET /game-engine/game-state` to determine the next screen (expected to be `GROUP_SELECTION`). The response contains no data.
+    - **No request body required** — the category ID is in the URL path.
+    - **Success (200 OK)**: Display "Category selected successfully." The frontend must then immediately call `GET /api/v1/game/state` to determine the next screen (expected to be `GROUP_SELECTION`). The response contains no data.
     - **Error (404 NOT_FOUND - CATEGORY_NOT_EXISTS)**: Display "Selected category does not exist or is no longer available."
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for category selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Create Category — Admin only)**: `POST http://localhost:8080/category/create`
+- **API Endpoint (Create Category — Admin only)**: `POST http://localhost:8080/api/v1/categories`
     - **Request Headers**: `Authorization: Bearer <token>` (must be `ROLE_ADMIN`)
     - **Request Body**:
         ```json
@@ -215,18 +215,17 @@ This section details the functional requirements of the application. All success
             "admin_only": true
         }
         ```
-        `admin_only` is optional and defaults to `false`. When `true`, the category is hidden from regular users in `GET /category/get`.
+        `admin_only` is optional and defaults to `false`. When `true`, the category is hidden from regular users in `GET /api/v1/categories`.
     - **Success (201 CREATED)**: Category created.
     - **Error (409 CONFLICT)**: Category name already exists.
     - **Error (400 BAD_REQUEST)**: `category_name` is missing.
     - **Error (403 FORBIDDEN)**: Caller is not an admin.
-- **API Endpoint (Update Category — Admin only)**: `PUT http://localhost:8080/category/update`
+- **API Endpoint (Update Category — Admin only)**: `PUT http://localhost:8080/api/v1/categories/{id}`
     - **Request Headers**: `Authorization: Bearer <token>` (must be `ROLE_ADMIN`)
-    - **Lookup is ID-based** — `category_id` is required. All other fields are optional.
+    - The category ID is in the **URL path** — `category_id` is no longer part of the body. All body fields are optional.
     - **Request Body**:
         ```json
         {
-            "category_id": 16,
             "updated_name": "test 45",
             "admin_only": false,
             "is_enabled": true
@@ -235,11 +234,11 @@ This section details the functional requirements of the application. All success
     - **Success (200 OK)**: Category updated.
     - **Error (404 NOT_FOUND)**: No category found for the given `category_id`.
     - **Error (409 CONFLICT)**: `updated_name` is already used by another category.
-    - **Error (400 BAD_REQUEST)**: `category_id` is missing.
+    - **Error (400 BAD_REQUEST)**: `id` path param missing or non-numeric.
     - **Error (403 FORBIDDEN)**: Caller is not an admin.
-- **API Endpoint (Delete Category — Admin only)**: `DELETE http://localhost:8080/category/delete?categoryId={id}`
+- **API Endpoint (Delete Category — Admin only)**: `DELETE http://localhost:8080/api/v1/categories/{id}`
     - **Request Headers**: `Authorization: Bearer <token>` (must be `ROLE_ADMIN`)
-    - `categoryId` is passed as a **query parameter** (not request body). Also deletes all words belonging to that category.
+    - The category ID is in the **URL path**. Also deletes all words belonging to that category.
     - **Success (200 OK)**: Category and its words deleted.
     - **Error (404 NOT_FOUND)**: No category found for the given ID.
     - **Error (400 BAD_REQUEST)**: `categoryId` param is missing.
@@ -266,17 +265,17 @@ This section details the functional requirements of the application. All success
             - Player names are required.
             - Number of players must be within the configured min/max limits (fetched from `/config/get`).
         - "Create Group" button.
-- **API Endpoint (Get All Groups)**: `GET http://localhost:8080/group/get`
+- **API Endpoint (Get All Groups)**: `GET http://localhost:8080/api/v1/groups`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**: Display the list of groups. Frontend should also check `max_group_allowed` config to disable "Add New Group" button if limit is reached.
     - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: Display "No groups found. Start by creating one!"
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Get Particular Group)**: `GET http://localhost:8080/group/get?groupId={id}`
+- **API Endpoint (Get Particular Group)**: `GET http://localhost:8080/api/v1/groups/{id}`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**: Display details of the requested group.
     - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: Display "Group not found."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Create Group)**: `POST http://localhost:8080/group/create`
+- **API Endpoint (Create Group)**: `POST http://localhost:8080/api/v1/groups`
     - **Request Headers**: `Authorization: Bearer <token>` (Backend will extract `userId` from JWT)
     - **Request Body**:
         ```json
@@ -292,7 +291,7 @@ This section details the functional requirements of the application. All success
     - **Error (409 CONFLICT - GROUP_ALREADY_EXISTS)**: Display "A group with this name already exists."
     - **Error (400 BAD_REQUEST)**: Display "Group name and player names are required." or "Number of players out of bounds."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Update Group)**: `PUT http://localhost:8080/group/update?groupId={id}` — ✅ **implemented** (no admin role; a user can only edit their **own** groups).
+- **API Endpoint (Update Group)**: `PUT http://localhost:8080/api/v1/groups/{id}` — ✅ **implemented** (no admin role; a user can only edit their **own** groups).
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: a full replace of the name and player list (both required).
         ```json
@@ -303,23 +302,23 @@ This section details the functional requirements of the application. All success
     - **Error (403 FORBIDDEN - ACCESS_DENIED)**: The group belongs to another user.
     - **Error (409 CONFLICT - GROUP_ALREADY_EXISTS)**: Another of your groups already uses that name.
     - **Error (400 BAD_REQUEST)**: `group_name` blank or `players` empty.
-- **API Endpoint (Delete Group)**: `DELETE http://localhost:8080/group/delete?groupId={id}` — ✅ **implemented** (owner-only, no admin role).
+- **API Endpoint (Delete Group)**: `DELETE http://localhost:8080/api/v1/groups/{id}` — ✅ **implemented** (owner-only, no admin role).
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**: "Group deleted successfully." Refresh the list of groups.
     - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: "Group not found."
     - **Error (403 FORBIDDEN - ACCESS_DENIED)**: The group belongs to another user.
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Select Group)**: `POST http://localhost:8080/group/select`
+- **API Endpoint (Select Group)**: `POST http://localhost:8080/api/v1/groups/{id}/select`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Request Body**: `{ "id": <selectedGroupId> }`
-    - **Success (200 OK)**: Display "Group selected successfully." The frontend must then immediately call `GET /game-engine/game-state` to determine the next screen (expected to be `GAME_OPTION_SELECTION`).
+    - **No request body required** — the group ID is in the URL path.
+    - **Success (200 OK)**: Display "Group selected successfully." The frontend must then immediately call `GET /api/v1/game/state` to determine the next screen (expected to be `GAME_OPTION_SELECTION`).
     - **Error (404 NOT_FOUND - NO_GROUP_FOUND)**: Display "Selected group does not exist."
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for group selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
 #### 3.2.6. Configuration for Group Player Limits
 - **Description**: The frontend needs to fetch configuration values for minimum and maximum players allowed in a group to enforce validation during group creation/update.
-- **API Endpoint**: `GET http://localhost:8080/config/get`
+- **API Endpoint**: `GET http://localhost:8080/api/v1/configs`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Expected Response**: A list of configurations, including `key: "max_player_allowed_in_group"`, `key: "min_player_allowed_in_group"`, and `key: "max_group_allowed"`.
     - **Logic**:
@@ -340,7 +339,7 @@ This section details the functional requirements of the application. All success
         - The buttons should be disabled if the minimum or maximum limit (fetched from configuration) is reached.
         - A message should be displayed (e.g., a small pop-up or inline text) if a limit is reached upon attempting to change the value.
     - A "Start Game" or "Continue" button to proceed.
-- **API Endpoint (Set Game Options)**: `POST http://localhost:8080/game-engine/game-option`
+- **API Endpoint (Set Game Options)**: `POST http://localhost:8080/api/v1/game/options`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**:
         ```json
@@ -348,11 +347,11 @@ This section details the functional requirements of the application. All success
             "number_of_spy": <selectedNumberOfSpies>
         }
         ```
-    - **Success (200 OK)**: Display "Game options set successfully." The frontend must then immediately call `GET /game-engine/game-state` to determine the next screen (expected to be `WORD_AND_SPY_REVEAL`).
+    - **Success (200 OK)**: Display "Game options set successfully." The frontend must then immediately call `GET /api/v1/game/state` to determine the next screen (expected to be `WORD_AND_SPY_REVEAL`).
     - **Error (400 BAD_REQUEST - INVALID_NUMBER_OF_SPY)**: The backend rejects a spy count that is out of range. Valid range is **1 to 2**, and it must leave at least one innocent (so the effective max is `min(2, players − 1)`). The DTO also enforces `@Max(2)`. Clamp the stepper to this range.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for game option selection."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Configuration for Number of Spies)**: `GET http://localhost:8080/config/get`
+- **API Endpoint (Configuration for Number of Spies)**: `GET http://localhost:8080/api/v1/configs`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Expected Response**: A list of configurations, including `key: "min_spy_allowed"` (1) and `key: "max_spy_allowed"` (now `2`, aligned with the game logic).
     - **Logic**:
@@ -446,7 +445,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
             - Displays the `data.roleDescriptionText` (if provided and relevant, e.g., a specific spy instruction).
             - The `data.wordName` **must not** be displayed.
         - The "Continue" button should be clearly visible.
-- **API Endpoint**: `GET http://localhost:8080/game-engine/role-reveal`
+- **API Endpoint**: `GET http://localhost:8080/api/v1/game/role-reveal`
 
   ⚠️ **This is a GET that mutates.** Every call advances the server's cursor (`PASS_DEVICE → ROLE_REVEAL → next player`) and persists it, and there is no way to read the current screen without consuming it. It must be called **exactly once per screen shown** — a duplicate call silently skips a player's role and quietly breaks the round. In React this means guarding the initial call with a ref rather than an empty dependency array, since StrictMode runs effects twice in development, and guarding the advance button against a double tap.
 
@@ -520,7 +519,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
             ✅ The secret word is now hidden server-side: `buildScreenData` sends `wordName: null` whenever the current player is a spy (both their pass-device and role-reveal screens), so the word never reaches a spy over the wire — not just in the rendered UI.
     - **Logic**:
         - The frontend will repeatedly call this API until `data.isLast` is `true`.
-        - Once `data.isLast` is `true`, the frontend should then call `GET /game-engine/game-state` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
+        - Once `data.isLast` is `true`, the frontend should then call `GET /api/v1/game/state` to transition to the next game phase (expected to be `DISCUSSION_TIME`).
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for role reveal."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
 
@@ -536,7 +535,7 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
     - End time = `discussionStartTime + discussionDuration * 1000`.
     - ⚠️ **Do not read `discussion_duration` from `/config/get` for this.** The payload value is the one the engine itself used to compute the deadline, so the countdown and the server cannot disagree. Reading config instead let them drift indefinitely — `/config/get` serves the database while the engine serves its own cache (see "Known backend gaps"), which had the client counting down from ten minutes while the server ended discussion after twenty seconds.
     - **Do not poll during discussion.** Wait out the deadline, then call `game-state` **once**: the server flips the game to `VOTING` on the first call past it. A repeat call is only warranted if the device's clock is ahead of the server's and it still reports `DISCUSSION_TIME`; back off rather than spinning.
-- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/api/v1/game/state`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK) with `DISCUSSION_TIME` status**:
         ```json
@@ -566,11 +565,11 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
 - **Logic**:
     - When the `gameStatus` is `VOTING`, the frontend's first action is to call `GET /game-engine/voting` to get the data for the current voter.
     - The UI is rendered based on the response. The `votingList` excludes the `currentPlayerName` **and any players eliminated in previous rounds** (they cannot be voted for and do not vote).
-    - When the user selects a player and clicks "Submit Vote", the frontend calls `POST /game-engine/vote` with the selected `player_id`.
-    - After a successful vote, the frontend immediately calls `GET /game-engine/voting` again to get the data for the next player's turn.
+    - When the user selects a player and clicks "Submit Vote", the frontend calls `POST /api/v1/game/votes` with `{ "player_id": N }` in the body.
+    - After a successful vote, the frontend immediately calls `GET /api/v1/game/voting` again to get the data for the next player's turn.
     - This cycle continues. The `data.isLast` flag in the `GET /game-engine/voting` response indicates if the current vote is the final one.
     - If `isLast` was `true` for the current turn, after that player votes the round is resolved. The frontend must call `GET /game-engine/game-state` to find the next state, which will be one of `REVOTE`, `SPY_GUESS`, `ROUND_END`, or `SCORING` — see **3.2.11 Round Outcome & Multi-Round Flow**.
-- **API Endpoint (Get Voting Screen Data)**: `GET http://localhost:8080/game-engine/voting`
+- **API Endpoint (Get Voting Screen Data)**: `GET http://localhost:8080/api/v1/game/voting`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Success (200 OK)**:
         ```json
@@ -591,8 +590,9 @@ Screen entrances are **CSS** animations, not JS ones. A JS entrance renders at `
         ```
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Display "Invalid game state for voting."
     - **Error (500 INTERNAL_SERVER_ERROR)**: Trigger the global "Internal Server Error" pop-up.
-- **API Endpoint (Cast Vote)**: `POST http://localhost:8080/game-engine/vote?player_id=<selected_player_id>`
+- **API Endpoint (Cast Vote)**: `POST http://localhost:8080/api/v1/game/votes`
     - **Request Headers**: `Authorization: Bearer <token>`
+    - **Request Body**: `{ "player_id": <selected_player_id> }` — the player number (1-based) from `votingList[].playerId`.
     - **Success (200 OK)**:
         ```json
         {
@@ -630,7 +630,7 @@ Rules the frontend should be aware of:
     - A text input for the word guess and a "Guess" button.
     - A "Decline" button.
     - **The secret word must NOT be shown on this screen.**
-- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/api/v1/game/state`
     - **Success (200 OK) with `SPY_GUESS`**:
         ```json
         {
@@ -639,23 +639,23 @@ Rules the frontend should be aware of:
             "status": "200 OK"
         }
         ```
-- **API Endpoint (Guess the word)**: `POST http://localhost:8080/game-engine/spy-guess`
+- **API Endpoint (Guess the word)**: `POST http://localhost:8080/api/v1/game/spy/guess`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: `{ "word": "Inception" }`
-    - **Success (200 OK)**: The game moves to `SCORING`. A **correct** guess means the spies win; a **wrong** guess means the innocents win. After the response, call `GET /game-engine/game-state` (expected `SCORING`).
+    - **Success (200 OK)**: The game moves to `SCORING`. A **correct** guess means the spies win; a **wrong** guess means the innocents win. After the response, call `GET /api/v1/game/state` (expected `SCORING`).
     - **Error (400 BAD_REQUEST)**: Word is blank/invalid, or the game is not in a state that allows guessing.
-- **API Endpoint (Decline to guess)**: `POST http://localhost:8080/game-engine/spy-decline`
+- **API Endpoint (Decline to guess)**: `POST http://localhost:8080/api/v1/game/spy/decline`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Success (200 OK)**: The caught spy is eliminated. If they were the **last** spy, the innocents win → `SCORING`. Otherwise the round continues → `ROUND_END` (or `SCORING` if too few players remain). After the response, call `GET /game-engine/game-state`.
+    - **Success (200 OK)**: The caught spy is eliminated. If they were the **last** spy, the innocents win → `SCORING`. Otherwise the round continues → `ROUND_END` (or `SCORING` if too few players remain). After the response, call `GET /api/v1/game/state`.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Only valid at `SPY_GUESS`.
-- **Voluntary guess**: `POST /game-engine/spy-guess` is also accepted during `DISCUSSION_TIME`, `VOTING`, and `REVOTE`, allowing a spy to proactively guess the word at any point in a round (same win/lose outcome).
+- **Voluntary guess**: `POST /api/v1/game/spy/guess` is also accepted during `DISCUSSION_TIME`, `VOTING`, and `REVOTE`, allowing a spy to proactively guess the word at any point in a round (same win/lose outcome).
 
 #### 3.2.13 Round End Screen (`ROUND_END`)
 - **Description**: An interstitial shown after an innocent is voted out (or a caught spy declines) and the game continues. It announces who was eliminated, then proceeds to the next round. Displayed when `gameStatus` is `ROUND_END`.
 - **UI**:
     - Display "<`data.eliminatedPlayerName`> was voted out" and (optionally) the round number.
     - A prominent "Continue" button.
-- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/api/v1/game/state`
     - **Success (200 OK) with `ROUND_END`**:
         ```json
         {
@@ -664,9 +664,9 @@ Rules the frontend should be aware of:
             "status": "200 OK"
         }
         ```
-- **API Endpoint (Start next round)**: `POST http://localhost:8080/game-engine/next-round`
+- **API Endpoint (Start next round)**: `POST http://localhost:8080/api/v1/game/rounds/next`
     - **Request Headers**: `Authorization: Bearer <token>`
-    - **Success (200 OK)**: Starts the next round — the game returns to `DISCUSSION_TIME` (a fresh discussion timer starts), then transitions to `VOTING` exactly as in 3.2.9–3.2.10. After the response, call `GET /game-engine/game-state`.
+    - **Success (200 OK)**: Starts the next round — the game returns to `DISCUSSION_TIME` (a fresh discussion timer starts), then transitions to `VOTING` exactly as in 3.2.9–3.2.10. After the response, call `GET /api/v1/game/state`.
     - **Error (400 BAD_REQUEST - INVALID_GAME_STATUS)**: Only valid at `ROUND_END`.
 
 #### 3.2.14 Scoring / Result Screen (`SCORING`)
@@ -676,7 +676,7 @@ Rules the frontend should be aware of:
     - Reveal the `data.spies` (names) and the secret `data.word`.
     - Render `data.scores` as a leaderboard (e.g., sorted by `score` descending).
     - A "New Game" button.
-- **API Endpoint (`game-state`)**: `GET http://localhost:8080/game-engine/game-state`
+- **API Endpoint (`game-state`)**: `GET http://localhost:8080/api/v1/game/state`
     - **Success (200 OK) with `SCORING`**:
         ```json
         {
@@ -696,7 +696,7 @@ Rules the frontend should be aware of:
             "status": "200 OK"
         }
         ```
-- **New Game**: `POST http://localhost:8080/game-engine/reset`, then `GET /game-engine/game-state` (expected `CATEGORY_SELECTION`).
+- **New Game**: `POST http://localhost:8080/api/v1/game/reset`, then `GET /api/v1/game/state` (expected `CATEGORY_SELECTION`).
 - **Scoring rules (context for the UI)**: for every round the spies survive, each spy gains points and each innocent loses points; the winning side receives a bonus at the end. All point values are configured server-side (see 3.2.15), so the frontend should render whatever `scores` are returned rather than assuming fixed numbers.
 
 #### 3.2.15 Scoring Configuration (server-side)
@@ -714,10 +714,10 @@ Rules the frontend should be aware of:
 
 #### 3.2.16 Game State Navigation (Back / Forward)
 - **Description**: A single endpoint to move the user between game states outside the normal forward flow — a **"Back"** button on the setup screens, and a **"Skip"** on the discussion screen. It updates the server-side state and returns the resulting screen.
-- **API Endpoint**: `POST http://localhost:8080/game-engine/game-state`
+- **API Endpoint**: `POST http://localhost:8080/api/v1/game/state`
     - **Request Headers**: `Authorization: Bearer <token>`
     - **Request Body**: `{ "action": "back" }` or `{ "action": "forward" }` (case-insensitive).
-    - **Success (200 OK)**: Returns the resulting game state — the **same shape as `GET /game-engine/game-state`** (`gameStatus` inside `data`, plus any state-specific fields). The change is persisted.
+    - **Success (200 OK)**: Returns the resulting game state — the **same shape as `GET /api/v1/game/state`** (`gameStatus` inside `data`, plus any state-specific fields). The change is persisted.
     - **`"back"`** — step one state back. Valid only when the current `gameStatus` is one of `CATEGORY_SELECTION`, `GROUP_SELECTION`, `GAME_OPTION_SELECTION`, `WORD_AND_SPY_REVEAL`, `DISCUSSION_TIME`. Transitions (each clears the selections owned by the state being left, so the user re-does them):
         | From | To | Cleared |
         |---|---|---|
@@ -781,43 +781,48 @@ Rules the frontend should be aware of:
 ## 7. Backend API Endpoints (Summary for Frontend Reference)
 
 ### Authentication
-- `POST http://localhost:8080/auth/register`: User registration.
-- `POST http://localhost:8080/auth/login`: User login.
+- `POST http://localhost:8080/api/v1/auth/register`: User registration.
+- `POST http://localhost:8080/api/v1/auth/login`: User login.
 - Logout: client-side only (discard the token) — no backend endpoint.
 
 ### Game Engine
-- `POST http://localhost:8080/game-engine/reset`: Resets the current game for the user.
-- `GET http://localhost:8080/game-engine/game-state`: Retrieves the current game screen/status for the user.
-- `GET http://localhost:8080/game-engine/role-reveal`: Advances the role reveal process for each player (call once per screen until `data.isLast` is true).
-- `POST http://localhost:8080/game-engine/game-option`: Sets game options like the number of spies (`number_of_spy`, 1 or 2).
-- `GET http://localhost:8080/game-engine/voting`: Retrieves the current voter's voting screen (valid at `VOTING`/`REVOTE`).
-- `POST http://localhost:8080/game-engine/vote?player_id={n}`: Casts a vote for player number `n`.
-- `POST http://localhost:8080/game-engine/next-round`: Advances from `ROUND_END` into the next round.
-- `POST http://localhost:8080/game-engine/spy-guess`: A spy guesses the word (`{ "word": "..." }`).
-- `POST http://localhost:8080/game-engine/spy-decline`: A caught spy declines to guess.
+- `POST http://localhost:8080/api/v1/game/reset`: Resets the current game for the user.
+- `GET http://localhost:8080/api/v1/game/state`: Retrieves the current game screen/status for the user.
+- `POST http://localhost:8080/api/v1/game/state`: Navigate game states — body `{ "action": "back" | "forward" }`.
+- `GET http://localhost:8080/api/v1/game/role-reveal`: Advances the role reveal cursor (call once per screen until `data.isLast` is true).
+- `POST http://localhost:8080/api/v1/game/options`: Sets game options — body `{ "number_of_spy": 1|2 }`.
+- `GET http://localhost:8080/api/v1/game/voting`: Retrieves the current voter's voting screen (valid at `VOTING`/`REVOTE`).
+- `POST http://localhost:8080/api/v1/game/votes`: Casts a vote — body `{ "player_id": N }`.
+- `POST http://localhost:8080/api/v1/game/rounds/next`: Advances from `ROUND_END` into the next round.
+- `POST http://localhost:8080/api/v1/game/spy/guess`: A spy guesses the word — body `{ "word": "..." }`.
+- `POST http://localhost:8080/api/v1/game/spy/decline`: A caught spy declines to guess.
 
 ### Group Management
-- `GET http://localhost:8080/group/get`: Retrieves all groups or a specific group.
-- `POST http://localhost:8080/group/create`: Creates a new group.
-- `PUT http://localhost:8080/group/update?groupId={id}`: Updates one of the user's own groups (owner-only, no admin role).
-- `DELETE http://localhost:8080/group/delete?groupId={id}`: Deletes one of the user's own groups (owner-only, no admin role).
-- `POST http://localhost:8080/group/select`: Selects a group for the current game.
+- `GET http://localhost:8080/api/v1/groups`: Retrieves all of the user's groups.
+- `GET http://localhost:8080/api/v1/groups/{id}`: Retrieves a specific group.
+- `POST http://localhost:8080/api/v1/groups`: Creates a new group.
+- `PUT http://localhost:8080/api/v1/groups/{id}`: Updates one of the user's own groups (owner-only, no admin role).
+- `DELETE http://localhost:8080/api/v1/groups/{id}`: Deletes one of the user's own groups (owner-only, no admin role).
+- `POST http://localhost:8080/api/v1/groups/{id}/select`: Selects a group for the current game (ID in path, no body).
 
 ### Category Management
-- `GET http://localhost:8080/category/get`: Retrieves categories — role-filtered automatically (admin-only categories hidden from regular users).
-- `POST http://localhost:8080/category/select`: Selects a category for the current game. Body: `{ "id": <categoryId> }`.
-- ✅ (admin) `POST /category/create` — body: `{ "category_name": "...", "admin_only": true|false }`. `admin_only` defaults to `false` if omitted.
-- ✅ (admin) `PUT /category/update` — lookup is now **ID-based**: `{ "category_id": <id>, "updated_name": "...", "admin_only": true|false, "is_enabled": true|false }`. All fields except `category_id` are optional.
-- ✅ (admin) `DELETE /category/delete?categoryId={id}` — category ID is passed as a **query param**, not a request body.
+- `GET http://localhost:8080/api/v1/categories`: Retrieves categories — role-filtered automatically (admin-only categories hidden from regular users).
+- `POST http://localhost:8080/api/v1/categories/{id}/select`: Selects a category for the current game (ID in path, no body).
+- `GET http://localhost:8080/api/v1/categories/{id}/words`: Lists all words for a category.
+- ✅ (admin) `POST http://localhost:8080/api/v1/categories` — body: `{ "category_name": "...", "admin_only": true|false }`. `admin_only` defaults to `false` if omitted.
+- ✅ (admin) `PUT http://localhost:8080/api/v1/categories/{id}` — body: `{ "updated_name": "...", "admin_only": true|false, "is_enabled": true|false }`. All body fields optional.
+- ✅ (admin) `DELETE http://localhost:8080/api/v1/categories/{id}` — deletes the category and all its words.
 
 ### Word Management (admin)
-- `POST http://localhost:8080/word/add`: Adds one or more words to a category — body `{ "category_id": n, "words": ["...", "..."] }`; returns `{ added, skipped }`.
-- `PUT http://localhost:8080/word/update`: Renames a word — body `{ "word_id": n, "word_name": "..." }`.
-- `DELETE http://localhost:8080/word/delete?wordId={id}`: Deletes a word.
-- `GET http://localhost:8080/word/get?categoryId={id}`: Lists a category's words.
+- `POST http://localhost:8080/api/v1/words`: Adds one or more words to a category — body `{ "category_id": n, "words": ["...", "..."] }`; returns `{ added, skipped }`.
+- `PUT http://localhost:8080/api/v1/words/{id}`: Renames a word — body `{ "word_name": "..." }`.
+- `DELETE http://localhost:8080/api/v1/words/{id}`: Deletes a word.
 
 ### Configuration
-- `GET http://localhost:8080/config/get`: Retrieves application configurations (e.g., player limits, spy limits, `scoring_config`, and `active_games` for the game-selection screen).
+- `GET http://localhost:8080/api/v1/configs`: Retrieves application configurations (e.g., player limits, spy limits, `scoring_config`, and `active_games` for the game-selection screen).
+- ✅ (admin) `POST http://localhost:8080/api/v1/configs`: Creates a new config entry.
+- ✅ (admin) `PUT http://localhost:8080/api/v1/configs`: Updates a config entry.
+- ✅ (admin) `GET http://localhost:8080/api/v1/configs/refresh`: Refreshes the in-memory config cache.
 
 ---
 
