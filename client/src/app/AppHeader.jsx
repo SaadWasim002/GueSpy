@@ -36,6 +36,18 @@ const LogoutIcon = () => (
   </svg>
 );
 
+const AdminIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path
+      d="M10 2.5 4 5v4.3c0 3.4 2.4 6.5 6 8.2 3.6-1.7 6-4.8 6-8.2V5z"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path d="m7.6 10 1.7 1.7 3.3-3.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 /**
  * Persistent top bar. Deliberately thin — during a game the screen itself is
  * the interface, and chrome competing with it would only get in the way.
@@ -73,6 +85,15 @@ export function AppHeader() {
       >
         {muted ? <SoundOffIcon /> : <SoundOnIcon />}
       </IconButton>
+
+      {/* Only admins are shown the door. The route guards it too, and the
+          backend guards every endpoint behind it — this just keeps a link
+          nobody else can use out of everyone else's way. */}
+      {isAuthenticated && user?.role === "ADMIN" ? (
+        <IconButton label="Admin" size="sm" as={Link} to="/admin">
+          <AdminIcon />
+        </IconButton>
+      ) : null}
 
       {isAuthenticated ? (
         <div className={styles.identity}>

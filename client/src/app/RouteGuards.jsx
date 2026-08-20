@@ -22,6 +22,29 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
+/**
+ * Gate for admin-only routes. Nests inside RequireAuth, which has already
+ * established there is a session.
+ *
+ * A non-admin is sent to the hub rather than shown a refusal: they did not
+ * ask for a restricted page, they typed a URL that is not theirs, and a
+ * dead end would be worse than the place they meant to be.
+ *
+ * This decides what to *render* and nothing more. Every admin endpoint is
+ * guarded server-side by `@PreAuthorize("hasRole('ADMIN')")` off the same
+ * token, so editing the stored claim buys a page of 403s, not access.
+ */
+export function RequireAdmin() {
+  const { user } = useAuth();
+
+  // The claim is the bare enum name. JwtUtil writes `user.getRole()` and it
+  // is JwtFilter that prefixes `ROLE_` when building authorities — matching
+  // on "ROLE_ADMIN" here would silently never fire.
+  if (user?.role !== "ADMIN") return <Navigate to="/" replace />;
+
+  return <Outlet />;
+}
+
 /** Inverse gate: keeps a signed-in user off the login and register screens. */
 export function RequireAnonymous() {
   const { isAuthenticated } = useAuth();

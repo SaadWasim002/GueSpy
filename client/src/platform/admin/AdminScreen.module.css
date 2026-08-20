@@ -1,0 +1,14 @@
+/* Stands in for the section switcher while there is only one section. */
+.only {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-soft);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-9);
+}

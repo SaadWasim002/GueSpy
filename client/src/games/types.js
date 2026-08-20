@@ -38,10 +38,25 @@
  * @property {GameEntry} [entry]    optional resume prompt, shown before the
  *                                  status screens when there is something
  *                                  worth resuming
+ * @property {GameAdmin} [admin]    optional admin sections, contributed to
+ *                                  the platform's admin area
  *
  * @typedef {object} GameEntry
  * @property {React.ComponentType} Screen  receives { session, onContinue, onNewGame }
  * @property {(session: GameSession) => boolean} shouldShow
+ *
+ * @typedef {object} GameAdmin
+ * @property {AdminSection[]} sections
+ *
+ * @typedef {object} AdminSection
+ * @property {string} id                    unique across every game
+ * @property {string} label                 tab label in the admin area
+ * @property {React.ComponentType} Component  rendered when the tab is active
+ *
+ * A game's content is the game's business, so the screens for managing it
+ * live in the game module and are declared here — the platform's admin area
+ * collects them the same way the hub collects `meta`. Configs stay platform
+ * side; they belong to the install, not to any one game.
  */
 
 /** Play modes a game can declare. The hub badges these on each card. */
