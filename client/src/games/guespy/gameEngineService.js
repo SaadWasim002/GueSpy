@@ -1,4 +1,5 @@
-import { api, unwrap } from "../../lib/api";
+import { api, envelope, unwrap } from "../../lib/api";
+import { ApiError } from "../../lib/apiError";
 
 /**
  * GueSpy's game-engine endpoints.
@@ -94,4 +95,39 @@ export async function declineSpyGuess() {
  */
 export async function startNextRound() {
   await api.post("/game-engine/next-round");
+}
+
+/**
+ * POST /game-engine/game-state — step back through setup, or skip forward
+ * past the discussion timer.
+ *
+ * `action` is "back" or "forward" (the server compares case-insensitively).
+ * Back is accepted at CATEGORY_SELECTION, GROUP_SELECTION,
+ * GAME_OPTION_SELECTION, WORD_AND_SPY_REVEAL and DISCUSSION_TIME, and each
+ * one clears the data owned by the state being left; forward is only ever
+ * DISCUSSION_TIME → VOTING. Anything else is a 400.
+ *
+ * The response body is the resulting state, in the same shape `fetchScreen`
+ * returns — so the caller can write it straight into the session rather than
+ * following up with a GET and flickering between the two.
+ *
+ * The guard below is not paranoia. An unrecognised action answers
+ * `ResponseEnum.INVALID_DATA`, which is declared `HttpStatus.OK`, so a
+ * *failure* arrives as a 200 with no `data` and would otherwise sail through
+ * as an empty state that blanks the game. Unreachable from here — this
+ * client only ever sends the two valid actions — but the cost of checking is
+ * one line and the cost of not checking is a wiped screen.
+ */
+export async function navigateGameState(action) {
+  const response = await api.post("/game-engine/game-state", { action });
+  const state = unwrap(response);
+
+  if (!state?.gameStatus) {
+    throw new ApiError({
+      status: response?.status ?? 200,
+      message: envelope(response)?.message || "The server didn't return a game state.",
+    });
+  }
+
+  return state;
 }

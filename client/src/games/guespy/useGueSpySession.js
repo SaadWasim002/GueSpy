@@ -52,6 +52,23 @@ export function useGueSpySession() {
     }
   }, []);
 
+  /**
+   * Adopt a state the server has already handed back, without re-reading it.
+   *
+   * The navigation endpoint answers with the resulting state, so a `refresh`
+   * afterwards would ask for something already in hand — and show the old
+   * screen in the gap. Bumping `requestId` claims the slot: a `refresh` that
+   * was already in flight is now stale and its response is dropped rather
+   * than overwriting this newer state.
+   */
+  const applyState = useCallback((payload) => {
+    requestId.current += 1;
+    if (!mounted.current) return;
+
+    const { gameStatus, ...data } = payload ?? {};
+    setSession({ status: gameStatus ?? null, data, isLoading: false, error: null });
+  }, []);
+
   /** Wipe progress and start over. Resolves once the new state has loaded. */
   const reset = useCallback(async () => {
     await resetGame();
@@ -72,5 +89,8 @@ export function useGueSpySession() {
    * — an unbounded request loop, not a poll. Depend on `refresh` itself; it
    * is a stable callback.
    */
-  return useMemo(() => ({ ...session, refresh, reset }), [session, refresh, reset]);
+  return useMemo(
+    () => ({ ...session, refresh, reset, applyState }),
+    [session, refresh, reset, applyState],
+  );
 }
