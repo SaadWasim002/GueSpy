@@ -92,7 +92,7 @@ export async function startNextRound() {
 }
 
 /**
- * POST /game-engine/game-state — step back through setup, or skip forward
+ * POST /api/v1/game/state — step back through setup, or skip forward
  * past the discussion timer.
  *
  * `action` is "back" or "forward" (the server compares case-insensitively).
@@ -112,7 +112,7 @@ export async function startNextRound() {
  * is a shape this API really produces — just not, today, on this path.
  */
 export async function navigateGameState(action) {
-  const response = await api.post("/game-engine/game-state", { action });
+  const response = await api.post("/api/v1/game/state", { action });
   const state = unwrap(response);
 
   if (!state?.gameStatus) {
