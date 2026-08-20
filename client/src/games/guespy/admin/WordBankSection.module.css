@@ -1,16 +1,16 @@
 /*
- * Master–detail. The category list is given a fixed, comfortable column and
- * the words take the rest, since the words are what the admin actually works
- * in — the list is navigation.
+ * Master–detail. The category list gets a fixed, comfortable column and the
+ * panel takes the rest, since the panel is where the work happens — the list
+ * is navigation.
  */
 .layout {
   display: grid;
-  grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
   gap: var(--sp-5);
   align-items: start;
 }
 
-/* Below this the two panes stack; a 20rem column and a word list side by
+/* Below this the two panes stack; an 18rem column and a word grid side by
    side on a phone leaves neither usable. */
 @media (max-width: 56rem) {
   .layout {
@@ -46,21 +46,17 @@
   gap: var(--sp-2);
 }
 
-/* Holds the select card and its tools as siblings — they cannot nest inside
-   the card, which is itself a button. */
-.slot {
-  position: relative;
-  display: flex;
-}
-
+/*
+ * The card is the whole row and does one thing: select. Edit and delete used
+ * to sit on top of it, which made every click a decision about which of
+ * three things you meant — they live in the panel now.
+ */
 .category {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
   width: 100%;
   text-align: left;
-  /* Room for the tool cluster so a long name never runs under it. */
-  padding-right: var(--sp-11);
 }
 
 .categoryName {
@@ -81,21 +77,6 @@
   font-size: var(--text-xs);
   color: var(--color-text-faint);
   font-variant-numeric: tabular-nums;
-}
-
-.tools {
-  position: absolute;
-  top: var(--sp-3);
-  right: var(--sp-3);
-  display: flex;
-  gap: var(--sp-1);
-  opacity: 0.55;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-
-.slot:hover .tools,
-.tools:focus-within {
-  opacity: 1;
 }
 
 .confirm {

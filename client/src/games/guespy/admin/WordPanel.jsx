@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Badge,
   Button,
@@ -13,6 +13,9 @@ import {
 import { cn } from "../../../lib/cn";
 import { addWords, deleteWord, fetchWords, updateWord } from "./adminService";
 import styles from "./WordPanel.module.css";
+
+/** Above this many words the list gets a filter box. */
+const FILTER_THRESHOLD = 12;
 
 /**
  * Split a pasted block into words.
@@ -30,22 +33,22 @@ function parseWords(raw) {
 }
 
 const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
     <path
       d="M13.5 3.5a1.9 1.9 0 0 1 2.7 2.7L7.6 14.8l-3.5.8.8-3.5z"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.6"
       strokeLinejoin="round"
     />
   </svg>
 );
 
 const TrashIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
     <path
       d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.2h6.6L14 6M8.5 8.8v4M11.5 8.8v4"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -53,11 +56,13 @@ const TrashIcon = () => (
 );
 
 /**
- * One word. Reads as text until you choose to edit it, then becomes a field
- * in place — the same shape as a player row in `GroupFormModal`, rather than
- * a dialog for a single string.
+ * One word in the grid.
+ *
+ * Reads as a word until you choose to edit it, then becomes a field in
+ * place. Editing spans the full row — an input, a Save and a Cancel do not
+ * fit in a track sized for the word "Dune".
  */
-function WordRow({ word, onRenamed, onDeleteRequested, busy }) {
+function WordCell({ word, onRenamed, onDeleteRequested, busy }) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(word.wordName);
@@ -123,7 +128,10 @@ function WordRow({ word, onRenamed, onDeleteRequested, busy }) {
 
   return (
     <li className={styles.word}>
-      <span className={styles.wordName}>{word.wordName}</span>
+      {/* title, because a long word ellipsises inside its track. */}
+      <span className={styles.wordName} title={word.wordName}>
+        {word.wordName}
+      </span>
 
       <div className={styles.wordTools}>
         <IconButton label={`Rename ${word.wordName}`} size="sm" onClick={start} disabled={busy}>
@@ -143,20 +151,80 @@ function WordRow({ word, onRenamed, onDeleteRequested, busy }) {
 }
 
 /**
- * The selected category: what it is, and every word in it.
+ * The selected category — everything about it in one place.
  *
- * @param category           the selected category row
- * @param onCategoryChanged  re-read the category list after a flag changes
+ * Its name, its two flags, its words, and the button that deletes it. The
+ * list on the left is navigation and nothing else: a row that both selects
+ * and carries its own edit and delete controls makes every click a small
+ * decision about which of three things you meant.
+ *
+ * @param category        the selected category row
+ * @param existingNames   every category name, for the rename clash check
+ * @param onSaveCategory  persist changed name/flags; resolves once re-read
+ * @param onWordsChanged  re-read the category list after words change
+ * @param onDeleteRequested  ask the section to open its delete confirmation
  */
-export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
+export function WordPanel({
+  category,
+  existingNames = [],
+  onSaveCategory,
+  onWordsChanged,
+  onDeleteRequested,
+}) {
   const toast = useToast();
 
   const [words, setWords] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const [filter, setFilter] = useState("");
   const [draft, setDraft] = useState("");
   const [adding, setAdding] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  /*
+   * Name and flags are edited locally and saved on demand.
+   *
+   * Saving on each flip would fire a request per toggle — two requests to
+   * change both flags, no way to change your mind, and one of them
+   * (disabling) currently makes the category vanish from the list. Held as a
+   * draft, everything about the category goes up together and only when
+   * asked for.
+   *
+   * Re-synced whenever the server's values change, which covers both picking
+   * a different category and the re-read after a save.
+   */
+  const server = useMemo(
+    () => ({
+      name: category?.categoryName ?? "",
+      isEnabled: category?.isEnabled !== false,
+      adminOnly: Boolean(category?.adminOnly),
+    }),
+    [category?.categoryName, category?.isEnabled, category?.adminOnly],
+  );
+
+  const [form, setForm] = useState(server);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setForm(server);
+  }, [server, category?.id]);
+
+  const trimmedName = form.name.trim();
+  const dirty =
+    trimmedName !== server.name ||
+    form.isEnabled !== server.isEnabled ||
+    form.adminOnly !== server.adminOnly;
+
+  // A category keeping its own name is not a clash with itself.
+  const nameError = !trimmedName
+    ? "Give the category a name."
+    : existingNames.some(
+          (existing) =>
+            existing.toLowerCase() === trimmedName.toLowerCase() &&
+            existing.toLowerCase() !== server.name.toLowerCase(),
+        )
+      ? "There's already a category with this name."
+      : null;
 
   const categoryId = category?.id;
   // Guards against a slow response for a category the admin has already
@@ -181,10 +249,34 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
     // while the new ones load, which reads as though they belong to it.
     setWords(null);
     setDraft("");
+    setFilter("");
     load();
   }, [load]);
 
   const parsed = parseWords(draft);
+
+  const needle = filter.trim().toLowerCase();
+  const visible = needle
+    ? (words ?? []).filter((word) => word.wordName.toLowerCase().includes(needle))
+    : (words ?? []);
+
+  const save = async () => {
+    if (nameError) return;
+    setSaving(true);
+
+    // Send only what actually changed, so an untouched field is never
+    // restated — the server applies each one only when present.
+    const changes = {};
+    if (trimmedName !== server.name) changes.name = trimmedName;
+    if (form.isEnabled !== server.isEnabled) changes.isEnabled = form.isEnabled;
+    if (form.adminOnly !== server.adminOnly) changes.adminOnly = form.adminOnly;
+
+    try {
+      await onSaveCategory(changes);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const submitWords = async (event) => {
     event?.preventDefault();
@@ -203,16 +295,14 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
             : `All ${skipped.length} were already in this category.`,
         );
       } else if (skipped.length > 0) {
-        toast.success(
-          `Added ${added.length}. Skipped ${skipped.length} already in this category.`,
-        );
+        toast.success(`Added ${added.length}. Skipped ${skipped.length} already in this category.`);
       } else {
         toast.success(added.length === 1 ? `Added "${added[0]}".` : `Added ${added.length} words.`);
       }
 
       setDraft("");
       await load();
-      await onCategoryChanged();
+      await onWordsChanged();
     } catch (error) {
       toast.error(
         error?.status === 404
@@ -242,7 +332,7 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
       setPendingDelete(null);
       // Either way the list is no longer trustworthy — re-read it.
       await load();
-      await onCategoryChanged();
+      await onWordsChanged();
     }
   };
 
@@ -252,7 +342,7 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
         <EmptyState
           icon="📚"
           title="Pick a category"
-          description="Choose one on the left to see and edit the words in it."
+          description="Choose one on the left to edit it and the words in it."
         />
       </div>
     );
@@ -260,37 +350,65 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
 
   return (
     <div className={styles.panel}>
-      <header className={styles.head}>
-        <div className={styles.title}>
-          <h3 className={styles.name}>{category.categoryName}</h3>
-          {/*
-            words.length, not category.totalWords: the server's counter is
-            incremented on add and decremented on delete rather than counted,
-            so it can drift from the list right next to it. The list is the
-            one that cannot be wrong.
-          */}
-          {words ? (
-            <Badge tone="neutral">
-              {words.length} {words.length === 1 ? "word" : "words"}
-            </Badge>
-          ) : null}
-        </div>
+      <div className={styles.eyebrowRow}>
+        <span className={styles.eyebrow}>Category</span>
+        {/*
+          words.length, not category.totalWords: the server's counter is
+          incremented on add and decremented on delete rather than counted,
+          so it can drift from the list right next to it. The list is the one
+          that cannot be wrong.
+        */}
+        {words ? (
+          <Badge tone="neutral">
+            {words.length} {words.length === 1 ? "word" : "words"}
+          </Badge>
+        ) : null}
+      </div>
 
-        <div className={styles.flags}>
-          <Switch
-            label="Enabled"
-            description="Off takes it out of play without deleting it."
-            checked={category.isEnabled !== false}
-            onChange={(next) => onToggleFlag({ isEnabled: next })}
-          />
-          <Switch
-            label="Admin only"
-            description="Only admins see this category."
-            checked={Boolean(category.adminOnly)}
-            onChange={(next) => onToggleFlag({ adminOnly: next })}
-          />
-        </div>
-      </header>
+      {/* Name and flags share one draft and one Save — they are all facts
+          about the same row, and the server takes them in one call. */}
+      <section className={styles.settings}>
+        <TextInput
+          label="Name"
+          value={form.name}
+          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+          error={dirty ? nameError : null}
+          maxLength={60}
+        />
+
+        <Switch
+          label="Enabled"
+          description="Off takes it out of play without deleting it."
+          checked={form.isEnabled}
+          disabled={saving}
+          onChange={(next) => setForm((current) => ({ ...current, isEnabled: next }))}
+        />
+
+        <Switch
+          label="Admin only"
+          description="Only admins see this category."
+          checked={form.adminOnly}
+          disabled={saving}
+          onChange={(next) => setForm((current) => ({ ...current, adminOnly: next }))}
+        />
+
+        {/*
+          Only once something has changed. A Save button that is always there
+          and usually does nothing trains people to ignore it; one that
+          appears is itself the notice that there is something unsaved.
+        */}
+        {dirty ? (
+          <div className={styles.saveBar}>
+            <span className={styles.saveHint}>Unsaved changes.</span>
+            <Button variant="ghost" size="sm" onClick={() => setForm(server)} disabled={saving}>
+              Discard
+            </Button>
+            <Button size="sm" onClick={save} loading={saving} disabled={Boolean(nameError)}>
+              Save
+            </Button>
+          </div>
+        ) : null}
+      </section>
 
       <form className={styles.add} onSubmit={submitWords}>
         <label className={styles.addLabel} htmlFor="bulk-words">
@@ -299,7 +417,7 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
         <textarea
           id="bulk-words"
           className={styles.textarea}
-          rows={4}
+          rows={3}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder={"Inception\nInterstellar\nDune"}
@@ -317,12 +435,26 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
         </div>
       </form>
 
+      {/* A category can hold fifty-odd words; finding one of them is the
+          common task, so it gets a box rather than the browser's find. */}
+      {words && words.length > FILTER_THRESHOLD ? (
+        <TextInput
+          size="sm"
+          value={filter}
+          onChange={(event) => setFilter(event.target.value)}
+          placeholder={`Filter ${words.length} words`}
+          aria-label="Filter words"
+        />
+      ) : null}
+
       {words === null && !loadError ? (
-        <div className={styles.words}>
-          {Array.from({ length: 5 }, (_, i) => (
-            <Skeleton key={i} height="2.5rem" />
+        <ul className={styles.words}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <li key={i}>
+              <Skeleton height="2.25rem" />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : loadError ? (
         <EmptyState
           tone="error"
@@ -337,10 +469,17 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
           title="No words yet"
           description="A category with no words can't be played — add some above."
         />
+      ) : visible.length === 0 ? (
+        <p className={styles.noMatch}>
+          Nothing matches “{filter.trim()}”.{" "}
+          <button type="button" className={styles.clearFilter} onClick={() => setFilter("")}>
+            Clear the filter
+          </button>
+        </p>
       ) : (
         <ul className={styles.words}>
-          {words.map((word) => (
-            <WordRow
+          {visible.map((word) => (
+            <WordCell
               key={word.id}
               word={word}
               busy={adding}
@@ -350,6 +489,15 @@ export function WordPanel({ category, onCategoryChanged, onToggleFlag }) {
           ))}
         </ul>
       )}
+
+      {/* Last, and quiet. It is the one action here that cannot be undone,
+          so it does not belong anywhere a click might land by accident. */}
+      <footer className={styles.danger}>
+        <Button variant="dangerGhost" size="sm" onClick={onDeleteRequested}>
+          Delete this category
+        </Button>
+        <span className={styles.dangerHint}>Deletes every word in it too.</span>
+      </footer>
 
       <Modal
         open={pendingDelete !== null}

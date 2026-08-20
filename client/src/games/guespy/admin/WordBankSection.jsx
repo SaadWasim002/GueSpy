@@ -4,39 +4,15 @@ import {
   Button,
   Card,
   EmptyState,
-  IconButton,
   Modal,
   Skeleton,
   TextInput,
   useToast,
 } from "../../../ui";
 import { deleteCategory, fetchAllCategories, updateCategory } from "./adminService";
-import { CategoryFormModal } from "./CategoryFormModal";
+import { NewCategoryModal } from "./NewCategoryModal";
 import { WordPanel } from "./WordPanel";
 import styles from "./WordBankSection.module.css";
-
-const EditIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path
-      d="M13.5 3.5a1.9 1.9 0 0 1 2.7 2.7L7.6 14.8l-3.5.8.8-3.5z"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path
-      d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.2h6.6L14 6M8.5 8.8v4M11.5 8.8v4"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 /**
  * GueSpy's word bank: the categories, and the words drawn from them.
@@ -44,7 +20,12 @@ const TrashIcon = () => (
  * One section rather than two tabs, because a word list means nothing
  * without a category — the backend says the same thing, since the only way
  * to read words is `/api/v1/categories/{id}/words`. Categories on the left,
- * the selected one's words on the right.
+ * everything about the selected one on the right.
+ *
+ * The list is *only* navigation. Editing a category, flipping its flags and
+ * deleting it all live in the panel, so a row means one thing when you click
+ * it. Deletion is confirmed here rather than there because it is this
+ * component that owns the list and the selection it invalidates.
  *
  * Contributed to the platform's admin area through the game module's `admin`
  * field, so nothing in `platform/` knows this screen exists.
@@ -56,9 +37,8 @@ export function WordBankSection() {
   const [loadError, setLoadError] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
 
-  // null = closed, { category: null } = create, { category } = edit.
-  const [form, setForm] = useState(null);
-  const [pendingDelete, setPendingDelete] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
@@ -78,7 +58,7 @@ export function WordBankSection() {
   const selected = categories?.find((category) => category.id === selectedId) ?? null;
 
   /**
-   * Flip `is_enabled` or `admin_only` on the selected category.
+   * Save the panel's draft — any of name, `is_enabled`, `admin_only`.
    *
    * The re-read afterwards is what makes the change visible, and it is also
    * where a backend gap shows up: `findAllActiveCategoryForUser` filters
@@ -86,7 +66,7 @@ export function WordBankSection() {
    * removes it from this very list. Rather than let it vanish silently, say
    * what happened. Once that query is widened the branch stops firing.
    */
-  const toggleFlag = async (changes) => {
+  const saveCategory = async (changes) => {
     if (!selected) return;
     const wasCalled = selected.categoryName;
 
@@ -94,6 +74,7 @@ export function WordBankSection() {
       await updateCategory(selected.id, changes);
       const next = await fetchAllCategories();
       setCategories(next);
+      toast.success("Category saved.");
 
       if (!next.some((category) => category.id === selected.id)) {
         setSelectedId(null);
@@ -104,29 +85,26 @@ export function WordBankSection() {
       }
     } catch (error) {
       toast.error(
-        error?.status === 404
-          ? "That category no longer exists."
-          : error?.status === 403
-            ? "You don't have permission to change categories."
-            : "Couldn't save that change. Try again.",
+        error?.status === 409
+          ? "There's already a category with this name."
+          : error?.status === 404
+            ? "That category no longer exists."
+            : error?.status === 403
+              ? "You don't have permission to change categories."
+              : "Couldn't save that change. Try again.",
       );
       load();
     }
   };
 
-  const openDelete = (category) => {
-    setPendingDelete(category);
-    setDeleteConfirmText("");
-  };
-
   const confirmDelete = async () => {
-    if (!pendingDelete) return;
+    if (!selected) return;
     setDeleting(true);
 
     try {
-      await deleteCategory(pendingDelete.id);
-      toast.success(`"${pendingDelete.categoryName}" deleted.`);
-      if (selectedId === pendingDelete.id) setSelectedId(null);
+      await deleteCategory(selected.id);
+      toast.success(`"${selected.categoryName}" deleted.`);
+      setSelectedId(null);
     } catch (error) {
       toast.error(
         error?.status === 404
@@ -137,7 +115,7 @@ export function WordBankSection() {
       );
     } finally {
       setDeleting(false);
-      setPendingDelete(null);
+      setConfirmingDelete(false);
       await load();
     }
   };
@@ -145,7 +123,7 @@ export function WordBankSection() {
   // Typing the name is the gate. Deliberately case-insensitive and trimmed:
   // the point is to make the action deliberate, not to test typing accuracy.
   const deleteArmed =
-    deleteConfirmText.trim().toLowerCase() === pendingDelete?.categoryName?.toLowerCase();
+    deleteConfirmText.trim().toLowerCase() === selected?.categoryName?.toLowerCase();
 
   return (
     <div className={styles.layout}>
@@ -154,7 +132,7 @@ export function WordBankSection() {
           <span className={styles.count}>
             {categories === null ? "Loading…" : `${categories.length} categories`}
           </span>
-          <Button variant="secondary" size="sm" onClick={() => setForm({ category: null })}>
+          <Button variant="secondary" size="sm" onClick={() => setCreating(true)}>
             + New
           </Button>
         </div>
@@ -178,77 +156,59 @@ export function WordBankSection() {
             icon="📂"
             title="No categories yet"
             description="Create one, then fill it with words."
-            actions={<Button onClick={() => setForm({ category: null })}>New category</Button>}
+            actions={<Button onClick={() => setCreating(true)}>New category</Button>}
           />
         ) : (
           <div className={styles.rows}>
             {categories.map((category) => (
-              /*
-               * The card is the select button. Edit and delete sit outside
-               * it as siblings — a button cannot contain other buttons, and
-               * nesting them would select the category on the way through.
-               * Same arrangement as the group cards.
-               */
-              <div key={category.id} className={styles.slot}>
-                <Card
-                  interactive
-                  selected={selectedId === category.id}
-                  onClick={() => setSelectedId(category.id)}
-                  className={styles.category}
-                >
-                  <span className={styles.categoryName}>{category.categoryName}</span>
+              <Card
+                key={category.id}
+                interactive
+                selected={selectedId === category.id}
+                onClick={() => setSelectedId(category.id)}
+                className={styles.category}
+              >
+                <span className={styles.categoryName}>{category.categoryName}</span>
 
-                  <div className={styles.meta}>
-                    <span className={styles.wordCount}>{category.totalWords ?? 0} words</span>
-                    {category.adminOnly ? <Badge tone="accent">Admin only</Badge> : null}
-                    {category.isEnabled === false ? <Badge tone="warning">Disabled</Badge> : null}
-                  </div>
-                </Card>
-
-                <div className={styles.tools}>
-                  <IconButton
-                    label={`Edit ${category.categoryName}`}
-                    size="sm"
-                    variant="solid"
-                    onClick={() => setForm({ category })}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    label={`Delete ${category.categoryName}`}
-                    size="sm"
-                    variant="solid"
-                    onClick={() => openDelete(category)}
-                  >
-                    <TrashIcon />
-                  </IconButton>
+                <div className={styles.meta}>
+                  <span className={styles.wordCount}>{category.totalWords ?? 0} words</span>
+                  {category.adminOnly ? <Badge tone="accent">Admin only</Badge> : null}
+                  {category.isEnabled === false ? <Badge tone="warning">Disabled</Badge> : null}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
-      <WordPanel category={selected} onCategoryChanged={load} onToggleFlag={toggleFlag} />
+      <WordPanel
+        category={selected}
+        existingNames={(categories ?? []).map((category) => category.categoryName)}
+        onSaveCategory={saveCategory}
+        onWordsChanged={load}
+        onDeleteRequested={() => {
+          setDeleteConfirmText("");
+          setConfirmingDelete(true);
+        }}
+      />
 
-      <CategoryFormModal
-        open={form !== null}
-        category={form?.category ?? null}
-        onClose={() => setForm(null)}
-        onSaved={load}
+      <NewCategoryModal
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={load}
         existingNames={(categories ?? []).map((category) => category.categoryName)}
       />
 
       <Modal
-        open={pendingDelete !== null}
-        onClose={deleting ? undefined : () => setPendingDelete(null)}
+        open={confirmingDelete}
+        onClose={deleting ? undefined : () => setConfirmingDelete(false)}
         dismissible={!deleting}
         size="sm"
-        title={`Delete "${pendingDelete?.categoryName ?? ""}"?`}
+        title={`Delete "${selected?.categoryName ?? ""}"?`}
         description="Every word in it is deleted too. This can't be undone."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setPendingDelete(null)} disabled={deleting}>
+            <Button variant="ghost" onClick={() => setConfirmingDelete(false)} disabled={deleting}>
               Keep it
             </Button>
             <Button
@@ -265,17 +225,16 @@ export function WordBankSection() {
         {/*
           Typing the name, rather than the two-button confirm used everywhere
           else. Undoing a pick is cheap and a dialog is enough; this erases a
-          category and every word in it with no way back, and the rows look
-          alike enough to click the wrong one.
+          category and every word in it with no way back.
         */}
         <div className={styles.confirm}>
           <p className={styles.confirmCount}>
-            {pendingDelete?.totalWords
-              ? `${pendingDelete.totalWords} words go with it.`
+            {selected?.totalWords
+              ? `${selected.totalWords} words go with it.`
               : "This category has no words saved."}
           </p>
           <TextInput
-            label={`Type "${pendingDelete?.categoryName ?? ""}" to confirm`}
+            label={`Type "${selected?.categoryName ?? ""}" to confirm`}
             value={deleteConfirmText}
             onChange={(event) => setDeleteConfirmText(event.target.value)}
             disabled={deleting}
