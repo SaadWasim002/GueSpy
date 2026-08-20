@@ -4,15 +4,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.game.gueSpy.dto.request.GroupRequest;
-import com.game.gueSpy.dto.request.SelectionRequest;
 import com.game.gueSpy.security.UserPrincipal;
 import com.game.gueSpy.service.GroupService;
 
@@ -20,15 +19,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/group")
+@RequestMapping("/api/v1/groups")
 @RequiredArgsConstructor
 public class GroupController {
 
     private final GroupService groupService;
 
     @PostMapping(
-        path = "/create",
-        name = "Create the group",
+        name = "Create a group",
+        consumes = "application/json",
         produces = "application/json"
     )
     public ResponseEntity<?> create(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody GroupRequest request){
@@ -36,39 +35,47 @@ public class GroupController {
     }
 
     @GetMapping(
-        path = "/get",
-        name = "Create the group",
+        name = "Get all groups",
         produces = "application/json"
     )
-    public ResponseEntity<?> get(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(required = false) Long groupId){
-        return groupService.getAllGroupForTheUser(principal.userId(), groupId);
+    public ResponseEntity<?> getAll(@AuthenticationPrincipal UserPrincipal principal){
+        return groupService.getAllGroupForTheUser(principal.userId(), null);
+    }
+
+    @GetMapping(
+        path = "/{id}",
+        name = "Get a specific group",
+        produces = "application/json"
+    )
+    public ResponseEntity<?> getOne(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id){
+        return groupService.getAllGroupForTheUser(principal.userId(), id);
     }
 
     @PostMapping(
-        path = "/select",
-        name = "select the group",
+        path = "/{id}/select",
+        name = "Select a group",
         produces = "application/json"
     )
-    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody SelectionRequest request){
-        return groupService.selectGroup(principal.userId(), request.getId());
+    public ResponseEntity<?> select(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id){
+        return groupService.selectGroup(principal.userId(), id);
     }
 
     @PutMapping(
-        path = "/update",
-        name = "update a group",
+        path = "/{id}",
+        name = "Update a group",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> update(@AuthenticationPrincipal UserPrincipal principal, @RequestParam Long groupId, @Valid @RequestBody GroupRequest request){
-        return groupService.updateGroup(request, groupId, principal.userId());
+    public ResponseEntity<?> update(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id, @Valid @RequestBody GroupRequest request){
+        return groupService.updateGroup(request, id, principal.userId());
     }
 
     @DeleteMapping(
-        path = "/delete",
-        name = "delete a group",
+        path = "/{id}",
+        name = "Delete a group",
         produces = "application/json"
     )
-    public ResponseEntity<?> delete(@AuthenticationPrincipal UserPrincipal principal, @RequestParam Long groupId){
-        return groupService.deleteGroup(groupId, principal.userId());
+    public ResponseEntity<?> delete(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id){
+        return groupService.deleteGroup(id, principal.userId());
     }
 }

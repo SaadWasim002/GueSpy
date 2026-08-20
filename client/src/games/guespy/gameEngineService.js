@@ -9,11 +9,9 @@ import { api, unwrap } from "../../lib/api";
  */
 
 /**
- * GET /game-engine/game-state → `{ gameStatus, ...stateSpecificFields }`.
+ * GET /api/v1/game/state → `{ gameStatus, ...stateSpecificFields }`.
  *
- * Renamed from `/get-screen`, which no longer exists. Every screen transition
- * in the game runs through this one call, so the old path 404s the entire
- * flow rather than degrading.
+ * Every screen transition in the game runs through this one call.
  *
  * Note the shape: the server returns a `GameStatusData` object *as* the data
  * payload, so `gameStatus` is nested inside `data` rather than being a
@@ -22,17 +20,17 @@ import { api, unwrap } from "../../lib/api";
  *   {"data":{"gameStatus":"NOT_STARTED"},"message":"…","status":"200 OK"}
  */
 export async function fetchScreen() {
-  const response = await api.get("/game-engine/game-state");
+  const response = await api.get("/api/v1/game/state");
   return unwrap(response) ?? {};
 }
 
-/** POST /game-engine/reset — wipes progress and returns to category selection. */
+/** POST /api/v1/game/reset — wipes progress and returns to category selection. */
 export async function resetGame() {
-  await api.post("/game-engine/reset");
+  await api.post("/api/v1/game/reset");
 }
 
 /**
- * GET /game-engine/role-reveal — the next screen in the pass-the-device pass.
+ * GET /api/v1/game/role-reveal — the next screen in the pass-the-device pass.
  *
  * This is a GET that MUTATES. Each call advances the server's cursor through
  * PASS_DEVICE → ROLE_REVEAL → next player, and persists it. There is no way
@@ -43,55 +41,51 @@ export async function resetGame() {
  * Returns { screenType, displayText, isLast, categoryName, wordName,
  * playerDetails: { playerName, playerNumber, isSpy } }.
  *
- * `wordName` is present on every response, including a spy's — hiding it is
- * the client's job. See RevealScreen.
+ * `wordName` is null for spies — the backend never sends it over the wire.
  */
 export async function fetchRoleReveal() {
-  const response = await api.get("/game-engine/role-reveal");
+  const response = await api.get("/api/v1/game/role-reveal");
   return unwrap(response);
 }
 
 /**
- * POST /game-engine/game-option — sets the spy count and deals the round.
+ * POST /api/v1/game/options — sets the spy count and deals the round.
  *
- * The server accepts any value ≥ 1 here: there is no upper bound on the DTO
- * and no check against the player count. Passing more spies than there are
- * players makes the engine's spy-picking loop unsatisfiable and it never
- * returns, so the caller must clamp. See GameOptionScreen for the bound.
+ * Valid range is 1 to min(2, players − 1). The caller must clamp before
+ * calling this; the backend will reject out-of-range values with 400.
  */
 export async function setGameOption(numberOfSpy) {
-  await api.post("/game-engine/game-option", { number_of_spy: numberOfSpy });
+  await api.post("/api/v1/game/options", { number_of_spy: numberOfSpy });
 }
 
 /**
- * POST /game-engine/spy-guess — a spy names the word.
+ * POST /api/v1/game/spy/guess — a spy names the word.
  *
- * Accepted while the game is at SPY_GUESS (a caught spy's one chance) and
- * also during DISCUSSION_TIME, VOTING and REVOTE, which is how a spy can
- * call it early. Either way the round ends: a correct guess wins it for the
- * spies, a wrong one hands it to the innocents.
+ * Accepted at SPY_GUESS and also during DISCUSSION_TIME, VOTING and REVOTE
+ * (a spy can call it early). A correct guess wins for the spies; wrong hands
+ * it to the innocents.
  */
 export async function submitSpyGuess(word) {
-  await api.post("/game-engine/spy-guess", { word });
+  await api.post("/api/v1/game/spy/guess", { word });
 }
 
 /**
- * POST /game-engine/spy-decline — a caught spy passes on guessing.
+ * POST /api/v1/game/spy/decline — a caught spy passes on guessing.
  *
  * They are eliminated. If they were the last spy the innocents win outright;
  * otherwise the game continues to the next round, or ends there if too few
  * players remain. Valid only at SPY_GUESS.
  */
 export async function declineSpyGuess() {
-  await api.post("/game-engine/spy-decline");
+  await api.post("/api/v1/game/spy/decline");
 }
 
 /**
- * POST /game-engine/next-round — leave the round-end interstitial.
+ * POST /api/v1/game/rounds/next — leave the round-end interstitial.
  *
  * Starts a fresh discussion timer and returns the game to DISCUSSION_TIME.
  * Valid only at ROUND_END.
  */
 export async function startNextRound() {
-  await api.post("/game-engine/next-round");
+  await api.post("/api/v1/game/rounds/next");
 }

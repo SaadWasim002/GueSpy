@@ -3,7 +3,7 @@ package com.game.gueSpy.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,15 +19,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/word")
+@RequestMapping("/api/v1/words")
 @RequiredArgsConstructor
 public class WordController {
     private final WordService wordService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
-        path = "/add",
-        name = "Add word",
+        name = "Add word(s)",
         consumes = "application/json",
         produces = "application/json"
     )
@@ -37,33 +36,22 @@ public class WordController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(
-        path = "/delete",
+        path = "/{id}",
         name = "Delete word",
-        consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> delete(@RequestParam Long wordId){
-        return wordService.deleteWord(wordId);
-    }
-
-    @GetMapping(
-        path = "/get",
-        name = "Get all the words of a particular category",
-        consumes = "application/json",
-        produces = "application/json"
-    )
-    public ResponseEntity<?> get(@RequestParam Long categoryId){
-        return wordService.getAllWords(categoryId);
+    public ResponseEntity<?> delete(@PathVariable Long id){
+        return wordService.deleteWord(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(
-        path = "/update",
+        path = "/{id}",
         name = "Update a word",
         consumes = "application/json",
         produces = "application/json"
     )
-    public ResponseEntity<?> update(@Valid @RequestBody WordUpdateRequest request){
-        return wordService.updateWord(request.getWordId(), request.getWordName());
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody WordUpdateRequest request){
+        return wordService.updateWord(id, request.getWordName());
     }
 }
