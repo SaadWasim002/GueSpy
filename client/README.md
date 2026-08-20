@@ -775,7 +775,30 @@ Categories and their words, master–detail in one section. Words are only reach
 
 #### 3.3.3 Settings
 
-Not yet built — see the second admin branch. `GET/POST/PUT /api/v1/configs` and `GET /api/v1/configs/refresh` are the surface.
+| Action | Endpoint | Notes |
+|---|---|---|
+| Read | `GET /api/v1/configs` | Reuses `platform/config/configService.js`; rows are `{ id, key, value, active, updatedAt }` |
+| Change a value | `PUT /api/v1/configs` | `{ key, value }`. 404 on an unknown key |
+| Add a key | `POST /api/v1/configs` | `{ key, value }`. 409 on a duplicate |
+| Reload the engine cache | `GET /api/v1/configs/refresh` | A GET that mutates |
+
+- **Values are validated against `CONFIG_SCHEMA` before being sent.** That table already existed for *reading* config (`platform/config/configKeys.js`); each entry now also carries a `kind` (`number` / `json`), and the admin editor runs the same parser before writing. A typo in `scoring_config` is refused at the field rather than saved and then discovered by every player at once. Keys the schema does not know are listed and editable but not second-guessed — the server may hold settings this frontend has no business validating.
+- **There is no "now refresh the cache" step.** `ConfigService.createNewConfig` and `updateConfig` both call `refresh()` themselves, so a change made through the API is live immediately. The reload button is presented as a repair tool for the one case it is needed: a row edited straight in the database, which leaves `/configs` reporting the new value while the engine serves the old one indefinitely (gap 4).
+- After a successful write the section calls `reload()` from `useAppConfig()`, so the running client picks up new player limits or spy bounds without a page reload.
+- ⚠️ **Inactive rows are badged.** `getAllConfigs` uses `findAll()` while the engine's cache uses `findActiveConfigs()`, so a row with `active = false` is reported here but not used by the game — see gap 4.
+
+#### 3.3.4 `active_games` — the one setting that is not a text field
+
+`active_games` is the entire contents of the home screen. An empty list, a wrong `gameType`, or one stray comma and every player signs in to "No games available". It therefore has a dedicated structured editor (`ActiveGamesEditor`) rather than a JSON box, and the guards are the point:
+
+1. **The value is rebuilt from structured state on every save**, so a malformed `active_games` cannot be written from this screen — there is no text to mistype.
+2. **A game can only be added from the module registry** (`listGameModules()`). A `gameType` with no module in this build renders in the hub as coming soon rather than a working card, so hand-typing one is a way to publish something nobody can play. Listed games that have no module are badged so the mismatch is visible.
+3. **A newly added game starts `enabled: false`.** Adding a game and publishing it to every player are two decisions, and only one of them was just made.
+4. **Removing asks first.** If the removal would leave the hub with nothing enabled, it asks harder — the game's name has to be typed, since that is the one edit here that takes the whole platform down rather than one game. The save bar says so too.
+
+#### 3.3.5 Bundle
+
+The admin area is code-split (`React.lazy` on the route, and again on the game's contributed section, which the registry would otherwise pull into the main chunk). Almost nobody who loads the app is an admin, and the area is a large slice of code a player never opens: main bundle 499 kB → 484 kB, with the admin chunks fetched on navigation.
 
 ## 4. Non-Functional Requirements
 
