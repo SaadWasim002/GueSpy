@@ -294,10 +294,18 @@ public class GameEngineService implements GameEngine {
                 userGameDetail.setGameStatus(GameStatus.GAME_OPTION_SELECTION);
                 break;
             case DISCUSSION_TIME:
+                // WORD_AND_SPY_REVEAL redoes the reveal for every player, so this is a
+                // full do-over of the round sequence, not just the current round -- clear
+                // eliminations and votes along with the round counter, or a round-three
+                // "back" would restart at round 1 while still carrying rounds 1-2's
+                // eliminated players and stale votes.
                 gameData.setCurrentPlayerNumber(null)
                         .setCurrentScreenType(null)
                         .setDiscussionStartTime(null)
-                        .setRoundNumber(null);
+                        .setRoundNumber(null)
+                        .setVotingData(null)
+                        .setCaughtSpy(null)
+                        .setLastEliminatedPlayer(null);
                 userGameDetail.setGameStatus(GameStatus.WORD_AND_SPY_REVEAL);
                 break;
             default:
@@ -362,6 +370,7 @@ public class GameEngineService implements GameEngine {
         data.setPlayers(players);
         data.setStartingPlayer(randomPlayer);
         data.setDiscussionDuration(discussionDuration);
+        data.setRoundNumber(userGameDetail.getGameData().getRoundNumber());
         if (System.currentTimeMillis() > endTime) {
             userGameDetail.setGameStatus(GameStatus.VOTING);
             userGameDetailsRepository.save(userGameDetail);
