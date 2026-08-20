@@ -1,5 +1,5 @@
+import { lazy } from "react";
 import { defineGameModule, PLAY_MODES } from "../types";
-import { WordBankSection } from "./admin/WordBankSection";
 import { CategoryScreen } from "./screens/CategoryScreen";
 import { DiscussionScreen } from "./screens/DiscussionScreen";
 import { GameEntryScreen } from "./screens/GameEntryScreen";
@@ -59,7 +59,25 @@ export const guespyModule = defineGameModule({
    * them the same way the hub collects `meta`.
    */
   admin: {
-    sections: [{ id: "guespy-word-bank", label: "Word bank", Component: WordBankSection }],
+    sections: [
+      {
+        id: "guespy-word-bank",
+        label: "Word bank",
+        /*
+         * Lazy, so the word bank is not in the bundle every player
+         * downloads. The module itself is imported by the registry — which
+         * the hub needs — so a plain import here would pull the whole admin
+         * screen along with it. Whether a section is split is the game's
+         * business; the shell renders it inside a Suspense boundary either
+         * way.
+         */
+        Component: lazy(() =>
+          import("./admin/WordBankSection").then((module) => ({
+            default: module.WordBankSection,
+          })),
+        ),
+      },
+    ],
   },
 
   screens: {

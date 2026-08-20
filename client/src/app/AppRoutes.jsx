@@ -1,13 +1,26 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { IS_DEV } from "../config/env";
 import { Gallery } from "../dev/Gallery/Gallery";
 import { LoginScreen } from "../platform/auth/screens/LoginScreen";
 import { RegisterScreen } from "../platform/auth/screens/RegisterScreen";
-import { AdminScreen } from "../platform/admin/AdminScreen";
 import { GameHubScreen } from "../platform/games/GameHubScreen";
+import { LoadingBlock, Screen } from "../ui";
 import { GameHost } from "./GameHost";
 import { NotFoundScreen } from "./NotFoundScreen";
 import { RequireAdmin, RequireAnonymous, RequireAuth } from "./RouteGuards";
+
+/*
+ * The admin area is split out of the main bundle.
+ *
+ * Almost nobody who loads this app is an admin, and the area is a large slice
+ * of code — every category and word screen, the settings editors — that a
+ * player will never open. Fetching it only when an admin actually navigates
+ * there keeps it out of the download for everyone else.
+ */
+const AdminScreen = lazy(() =>
+  import("../platform/admin/AdminScreen").then((module) => ({ default: module.AdminScreen })),
+);
 
 /**
  * Remounts the host whenever the routed game changes.
@@ -59,7 +72,20 @@ export function AppRoutes() {
         {/* Nested rather than a sibling: admin implies a session, and this
             way a signed-out visit lands on /login instead of the hub. */}
         <Route element={<RequireAdmin />}>
-          <Route path="/admin" element={<AdminScreen />} />
+          <Route
+            path="/admin"
+            element={
+              <Suspense
+                fallback={
+                  <Screen center width="narrow">
+                    <LoadingBlock label="Opening the admin area…" />
+                  </Screen>
+                }
+              >
+                <AdminScreen />
+              </Suspense>
+            }
+          />
         </Route>
       </Route>
 

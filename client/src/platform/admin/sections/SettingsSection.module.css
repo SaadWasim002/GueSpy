@@ -1,0 +1,122 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.head > :last-child {
+  margin-left: auto;
+  flex: none;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+.subtitle {
+  margin-top: var(--sp-1);
+  max-width: 52ch;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+.rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-faint);
+  background: var(--color-surface-sunken);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+/* A changed row is marked so a long grid still shows what is about to be
+   written when the save bar says "3 changed settings". */
+.rowDirty {
+  border-color: var(--accent-line);
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  color: var(--color-text-soft);
+  overflow-wrap: anywhere;
+}
+
+/* JSON values get a real box — scoring_config on one line is unreadable. */
+.textarea {
+  width: 100%;
+  padding: var(--sp-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-deep);
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.invalid {
+  border-color: var(--color-danger);
+}
+
+.rowError {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+}
+
+.saveBar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.saveHint {
+  margin-right: auto;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}

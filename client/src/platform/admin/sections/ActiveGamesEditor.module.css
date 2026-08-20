@@ -1,0 +1,162 @@
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.head > :last-child {
+  margin-left: auto;
+  flex: none;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+.subtitle {
+  margin-top: var(--sp-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-faint);
+  background: var(--color-surface-sunken);
+}
+
+/* Listed but not offered. Dimmed so the live ones are countable at a glance. */
+.gameOff {
+  opacity: 0.62;
+}
+
+.gameHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.gameName {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+/* The gameType is the join between this list and the module registry, so it
+   is shown as the identifier it is rather than as editable prose. */
+.gameType {
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-overlay);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-2xs);
+  color: var(--color-text-faint);
+}
+
+.gameFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.gameFoot > :last-child {
+  flex: none;
+}
+
+.none,
+.allAdded {
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+  text-wrap: pretty;
+}
+
+.saveBar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.saveHint {
+  margin-right: auto;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+/* --- add picker --- */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.pick:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-veil);
+}
+
+.pickEmblem {
+  font-size: var(--text-xl);
+  flex: none;
+}
+
+.pickText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pickName {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+}
+
+.pickTagline {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
